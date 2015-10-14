@@ -69,7 +69,10 @@ FormatsToProcess = @()
 NestedModules = @()
 
 # Functions to export from this module
-FunctionsToExport = '*'
+FunctionsToExport = @(
+    'Get-IniContent',
+    'Out-IniFile'
+)
 
 # Cmdlets to export from this module
 CmdletsToExport = '*'
@@ -78,7 +81,10 @@ CmdletsToExport = '*'
 VariablesToExport = '*'
 
 # Aliases to export from this module
-AliasesToExport = '*'
+AliasesToExport = @(
+    'get-ini',
+    'set-ini'
+)
 
 # List of all modules packaged with this module
 ModuleList = @()

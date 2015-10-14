@@ -39,7 +39,7 @@ Function Get-IniContent {
 
     .Parameter IgnoreComments
         Remove lines determined to be comments from the resulting dictionary.
-         
+
     .Example
         $FileContent = Get-IniContent "C:\myinifile.ini"
         -----------
@@ -94,7 +94,7 @@ Function Get-IniContent {
                 $CommentCount = 0
                 continue
             }
-            $commentRegex # Comment 
+            $commentRegex # Comment
             {
                 if (!$IgnoreComments)
                 {
@@ -109,12 +109,12 @@ Function Get-IniContent {
                     $ini[$section][$name] = $value
                 }
                 continue
-            }  
+            }
             "(.+?)\s*=\s*(.*)" # Key
             {
                 if (!(test-path "variable:section"))
                 {
-                    $section = "_" 
+                    $section = "_"
                     $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 }
                 $name,$value = $matches[1..2]
@@ -129,3 +129,5 @@ Function Get-IniContent {
     End
         {Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"}
 }
+
+Set-Alias get-ini Get-IniContent

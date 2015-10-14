@@ -26,7 +26,7 @@ Function Out-IniFile {
 
     .Inputs
         System.String
-        System.Collections.IDictionary 
+        System.Collections.IDictionary
 
     .Outputs
         System.IO.FileSystemInfo
@@ -42,9 +42,9 @@ Function Out-IniFile {
 
      .Parameter Encoding
         Specifies the file encoding. The default is UTF8.
-    
+
     Valid values are:
-    
+
     -- ASCII:  Uses the encoding for the ASCII (7-bit) character set.
     -- BigEndianUnicode:  Encodes in UTF-16 format using the big-endian byte order.
     -- Byte:   Encodes a set of characters into a sequence of bytes.
@@ -61,7 +61,7 @@ Function Out-IniFile {
 
      .Parameter Loose
         Adds spaces around the equal sign when writing the key = value
-                 
+
     .Example
         Out-IniFile $IniVar "C:\myinifile.ini"
         -----------
@@ -98,7 +98,7 @@ Function Out-IniFile {
 
         [ValidateSet("Unicode","UTF7","UTF8","ASCII","BigEndianUnicode","Byte","String")]
         [Parameter()]
-        [string]$Encoding = "UTF8", 
+        [string]$Encoding = "UTF8",
 
         [ValidateNotNullOrEmpty()]
         [ValidateScript({Test-Path $_ -IsValid})]
@@ -110,7 +110,7 @@ Function Out-IniFile {
 
         [ValidateNotNullOrEmpty()]
         [Parameter(ValueFromPipeline=$True,Mandatory=$True)]
-        [System.Collections.IDictionary]$InputObject, 
+        [System.Collections.IDictionary]$InputObject,
 
         [switch]$Passthru,
 
@@ -126,11 +126,11 @@ Function Out-IniFile {
             param(
                 [ValidateNotNullOrEmpty()]
                 [Parameter(ValueFromPipeline=$True,Mandatory=$True)]
-                [System.Collections.IDictionary]$InputObject, 
-                
+                [System.Collections.IDictionary]$InputObject,
+
                 [ValidateSet("Unicode","UTF7","UTF8","ASCII","BigEndianUnicode","Byte","String")]
                 [Parameter(Mandatory=$True)]
-                [string]$Encoding = "UTF8", 
+                [string]$Encoding = "UTF8",
 
                 [ValidateNotNullOrEmpty()]
                 [ValidateScript({Test-Path $_ -IsValid})]
@@ -140,24 +140,24 @@ Function Out-IniFile {
 
                 [Parameter(Mandatory=$True)]
                 $delimiter,
-                
+
                 [Parameter(Mandatory=$True)]
                 $MyInvocation
             )
 
             Process
             {
-                Foreach ($key in $InputObject.keys) 
-                { 
+                Foreach ($key in $InputObject.keys)
+                {
                     if ($key -match "^Comment\d+") {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing comment: $key"
                         Add-Content -Value "$($InputObject[$key])" @parameters
                     } else {
-                        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key" 
+                        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key"
                         Add-Content -Value "$key$delimiter$($InputObject[$key])" @parameters
-                    } 
+                    }
                 }
-            } 
+            }
         }
 
         $delimiter = '='
@@ -170,7 +170,7 @@ Function Out-IniFile {
             {$outFile = New-Item -ItemType file -Path $Filepath -Force:$Force}
 
 		if (!(Test-Path $outFile.FullName)) {Throw "Could not create File"}
-        
+
         #Splatting Parameters
         $parameters = @{
             Encoding     = $Encoding;
@@ -184,7 +184,7 @@ Function Out-IniFile {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Filepath"
         foreach ($i in $InputObject.keys)
         {
-            if (!($InputObject[$i].GetType().GetInterface('IDictionary'))) 
+            if (!($InputObject[$i].GetType().GetInterface('IDictionary')))
             {
                 #No Sections
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $i"
@@ -192,7 +192,8 @@ Function Out-IniFile {
                             @parameters
 
             } elseif ($i -eq '_') {
-                Out-Keys $InputObject[$i] `                         @parameters `
+                Out-Keys $InputObject[$i] `
+                         @parameters `
                          -delimiter $delimiter `
                          -MyInvocation $MyInvocation
             } else {
@@ -214,8 +215,10 @@ Function Out-IniFile {
 
     End
     {
-        if ($PassThru) 
+        if ($PassThru)
             { Return (Get-Item $outFile) }
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
     }
 }
+
+Set-Alias set-ini Out-IniFile
