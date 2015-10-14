@@ -1,17 +1,22 @@
-[![Stories in Ready](https://badge.waffle.io/lipkau/PsIni.png?label=ready&title=Ready)](https://waffle.io/lipkau/PsIni)
-﻿# [PsIni](http://lipkau.github.io/PsIni/) [![Join the chat at https://gitter.im/lipkau/PsIni](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lipkau/PsIni?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+# [PsIni](http://lipkau.github.io/PsIni/) [![Join the chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lipkau/PsIni?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+[![Stories in Ready](https://badge.waffle.io/lipkau/PsIni.png?label=backlog&title=Backlog)](https://waffle.io/lipkau/PsIni) [![Stories in Backlog](https://badge.waffle.io/lipkau/PsIni.png?label=ready&title=Ready)](https://waffle.io/lipkau/PsIni) [![Stories In Progress](https://badge.waffle.io/lipkau/PsIni.png?label=in%20progress&title=In%20Progress)](https://waffle.io/lipkau/PsIni)
+
 ## Description
-Work with INI files in PowerShell using hashtables.  
+
+Work with INI files in PowerShell using hashtables.
 
 ##### Origin
+
 This code was originally a blog post for [Hey Scripting Guy](http://blogs.technet.com/b/heyscriptingguy)
-> [Use PowerShell to Work with Any INI File](http://blogs.technet.com/b/heyscriptingguy/archive/2011/08/20/use-powershell-to-work-with-any-ini-file.aspx) 
+> [Use PowerShell to Work with Any INI File](http://blogs.technet.com/b/heyscriptingguy/archive/2011/08/20/use-powershell-to-work-with-any-ini-file.aspx)
 
 The individual functions have been published to Miscrosoft's Script Gallery:
 * [Get-IniContent](http://gallery.technet.microsoft.com/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91)
 * [Out-IniFile](http://gallery.technet.microsoft.com/scriptcenter/7d7c867f-026e-4620-bf32-eca99b4e42f4)
 
-## Table of Contents  
+## Table of Contents
+
 * [Description](#description)
 * [Examples](#examples)
 * [Authors/Contributors](#authorscontributors)
@@ -19,6 +24,7 @@ The individual functions have been published to Miscrosoft's Script Gallery:
 
 
 ## Examples
+
 Create a Hashtable and save it to C:\settings.ini:
 
       PS> Import-Module PsIni
@@ -44,12 +50,16 @@ Returns the key "Key2" of the section "Category2" from the C:\settings.ini file:
       Value2
 
 ## Authors/Contributors
+
 ### Author
+
  - [Oliver Lipkau](https://github.com/lipkau)
 
 ### Contributor
+
  - [Craig Buchanan](https://github.com/craibuc)  
  - [Colin Bate](https://github.com/colinbate)  
 
 ## Documentation
+
  [Wiki Documentation](https://github.com/lipkau/PsIni/wiki/)
