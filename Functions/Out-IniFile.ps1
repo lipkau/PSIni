@@ -21,6 +21,7 @@ Function Out-IniFile {
                       1.0.6 - 2015/06/18 - OL - Remove check for .ini extension (GitHub Issue#6)
                       1.1.0 - 2015/07/14 - CB - Improve round-tripping and be a bit more liberal (GitHub Pull #7)
                                            OL - Small Improvments and cleanup
+                      1.1.2 - 2015/10/14 - OL - Fixed parameters in nested function
 
         #Requires -Version 2.0
 
@@ -151,10 +152,10 @@ Function Out-IniFile {
                 {
                     if ($key -match "^Comment\d+") {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing comment: $key"
-                        Add-Content -Value "$($InputObject[$key])" @parameters
+                        Add-Content -Value "$($InputObject[$key])" -Encoding $Encoding -Path $Path
                     } else {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key"
-                        Add-Content -Value "$key$delimiter$($InputObject[$key])" @parameters
+                        Add-Content -Value "$key$delimiter$($InputObject[$key])" -Encoding $Encoding -Path $Path
                     }
                 }
             }
