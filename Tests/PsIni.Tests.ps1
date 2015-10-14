@@ -1,11 +1,22 @@
-$ScriptPath = $MyInvocation.MyCommand.Path
-$ScriptDir = Split-Path -parent $ScriptPath
-Import-Module "$ScriptDir\..\PsIni" -Force
+# Enforce WorkingDir
+#--------------------------------------------------
+$Script:ScriptDir = split-path -parent $PSCommandPath
+Set-Location $ScriptDir
+
+# Module Env
+#--------------------------------------------------
+$Script:paths = @($env:PSModulePath -split ';')
+$ModuleRoot = (Resolve-Path "$ScriptDir\..\..").Path
+if (!($ModuleRoot -in $Script:paths))
+{
+    $Script:paths += $ModuleRoot
+}
+$env:PSModulePath = $Script:paths -join ';'
 
 Describe "PsIni" {
 
     # arrange
-    $ini = "$TestDrive\Settings.ini"
+    $iniFile = "TestDrive:\Settings.ini"
 
     # values to be persisted
     $dictIn = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
@@ -16,15 +27,28 @@ Describe "PsIni" {
     $dictIn["Category2"]["Key3"] = "Value3"
     $dictIn["Category2"]["Key4"] = "Value4"
 
+    Context "Load Module" {
+
+        #act
+        $error.clear()
+        Import-Module "PsIni" -Force -ErrorAction SilentlyContinue
+
+        #assert
+        It "loads the module" {
+            $error.count | Should Be 0
+        }
+
+    }
+
     Context "Writing INI" {
 
         # act
-        $dictIn | Out-IniFile -FilePath $ini
+        $dictIn | Out-IniFile -FilePath $iniFile
 
         # assert
         It "creates a file" {
             # should exist
-            Test-Path $ini | Should Be $true
+            Test-Path $iniFile | Should Be $true
         }
 
         # assert
@@ -33,7 +57,7 @@ Describe "PsIni" {
             $content = "[Category1]`r`nKey1=value1`r`nKey2=Value2`r`n`r`n[Category2]`r`nKey3=Value3`r`nKey4=Value4`r`n`r`n"
 
             # http://powershell.org/wp/2013/10/21/why-get-content-aint-yer-friend
-            Get-Content $ini | Out-String | Should Be $content
+            Get-Content $iniFile | Out-String | Should Be $content
 
         }
 
@@ -42,8 +66,8 @@ Describe "PsIni" {
     Context "Reading INI" {
 
         # act
-        Out-IniFile -inputobject $dictIn -filepath $ini
-        $dictOut = Get-IniContent $ini
+        Out-IniFile -inputobject $dictIn -filepath $iniFile
+        $dictOut = Get-IniContent $iniFile
 
         # assert
         It "creates a OrderedDictionary from an INI file" {

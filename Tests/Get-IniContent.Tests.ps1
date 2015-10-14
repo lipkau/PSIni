@@ -1,7 +1,11 @@
-﻿$here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$sut = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
+﻿# Enforce WorkingDir
+#--------------------------------------------------
+$Script:ScriptDir = split-path -parent $PSCommandPath
+Set-Location $ScriptDir
+
+$testFile = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
 # functions and tests stored in separate directories; adjusting dot-sourcing
-. "$($here -replace 'Tests', 'Functions')\$sut"
+. "$($ScriptDir -replace 'Tests', 'Functions')\$testFile"
 
 Describe "Get-IniContent" {
 
