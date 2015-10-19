@@ -5,7 +5,7 @@ Set-Location $ScriptDir
 
 $testFile = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
 # functions and tests stored in separate directories; adjusting dot-sourcing
-#. "$($ScriptDir -replace 'Tests', 'Functions')\$testFile"
+. "$($ScriptDir -replace 'Tests', 'Functions')\$testFile"
 
 Describe "Get-IniContent" {
 
