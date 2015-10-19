@@ -1,13 +1,13 @@
 # Enforce WorkingDir
 #--------------------------------------------------
-$Script:ScriptDir = split-path -parent $PSCommandPath
+$Script:ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
 Set-Location $ScriptDir
 
 # Module Env
 #--------------------------------------------------
 $Script:paths = @($env:PSModulePath -split ';')
 $ModuleRoot = (Resolve-Path "$ScriptDir\..\..").Path
-if (!($ModuleRoot -in $Script:paths))
+if (!($Script:paths -contains $ModuleRoot))
 {
     $Script:paths += $ModuleRoot
 }
@@ -66,8 +66,8 @@ Describe "PsIni" {
     Context "Reading INI" {
 
         # act
-        Out-IniFile -inputobject $dictIn -filepath $iniFile
-        $dictOut = Get-IniContent $iniFile
+        Out-IniFile -InputObject $dictIn -FilePath $iniFile
+        $dictOut = Get-IniContent -FilePath $iniFile
 
         # assert
         It "creates a OrderedDictionary from an INI file" {

@@ -1,6 +1,6 @@
 ﻿# Enforce WorkingDir
 #--------------------------------------------------
-$Script:ScriptDir = split-path -parent $PSCommandPath
+$Script:ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
 Set-Location $ScriptDir
 
 $testFile = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
@@ -13,7 +13,7 @@ Describe "Out-IniFile" {
 
         # assert
         It "Out-IniFile alias should exist" {
-            (Get-Alias -Definition Out-IniFile).name | Should Be "set-ini"
+            Get-Alias -Definition Out-IniFile | Where-Object {$_.name -eq "set-ini"} | Measure-Object | Select-Object -ExpandProperty Count | Should Be 1
         }
 
     }

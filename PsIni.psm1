@@ -14,8 +14,7 @@
 
 #>
 
-$ScriptPath = $MyInvocation.MyCommand.Path
-$PsIniModuleHome = split-path -parent $ScriptPath
+$PsIniModuleHome = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
 
 . "$PsIniModuleHome\Functions\Get-IniContent.ps1"
 

@@ -3,3 +3,4 @@ desktop.ini
 *.log
 *.bak
 *.cache
+*.sublime-*
