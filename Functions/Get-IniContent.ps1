@@ -87,7 +87,7 @@ Function Get-IniContent {
         $commentCount = 0
         switch -regex -file $FilePath
         {
-            "^\[(.+)\]$" # Section
+            "^\s*\[(.+)\]\s*$" # Section
             {
                 $section = $matches[1]
                 $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)

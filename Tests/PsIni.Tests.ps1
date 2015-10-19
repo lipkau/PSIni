@@ -1,6 +1,6 @@
 # Enforce WorkingDir
 #--------------------------------------------------
-$Script:ScriptDir = split-path -parent $PSCommandPath
+$Script:ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Path -parent
 Set-Location $ScriptDir
 
 # Module Env

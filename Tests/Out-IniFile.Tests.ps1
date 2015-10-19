@@ -1,6 +1,6 @@
 ﻿# Enforce WorkingDir
 #--------------------------------------------------
-$Script:ScriptDir = split-path -parent $PSCommandPath
+$Script:ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Path -parent
 Set-Location $ScriptDir
 
 $testFile = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
