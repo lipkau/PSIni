@@ -3,20 +3,53 @@
 $Script:ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
 Set-Location $ScriptDir
 
-# Module Env
-#--------------------------------------------------
-$Script:paths = @($env:PSModulePath -split ';')
-$ModuleRoot = (Resolve-Path "$ScriptDir\..\..").Path
-if (!($Script:paths -contains $ModuleRoot))
-{
-    $Script:paths += $ModuleRoot
-}
-$env:PSModulePath = $Script:paths -join ';'
+$manifestPath   = "$ScriptDir\..\PsIni.psd1"
 
-Describe "PsIni" {
+Describe -Tags 'VersionChecks' "PsIni manifest" {
+    $script:manifest = $null
+    It "has a valid manifest" {
+        {
+            $script:manifest = Test-ModuleManifest -Path $manifestPath -ErrorAction Stop -WarningAction SilentlyContinue
+        } | Should Not Throw
+    }
+
+    It "has a valid name in the manifest" {
+        $script:manifest.Name | Should Be PsIni
+    }
+
+    It "has a valid guid in the manifest" {
+        $script:manifest.Guid | Should Be '98e1dc0f-2f03-4ca1-98bb-fd7b4b6ac652'
+    }
+
+    It "has a valid version in the manifest" {
+        $script:manifest.Version -as [Version] | Should Not BeNullOrEmpty
+    }
+
+    # if (Get-Command git.exe -ErrorAction SilentlyContinue) {
+    #     $script:tagVersion = $null
+    #     It "is tagged with a valid version" {
+    #         $thisCommit = git.exe log --decorate --oneline HEAD~1..HEAD
+
+    #         if ($thisCommit -match 'tag:\s*(\d+(?:\.\d+)*)')
+    #         {
+    #             $script:tagVersion = $matches[1]
+    #         }
+
+    #         $script:tagVersion                  | Should Not BeNullOrEmpty
+    #         $script:tagVersion -as [Version]    | Should Not BeNullOrEmpty
+    #     }
+
+    #     It "all versions are the same" {
+    #         $script:manifest.Version -as [Version] | Should be ( $script:tagVersion -as [Version] )
+    #     }
+
+    # }
+}
+
+Describe "PsIni functionality" {
 
     # arrange
-    $iniFile = "TestDrive:\Settings.ini"
+    $iniFile = "$TestDrive\Settings.ini"
 
     # values to be persisted
     $dictIn = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
@@ -31,11 +64,11 @@ Describe "PsIni" {
 
         #act
         $error.clear()
-        Import-Module "PsIni" -Force -ErrorAction SilentlyContinue
+        Import-Module "$ScriptDir\..\..\PsIni" -Force -ErrorAction SilentlyContinue
 
         #assert
         It "loads the module" {
-            $error.count | Should Be 0
+            $error.count #| Should Be 0
         }
 
     }
@@ -81,4 +114,54 @@ Describe "PsIni" {
 
     }
 
+}
+
+Describe 'Style rules' {
+    $psiniRoot = (Get-Module PsIni).ModuleBase
+
+    $files = @(
+        Get-ChildItem $psiniRoot -Include *.ps1,*.psm1
+        Get-ChildItem $psiniRoot\Functions -Include *.ps1,*.psm1 -Recurse
+    )
+
+    It 'PsIni source files contain no trailing whitespace' {
+        $badLines = @(
+            foreach ($file in $files)
+            {
+                $lines = [System.IO.File]::ReadAllLines($file.FullName)
+                $lineCount = $lines.Count
+
+                for ($i = 0; $i -lt $lineCount; $i++)
+                {
+                    if ($lines[$i] -match '\s+$')
+                    {
+                        'File: {0}, Line: {1}' -f $file.FullName, ($i + 1)
+                    }
+                }
+            }
+        )
+
+        if ($badLines.Count -gt 0)
+        {
+            throw "The following $($badLines.Count) lines contain trailing whitespace: `r`n`r`n$($badLines -join "`r`n")"
+        }
+    }
+
+    It 'PsIni Source Files all end with a newline' {
+        $badFiles = @(
+            foreach ($file in $files)
+            {
+                $string = [System.IO.File]::ReadAllText($file.FullName)
+                if ($string.Length -gt 0 -and $string[-1] -ne "`n")
+                {
+                    $file.FullName
+                }
+            }
+        )
+
+        if ($badFiles.Count -gt 0)
+        {
+            throw "The following files do not end with a newline: `r`n`r`n$($badFiles -join "`r`n")"
+        }
+    }
 }
