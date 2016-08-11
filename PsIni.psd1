@@ -9,6 +9,7 @@
 #   2015-06-18 - OL - Migrate to semantic versioning (GitHub issue#4)
 #   2015-07-14 - OL - Merge Pull Request #7
 #   2015-10-14 - OL - Multiple improvments
+#   2016-08-11 - SS - Added Comment, Uncomment, Remove and Update functions
 
 @{
 
@@ -16,7 +17,7 @@
 ModuleToProcess = 'PsIni.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1.2'
+ModuleVersion = '1.1.3'
 
 # ID used to uniquely identify this module
 GUID = '98e1dc0f-2f03-4ca1-98bb-fd7b4b6ac652'
@@ -72,7 +73,11 @@ NestedModules = @()
 # Functions to export from this module
 FunctionsToExport = @(
     'Get-IniContent',
-    'Out-IniFile'
+    'Out-IniFile',
+    'Comment-IniContent',
+    'Uncomment-IniContent',
+    'Remove-IniContent',
+    'Update-IniContent'
 )
 
 # Cmdlets to export from this module
@@ -84,7 +89,11 @@ VariablesToExport = '*'
 # Aliases to export from this module
 AliasesToExport = @(
     'get-ini',
-    'set-ini'
+    'set-ini',
+    'comment-ini',
+    'uncomment-ini',
+    'remove-ini',
+    'update-ini'
 )
 
 # List of all modules packaged with this module
