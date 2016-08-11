@@ -86,13 +86,13 @@ Function Get-IniContent {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $Filepath"
 
         $ini = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-        
+
         if (!(Test-Path $Filepath))
         {
             Write-Verbose("Warning: `"{0}`" was not found." -f $Filepath)
             return $ini
         }
-        
+
         $commentCount = 0
         switch -regex -file $FilePath
         {
