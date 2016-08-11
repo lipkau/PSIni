@@ -20,6 +20,7 @@ Function Get-IniContent {
                       1.1.0 - 2015/07/14 - CB - Improve round-tripping and be a bit more liberal (GitHub Pull #7)
                                            OL - Small Improvments and cleanup
                       1.1.1 - 2015/07/14 - CB - changed .outputs section to be OrderedDictionary
+                      1.1.2 - 2016/08/09 - SS - Add some more verbose outputs as the ini is parsed
 
         #Requires -Version 2.0
 
@@ -90,6 +91,7 @@ Function Get-IniContent {
             "^\s*\[(.+)\]\s*$" # Section
             {
                 $section = $matches[1]
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding section : $section"
                 $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 $CommentCount = 0
                 continue
@@ -106,6 +108,7 @@ Function Get-IniContent {
                     $value = $matches[1]
                     $CommentCount++
                     $name = "Comment" + $CommentCount
+                    Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding $name with value: $value"
                     $ini[$section][$name] = $value
                 }
                 continue
@@ -118,6 +121,7 @@ Function Get-IniContent {
                     $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 }
                 $name,$value = $matches[1..2]
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
                 $ini[$section][$name] = $value
                 continue
             }
