@@ -20,8 +20,9 @@ Function Get-IniContent {
                       1.1.0 - 2015/07/14 - CB - Improve round-tripping and be a bit more liberal (GitHub Pull #7)
                                            OL - Small Improvments and cleanup
                       1.1.1 - 2015/07/14 - CB - changed .outputs section to be OrderedDictionary
-                      1.1.2 - 2016/08/10 - SS - Add some more verbose outputs as the ini is parsed,
-                      				allow non-existent paths for new ini handling.
+                      1.1.2 - 2016/08/11 - SS - Add some more verbose outputs as the ini is parsed,
+                      				allow non-existent paths for new ini handling,
+                      				test for variable existence using local scope.
 
         #Requires -Version 2.0
 
@@ -107,7 +108,7 @@ Function Get-IniContent {
             {
                 if (!$IgnoreComments)
                 {
-                    if (!(test-path "variable:section"))
+                    if (!(test-path "variable:local:section"))
                     {
                         $section = "_"
                         $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
@@ -122,7 +123,7 @@ Function Get-IniContent {
             }
             "(.+?)\s*=\s*(.*)" # Key
             {
-                if (!(test-path "variable:section"))
+                if (!(test-path "variable:local:section"))
                 {
                     $section = "_"
                     $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
