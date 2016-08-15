@@ -6,5 +6,5 @@ $content=@{"category1"=$category1;"category2"=$category2}
 out-inifile -inputobject $content -filepath .\settings.ini -force
 
 Write-Host("content[category2][key4] is commented out as {0}" -f $content["category2"]["Comment1"])
-$content = Get-IniContent .\settings.ini | Uncomment-IniContent -Sections 'category2' -Keys 'key4'
+$content = Get-IniContent .\settings.ini | Remove-IniComment -Sections 'category2' -Keys 'key4'
 Write-Host("content[category2][key4] uncommented, now is {0}" -f $content["category2"]["key4"])

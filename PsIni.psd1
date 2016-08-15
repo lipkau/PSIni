@@ -74,10 +74,10 @@ NestedModules = @()
 FunctionsToExport = @(
     'Get-IniContent',
     'Out-IniFile',
-    'Comment-IniContent',
-    'Uncomment-IniContent',
-    'Remove-IniContent',
-    'Update-IniContent'
+    'Add-IniComment',
+    'Remove-IniComment',
+    'Remove-IniEntry',
+    'Set-IniContent'
 )
 
 # Cmdlets to export from this module
@@ -88,12 +88,12 @@ VariablesToExport = '*'
 
 # Aliases to export from this module
 AliasesToExport = @(
-    'get-ini',
-    'set-ini',
-    'comment-ini',
-    'uncomment-ini',
-    'remove-ini',
-    'update-ini'
+    'gic',
+    'oif',
+    'aic',
+    'ric',
+    'rie',
+    'sic'
 )
 
 # List of all modules packaged with this module

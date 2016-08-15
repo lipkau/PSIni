@@ -125,7 +125,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Key3"] = "Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Update-IniContent -Sections 'Category1' -NameValuePairs 'Key1=NewValue1'
+        $content | Set-IniContent -Sections 'Category1' -NameValuePairs 'Key1=NewValue1'
 
         # assert
         It "updates INI content with the new value" {
@@ -145,7 +145,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Key3"] = "Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Remove-IniContent -Sections 'Category1' -Keys 'Key1'
+        $content | Remove-IniEntry -Sections 'Category1' -Keys 'Key1'
 
         # assert
         It "removes specified key from INI" {
@@ -165,7 +165,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Key3"] = "Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Comment-IniContent -Keys 'Key1,Key4'
+        $content | Add-IniComment -Keys 'Key1,Key4'
 
         # assert
         It "removes specified keys from INI" {
@@ -193,7 +193,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Comment1"] = ";Key3=Cat2Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Uncomment-IniContent -Keys 'Key3'
+        $content | Remove-IniComment -Keys 'Key3'
 
         # assert
         It "removes specified comments from INI" {

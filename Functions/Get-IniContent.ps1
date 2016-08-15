@@ -142,4 +142,4 @@ Function Get-IniContent {
         {Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"}
 }
 
-Set-Alias get-ini Get-IniContent
+Set-Alias gic Get-IniContent

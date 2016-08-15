@@ -224,4 +224,4 @@ Function Out-IniFile {
     }
 }
 
-Set-Alias set-ini Out-IniFile
+Set-Alias oif Out-IniFile

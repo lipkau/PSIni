@@ -12,7 +12,7 @@ Describe "Get-IniContent" {
     # assert
     Context "Alias" {
         It "Get-IniContent alias should exist" {
-            Get-Alias -Definition Get-IniContent | Where-Object {$_.name -eq "get-ini"} | Measure-Object | Select-Object -ExpandProperty Count | Should Be 1
+            Get-Alias -Definition Get-IniContent | Where-Object {$_.name -eq "gic"} | Measure-Object | Select-Object -ExpandProperty Count | Should Be 1
         }
     }
 

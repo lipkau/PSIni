@@ -21,10 +21,10 @@ $PsIniModuleHome = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
 
 . "$PsIniModuleHome\Functions\Out-IniFile.ps1"
 
-. "$PsIniModuleHome\Functions\Comment-IniContent.ps1"
+. "$PsIniModuleHome\Functions\Add-IniComment.ps1"
 
-. "$PsIniModuleHome\Functions\Uncomment-IniContent.ps1"
+. "$PsIniModuleHome\Functions\Remove-IniComment.ps1"
 
-. "$PsIniModuleHome\Functions\Remove-IniContent.ps1"
+. "$PsIniModuleHome\Functions\Remove-IniEntry.ps1"
 
-. "$PsIniModuleHome\Functions\Update-IniContent.ps1"
+. "$PsIniModuleHome\Functions\Set-IniContent.ps1"
