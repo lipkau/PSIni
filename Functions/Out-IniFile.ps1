@@ -185,12 +185,12 @@ Function Out-IniFile {
     {
         if ($append)
         {
-            Write-Debug ("Appending to '{0}'." -f $outfile)
+            Write-Debug ("Appending to '{0}'." -f $FilePath)
             $outfile = Get-Item $FilePath
         }
         else
         {
-            Write-Debug ("Creating new file '{0}'." -f $outfile)
+            Write-Debug ("Creating new file '{0}'." -f $FilePath)
             $outFile = New-Item -ItemType file -Path $Filepath -Force:$Force
         }
 
