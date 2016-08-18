@@ -13,7 +13,7 @@ Function Remove-IniComment {
         Author		: Sean Seymour <seanjseymour@gmail.com> based on work by Oliver Lipkau <oliver@lipkau.net>
 		Source		: https://github.com/lipkau/PsIni
                       http://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91
-        Version		: 1.0.0 - 2016/08/05 - SS - Initial release
+        Version		: 1.0.0 - 2016/08/18 - SS - Initial release
 
         #Requires -Version 2.0
 
@@ -122,15 +122,15 @@ Function Remove-IniComment {
             $commentFound = $false
 
             $commentValue = $CommentChar + $key
-            Write-Debug("commentValue is '{0}'." -f $commentValue)
+            Write-Debug ("commentValue is '{0}'." -f $commentValue)
 
             foreach ($entry in $content[$section].GetEnumerator())
             {
-                Write-Debug("Uncomment looking for key '{0}' with value '{1}'." -f $entry.key, $entry.value)
+                Write-Debug ("Uncomment looking for key '{0}' with value '{1}'." -f $entry.key, $entry.value)
 
                 if ($entry.key.StartsWith('Comment') -and $entry.value -match $commentValue)
                 {
-                    Write-Verbose("$($MyInvocation.MyCommand.Name):: Uncommenting '{0}' in {1} section." -f $entry.value, $section)
+                    Write-Verbose ("$($MyInvocation.MyCommand.Name):: Uncommenting '{0}' in {1} section." -f $entry.value, $section)
                     $oldKey = $entry.key
                     $split = $entry.value.Split("=")
 
@@ -157,19 +157,19 @@ Function Remove-IniComment {
             {
                 if ($content[$section][$key])
                 {
-                    Write-Verbose("$($MyInvocation.MyCommand.Name):: Unable to uncomment '{0}' key in {1} section as there is already a key with that name." -f $key, $section)
+                    Write-Verbose ("$($MyInvocation.MyCommand.Name):: Unable to uncomment '{0}' key in {1} section as there is already a key with that name." -f $key, $section)
                 }
                 else
                 {
-                    Write-Debug("Removing '{0}'." -f $oldKey)
+                    Write-Debug ("Removing '{0}'." -f $oldKey)
                     $content[$section].Remove($oldKey)
-                    Write-Debug("Inserting [{0}][{1}] = {2} at index {3}." -f $section, $key, $newValue, $index)
+                    Write-Debug ("Inserting [{0}][{1}] = {2} at index {3}." -f $section, $key, $newValue, $index)
                     $content[$section].Insert($index, $key, $newValue)
                 }
             }
             else
             {
-                Write-Verbose("$($MyInvocation.MyCommand.Name):: Did not find '{0}' key in {1} section to uncomment." -f $key, $section)
+                Write-Verbose ("$($MyInvocation.MyCommand.Name):: Did not find '{0}' key in {1} section to uncomment." -f $key, $section)
             }
         }
     }
@@ -188,17 +188,17 @@ Function Remove-IniComment {
                 # Get rid of whitespace and section brackets.
                 $section = $section.Trim() -replace '[][]',''
 
-                Write-Debug("Processing '{0}' section." -f $section)
+                Write-Debug ("Processing '{0}' section." -f $section)
 
                 foreach ($key in $Keys.Split($KeyDelimiter))
                 {
-                    Write-Debug("Processing '{0}' key." -f $key)
+                    Write-Debug ("Processing '{0}' key." -f $key)
 
                     $key = $key.Trim()
 
                     if (!($content[$section]))
                     {
-                        Write-Verbose("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist." -f $section)
+                        Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist." -f $section)
                         # Break out of the loop after this, because we don't want to check further keys for this non-existent section.
                         break
                     }
@@ -213,12 +213,12 @@ Function Remove-IniComment {
             foreach ($item in $content.GetEnumerator())
             {
                 $section = $item.key
-                Write-Debug("Processing '{0}' section." -f $section)
+                Write-Debug ("Processing '{0}' section." -f $section)
 
                 foreach ($key in $Keys.Split($KeyDelimiter))
                 {
                     $key = $key.Trim()
-                    Write-Debug("Processing '{0}' key." -f $key)
+                    Write-Debug ("Processing '{0}' key." -f $key)
                     Convert-IniCommentToEntry $content $key $section
                 }
             }

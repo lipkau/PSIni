@@ -13,7 +13,7 @@ Function Add-IniComment {
         Author		: Sean Seymour <seanjseymour@gmail.com> based on work by Oliver Lipkau <oliver@lipkau.net>
 		Source		: https://github.com/lipkau/PsIni
                       http://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91
-        Version		: 1.0.0 - 2016/08/05 - SS - Initial release
+        Version		: 1.0.0 - 2016/08/18 - SS - Initial release
 
         #Requires -Version 2.0
 
@@ -142,7 +142,7 @@ Function Add-IniComment {
                 # use a variation on http://stackoverflow.com/a/34930231/844937 to search for a case-insensitive match.
                 $sectionKeys = $($content[$section].keys)
                 $index = $sectionKeys.IndexOf($key)
-                Write-Debug("Index of {0} is {1}." -f $key, $index)
+                Write-Debug ("Index of {0} is {1}." -f $key, $index)
 
                 if ($index -eq -1)
                 {
@@ -152,7 +152,7 @@ Function Add-IniComment {
                         if ($sectionKey -match $key)
                         {
                             $index = $i
-                            Write-Debug("Index updated to {0}." -f $index)
+                            Write-Debug ("Index updated to {0}." -f $index)
                             break
                         }
                         else { $i++ }
@@ -161,13 +161,13 @@ Function Add-IniComment {
 
                 if ($index -ge 0)
                 {
-                    Write-Verbose("$($MyInvocation.MyCommand.Name):: Commenting out {0} key in {1} section." -f $key, $section)
+                    Write-Verbose ("$($MyInvocation.MyCommand.Name):: Commenting out {0} key in {1} section." -f $key, $section)
                     $content[$section].Remove($key)
                     $content[$section].Insert($index, $commentKey, $commentValue)
                 }
                 else
                 {
-                    Write-Verbose("$($MyInvocation.MyCommand.Name):: Could not find '{0}' key in {1} section to comment out." -f $key, $section)
+                    Write-Verbose ("$($MyInvocation.MyCommand.Name):: Could not find '{0}' key in {1} section to comment out." -f $key, $section)
                 }
             }
         }
@@ -187,24 +187,24 @@ Function Add-IniComment {
                 # Get rid of whitespace and section brackets.
                 $section = $section.Trim() -replace '[][]',''
 
-                Write-Debug("Processing '{0}' section." -f $section)
+                Write-Debug ("Processing '{0}' section." -f $section)
 
                 foreach ($key in $Keys.Split($KeyDelimiter))
                 {
-                    Write-Debug("Processing '{0}' key." -f $key)
+                    Write-Debug ("Processing '{0}' key." -f $key)
 
                     $key = $key.Trim()
 
                     if ($content[$section]) { $currentValue = $content[$section][$key] }
                     else
                     {
-                        Write-Verbose("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist." -f $section)
+                        Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist." -f $section)
                         # Break out of the loop after this, because we don't want to check further keys for this non-existent section.
                         break
                     }
 
                     if ($currentValue) { Convert-IniEntryToComment $content $key $section }
-                    else { Write-Verbose("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist." -f $key) }
+                    else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist." -f $key) }
                 }
             }
         }
@@ -213,15 +213,15 @@ Function Add-IniComment {
             foreach ($item in $content.GetEnumerator())
             {
                 $section = $item.key
-                Write-Debug("Processing '{0}' section." -f $section)
+                Write-Debug ("Processing '{0}' section." -f $section)
 
                 foreach ($key in $Keys.Split($KeyDelimiter))
                 {
                     $key = $key.Trim()
-                    Write-Debug("Processing '{0}' key." -f $key)
+                    Write-Debug ("Processing '{0}' key." -f $key)
 
                     if ($content[$section][$key]) { Convert-IniEntryToComment $content $key $section }
-                    else { Write-Verbose("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist." -f $key) }
+                    else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist." -f $key) }
                 }
             }
         }

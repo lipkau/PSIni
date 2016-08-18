@@ -14,7 +14,7 @@ Function Set-IniContent {
         Author		: Sean Seymour <seanjseymour@gmail.com> based on work by Oliver Lipkau <oliver@lipkau.net>
 		Source		: https://github.com/lipkau/PsIni
                       http://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91
-        Version		: 1.0.0 - 2016/08/05 - SS - Initial release
+        Version		: 1.0.0 - 2016/08/18 - SS - Initial release
 
         #Requires -Version 2.0
 
@@ -125,7 +125,7 @@ Function Set-IniContent {
 
             foreach ($pair in $NameValuePairs.Split($NameValuePairDelimiter))
             {
-                Write-Debug("Processing '{0}' pair." -f $pair)
+                Write-Debug ("Processing '{0}' pair." -f $pair)
 
                 $splitPair = $pair.Split($NameValueDelimiter)
 
@@ -137,15 +137,15 @@ Function Set-IniContent {
 
                 $key = $splitPair[0].Trim()
                 $value = $splitPair[1].Trim()
-                Write-Debug("Split key is {0}, split value is {1}" -f $key, $value)
+                Write-Debug ("Split key is {0}, split value is {1}" -f $key, $value)
 
                 if (!($content[$section]))
                 {
-                    Write-Verbose("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist, creating it." -f $section)
+                    Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist, creating it." -f $section)
                     $content[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 }
 
-                Write-Verbose("$($MyInvocation.MyCommand.Name):: Setting '{0}' key in section {1} to '{2}'." -f $key, $section, $value)
+                Write-Verbose ("$($MyInvocation.MyCommand.Name):: Setting '{0}' key in section {1} to '{2}'." -f $key, $section, $value)
                 $content[$section][$key] = $value
             }
         }
@@ -165,7 +165,7 @@ Function Set-IniContent {
                 # Get rid of whitespace and section brackets.
                 $section = $section.Trim() -replace '[][]',''
 
-                Write-Debug("Processing '{0}' section." -f $section)
+                Write-Debug ("Processing '{0}' section." -f $section)
 
                 Update-IniEntry $content $section
             }
@@ -176,7 +176,7 @@ Function Set-IniContent {
             {
                 $section = $item.key
 
-                Write-Debug("Processing '{0}' section." -f $section)
+                Write-Debug ("Processing '{0}' section." -f $section)
 
                 Update-IniEntry $content $section
             }

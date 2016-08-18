@@ -13,7 +13,7 @@ Function Remove-IniEntry {
         Author		: Sean Seymour <seanjseymour@gmail.com> based on work by Oliver Lipkau <oliver@lipkau.net>
 		Source		: https://github.com/lipkau/PsIni
                       http://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91
-        Version		: 1.0.0 - 2016/08/05 - SS - Initial release
+        Version		: 1.0.0 - 2016/08/18 - SS - Initial release
 
         #Requires -Version 2.0
 
@@ -123,7 +123,7 @@ Function Remove-IniEntry {
 
         if (!$Keys -and !$Sections)
         {
-            Write-Verbose("No sections or keys provided, exiting.")
+            Write-Verbose ("No sections or keys provided, exiting.")
             return $content
         }
 
@@ -135,36 +135,36 @@ Function Remove-IniEntry {
                 # Get rid of whitespace and section brackets.
                 $section = $section.Trim() -replace '[][]',''
 
-                Write-Debug("Processing '{0}' section." -f $section)
+                Write-Debug ("Processing '{0}' section." -f $section)
 
                 # If the user wants to remove an entire section, there will be a section specified but no keys.
                 if (!$Keys)
                 {
-                    Write-Verbose("Deleting entire section '{0}'." -f $section)
+                    Write-Verbose ("Deleting entire section '{0}'." -f $section)
                     $content.Remove($section)
                 }
                 else
                 {
                     foreach ($key in $Keys.Split($KeyDelimiter))
                     {
-                        Write-Debug("Processing '{0}' key." -f $key)
+                        Write-Debug ("Processing '{0}' key." -f $key)
 
                         $key = $key.Trim()
 
                         if ($content[$section]) { $currentValue = $content[$section][$key] }
                         else
                         {
-                            Write-Verbose("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist." -f $section)
+                            Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist." -f $section)
                             # Break out of the loop after this, because we don't want to check further keys for this non-existent section.
                             break
                         }
 
                         if ($currentValue)
                         {
-                            Write-Verbose("Removing {0} key from {1} section." -f $key, $section)
+                            Write-Verbose ("Removing {0} key from {1} section." -f $key, $section)
                             $content[$section].Remove($key)
                         }
-                        else { Write-Verbose("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist." -f $key) }
+                        else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist." -f $key) }
                     }
                 }
             }
@@ -174,19 +174,19 @@ Function Remove-IniEntry {
             foreach ($item in $content.GetEnumerator())
             {
                 $section = $item.key
-                Write-Debug("Processing '{0}' section." -f $section)
+                Write-Debug ("Processing '{0}' section." -f $section)
 
                 foreach ($key in $Keys.Split($KeyDelimiter))
                 {
                     $key = $key.Trim()
-                    Write-Debug("Processing '{0}' key." -f $key)
+                    Write-Debug ("Processing '{0}' key." -f $key)
 
                     if ($content[$section][$key])
                     {
-                        Write-Verbose("Removing {0} key from {1} section." -f $key, $section)
+                        Write-Verbose ("Removing {0} key from {1} section." -f $key, $section)
                         $content[$section].Remove($key)
                     }
-                    else { Write-Verbose("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist in {1} section." -f $key, $section) }
+                    else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist in {1} section." -f $key, $section) }
                 }
             }
         }
