@@ -17,6 +17,10 @@
 
 $PsIniModuleHome = Split-Path -Path $MyInvocation.MyCommand.Path -Parent
 
+. "$PsIniModuleHome\Functions\Convert-IniCommentToEntry.ps1"
+
+. "$PsIniModuleHome\Functions\Convert-IniEntryToComment.ps1"
+
 . "$PsIniModuleHome\Functions\Get-IniContent.ps1"
 
 . "$PsIniModuleHome\Functions\Out-IniFile.ps1"
