@@ -1,7 +1,7 @@
 # Internal module function to remove the old key then insert a new one at the old location in the comment style used by Get-IniContent.
 Function Convert-IniEntryToComment
 {
-    param ($content, $key, $section)
+    param ($content, $key, $section, $commentChar)
 
     # Comments in Get-IniContent start with 1, not zero.
     $commentCount = 1
@@ -11,13 +11,20 @@ Function Convert-IniEntryToComment
         if ($entry.key.StartsWith('Comment')) { $commentCount++ }
     }
 
+    Write-Debug ("commentCount is {0}." -f $commentCount)
+
     $desiredValue = $content[$section][$key]
 
     # Don't attempt to comment out non-existent keys.
     if ($desiredValue)
     {
+        Write-Debug ("desiredValue is {0}." -f $desiredValue)
+
         $commentKey = 'Comment' +  $commentCount
-        $commentValue = $CommentChar + $key + '=' + $desiredValue
+        Write-Debug ("commentKey is {0}." -f $commentKey)
+
+        $commentValue = $commentChar[0] + $key + '=' + $desiredValue
+        Write-Debug ("commentValue is {0}." -f $commentValue)
 
         # Thanks to http://stackoverflow.com/a/35731603/844937. However, that solution is case sensitive.
         # Tried $index = $($content[$section].keys).IndexOf($key, [StringComparison]"CurrentCultureIgnoreCase")

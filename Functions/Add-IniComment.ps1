@@ -31,7 +31,9 @@ Function Add-IniComment {
         Specifies the Hashtable to be modified. Enter a variable that contains the objects or type a command or expression that gets the objects.
 
     .Parameter CommentChar
-        Specify what character should be used to comment out keys.
+        Specify what character should be used to comment out entries.
+        Note: This parameter is a char array to maintain compatibility with the other functions.
+        However, only the first character is used to comment out entries.
         Default: ";"
 
     .Parameter Keys
@@ -99,7 +101,7 @@ Function Add-IniComment {
 
         [String]$KeyDelimiter = ',',
 
-        [String]$CommentChar = ';',
+        [char[]]$CommentChar = @(";"),
 
         [ValidateNotNullOrEmpty()]
         [String]$Sections,
@@ -146,8 +148,8 @@ Function Add-IniComment {
                         break
                     }
 
-                    if ($currentValue) { Convert-IniEntryToComment $content $key $section }
-                    else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist." -f $key) }
+                    if ($currentValue) { Convert-IniEntryToComment $content $key $section $CommentChar }
+                    else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '[{0}][{1}]' does not exist." -f $section, $key) }
                 }
             }
         }
@@ -163,8 +165,8 @@ Function Add-IniComment {
                     $key = $key.Trim()
                     Write-Debug ("Processing '{0}' key." -f $key)
 
-                    if ($content[$section][$key]) { Convert-IniEntryToComment $content $key $section }
-                    else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist." -f $key) }
+                    if ($content[$section][$key]) { Convert-IniEntryToComment $content $key $section $CommentChar }
+                    else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '[{0}][{1}]' does not exist." -f $section, $key) }
                 }
             }
         }

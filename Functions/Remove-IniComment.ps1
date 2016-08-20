@@ -31,7 +31,8 @@ Function Remove-IniComment {
         Specifies the Hashtable to be modified. Enter a variable that contains the objects or type a command or expression that gets the objects.
 
     .Parameter CommentChar
-        Specify what character should be removed to uncomment keys.
+        Specify what characters should be describe a comment.
+        Lines starting with the characters provided will be rendered as comments.
         Default: ";"
 
     .Parameter Keys
@@ -99,7 +100,7 @@ Function Remove-IniComment {
 
         [String]$KeyDelimiter = ',',
 
-        [String]$CommentChar = ';',
+        [char[]]$CommentChar = @(";"),
 
         [ValidateNotNullOrEmpty()]
         [String]$Sections,
@@ -146,7 +147,7 @@ Function Remove-IniComment {
                     }
                     # Since this is a comment, we need to search through all the CommentX keys in this section.
                     # That's handled in the Convert-IniCommentToEntry function, so don't bother checking key existence here.
-                    Convert-IniCommentToEntry $content $key $section
+                    Convert-IniCommentToEntry $content $key $section $CommentChar
                 }
             }
         }
@@ -161,7 +162,7 @@ Function Remove-IniComment {
                 {
                     $key = $key.Trim()
                     Write-Debug ("Processing '{0}' key." -f $key)
-                    Convert-IniCommentToEntry $content $key $section
+                    Convert-IniCommentToEntry $content $key $section $CommentChar
                 }
             }
         }

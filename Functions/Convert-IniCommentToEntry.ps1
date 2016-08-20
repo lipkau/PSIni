@@ -1,19 +1,19 @@
 # Internal module function to remove the old comment then insert a new key/value pair at the old location with the previous comment's value.
 Function Convert-IniCommentToEntry
 {
-    param ($content, $key, $section)
+    param ($content, $key, $section, $commentChar)
 
     $index = 0
     $commentFound = $false
 
-    $commentValue = $CommentChar + $key
-    Write-Debug ("commentValue is '{0}'." -f $commentValue)
+    $commentRegex = "^([$($commentChar -join '')]$key.*)$"
+    Write-Debug ("commentRegex is {0}." -f $commentRegex)
 
     foreach ($entry in $content[$section].GetEnumerator())
     {
-        Write-Debug ("Uncomment looking for key '{0}' with value '{1}'." -f $entry.key, $entry.value)
+        Write-Debug ("Uncomment looking at key '{0}' with value '{1}'." -f $entry.key, $entry.value)
 
-        if ($entry.key.StartsWith('Comment') -and $entry.value -match $commentValue)
+        if ($entry.key.StartsWith('Comment') -and $entry.value -match $commentRegex)
         {
             Write-Verbose ("$($MyInvocation.MyCommand.Name):: Uncommenting '{0}' in {1} section." -f $entry.value, $section)
             $oldKey = $entry.key

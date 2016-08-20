@@ -190,10 +190,11 @@ Describe "PsIni functionality" {
         $content["Category1"]["Key2"] = "Value2"
         $content["Category1"]["Comment1"] = ";Key3=Cat1Value3"
         $content["Category2"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-        $content["Category2"]["Comment1"] = ";Key3=Cat2Value3"
+        $content["Category2"]["Comment1"] = "#Key3=Cat2Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Remove-IniComment -Keys 'Key3'
+        [char[]]$commentChars = @(";","#")
+        $content | Remove-IniComment -Keys 'Key3' -CommentChar $commentChars -Verbose -Debug
 
         # assert
         It "removes specified comments from INI" {
