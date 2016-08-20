@@ -194,7 +194,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Key4"] = "Value4"
 
         [char[]]$commentChars = @(";","#")
-        $content | Remove-IniComment -Keys 'Key3' -CommentChar $commentChars -Verbose -Debug
+        $content | Remove-IniComment -Keys 'Key3' -CommentChar $commentChars
 
         # assert
         It "removes specified comments from INI" {
