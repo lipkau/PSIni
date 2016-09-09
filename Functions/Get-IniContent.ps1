@@ -20,6 +20,10 @@ Function Get-IniContent {
                       1.1.0 - 2015/07/14 - CB - Improve round-tripping and be a bit more liberal (GitHub Pull #7)
                                            OL - Small Improvments and cleanup
                       1.1.1 - 2015/07/14 - CB - changed .outputs section to be OrderedDictionary
+                      1.1.2 - 2016/08/18 - SS - Add some more verbose outputs as the ini is parsed,
+                      				            allow non-existent paths for new ini handling,
+                      				            test for variable existence using local scope,
+                      				            added additional debug output.
 
         #Requires -Version 2.0
 
@@ -66,7 +70,6 @@ Function Get-IniContent {
     [CmdletBinding()]
     Param(
         [ValidateNotNullOrEmpty()]
-        [ValidateScript({(Test-Path $_)})]
         [Parameter(ValueFromPipeline=$True,Mandatory=$True)]
         [string]$FilePath,
         [char[]]$CommentChar = @(";"),
@@ -75,8 +78,15 @@ Function Get-IniContent {
 
     Begin
     {
+        Write-Debug "PsBoundParameters:"
+        $PSBoundParameters.GetEnumerator() | ForEach { Write-Debug $_ }
+        if ($PSBoundParameters['Debug']) { $DebugPreference = 'Continue' }
+        Write-Debug "DebugPreference: $DebugPreference"
+
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
+
         $commentRegex = "^([$($CommentChar -join '')].*)$"
+        Write-Debug ("commentRegex is {0}." -f $commentRegex)
     }
 
     Process
@@ -84,12 +94,20 @@ Function Get-IniContent {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $Filepath"
 
         $ini = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+
+        if (!(Test-Path $Filepath))
+        {
+            Write-Verbose ("Warning: `"{0}`" was not found." -f $Filepath)
+            return $ini
+        }
+
         $commentCount = 0
         switch -regex -file $FilePath
         {
             "^\s*\[(.+)\]\s*$" # Section
             {
                 $section = $matches[1]
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding section : $section"
                 $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 $CommentCount = 0
                 continue
@@ -98,26 +116,31 @@ Function Get-IniContent {
             {
                 if (!$IgnoreComments)
                 {
-                    if (!(test-path "variable:section"))
+                    if (!(test-path "variable:local:section"))
                     {
                         $section = "_"
                         $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                     }
                     $value = $matches[1]
                     $CommentCount++
+                    Write-Debug ("Incremented CommentCount is now {0}." -f $CommentCount)
                     $name = "Comment" + $CommentCount
+                    Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding $name with value: $value"
                     $ini[$section][$name] = $value
                 }
+                else { Write-Debug ("Ignoring comment {0}." -f $matches[1]) }
+
                 continue
             }
             "(.+?)\s*=\s*(.*)" # Key
             {
-                if (!(test-path "variable:section"))
+                if (!(test-path "variable:local:section"))
                 {
                     $section = "_"
                     $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 }
                 $name,$value = $matches[1..2]
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
                 $ini[$section][$name] = $value
                 continue
             }
@@ -130,4 +153,4 @@ Function Get-IniContent {
         {Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"}
 }
 
-Set-Alias get-ini Get-IniContent
+Set-Alias gic Get-IniContent

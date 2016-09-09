@@ -13,7 +13,7 @@ Describe "Out-IniFile" {
 
         # assert
         It "Out-IniFile alias should exist" {
-            Get-Alias -Definition Out-IniFile | Where-Object {$_.name -eq "set-ini"} | Measure-Object | Select-Object -ExpandProperty Count | Should Be 1
+            Get-Alias -Definition Out-IniFile | Where-Object {$_.name -eq "oif"} | Measure-Object | Select-Object -ExpandProperty Count | Should Be 1
         }
 
     }

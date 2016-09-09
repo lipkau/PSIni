@@ -113,6 +113,102 @@ Describe "PsIni functionality" {
         }
 
     }
+    
+    Context "Updating INI Content" {
+
+        # act
+        $content = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"]["Key1"] = "Value1"
+        $content["Category1"]["Key2"] = "Value2"
+        $content["Category2"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category2"]["Key3"] = "Value3"
+        $content["Category2"]["Key4"] = "Value4"
+
+        $content | Set-IniContent -Sections 'Category1' -NameValuePairs 'Key1=NewValue1'
+
+        # assert
+        It "updates INI content with the new value" {
+            $content['Category1']['Key1'] | Should Be 'NewValue1'
+        }
+
+    }
+
+    Context "Removing INI Content" {
+
+        # act
+        $content = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"]["Key1"] = "Value1"
+        $content["Category1"]["Key2"] = "Value2"
+        $content["Category2"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category2"]["Key3"] = "Value3"
+        $content["Category2"]["Key4"] = "Value4"
+
+        $content | Remove-IniEntry -Sections 'Category1' -Keys 'Key1'
+
+        # assert
+        It "removes specified key from INI" {
+            $content['Category1']['Key1'] | Should BeNullOrEmpty
+        }
+
+    }
+
+    Context "Commenting out INI Content" {
+
+        # act
+        $content = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"]["Key1"] = "Value1"
+        $content["Category1"]["Key2"] = "Value2"
+        $content["Category2"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category2"]["Key3"] = "Value3"
+        $content["Category2"]["Key4"] = "Value4"
+
+        $content | Add-IniComment -Keys 'Key1,Key4'
+
+        # assert
+        It "removes specified keys from INI" {
+            $content['Category1']['Key1'] | Should BeNullOrEmpty
+            $content['Category2']['Key4'] | Should BeNullOrEmpty
+        }
+
+        # assert
+        It "updates INI content with the commented out values" {
+            $content['Category1']['Comment1'] | Should Be ';Key1=Value1'
+            $content['Category2']['Comment1'] | Should Be ';Key4=Value4'
+        }
+
+    }
+
+    Context "Uncommenting INI Content" {
+
+        # act
+        $content = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"]["Key1"] = "Value1"
+        $content["Category1"]["Key2"] = "Value2"
+        $content["Category1"]["Comment1"] = ";Key3=Cat1Value3"
+        $content["Category2"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category2"]["Comment1"] = "#Key3=Cat2Value3"
+        $content["Category2"]["Key4"] = "Value4"
+
+        [char[]]$commentChars = @(";","#")
+        $content | Remove-IniComment -Keys 'Key3' -CommentChar $commentChars
+
+        # assert
+        It "removes specified comments from INI" {
+            $content['Category1']['Comment1'] | Should BeNullOrEmpty
+            $content['Category2']['Comment1'] | Should BeNullOrEmpty
+        }
+
+        # assert
+        It "updates INI content with the uncommented values" {
+            $content['Category1']['Key3'] | Should Be 'Cat1Value3'
+            $content['Category2']['Key3'] | Should Be 'Cat2Value3'
+        }
+
+    }
 
 }
 

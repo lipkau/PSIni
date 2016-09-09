@@ -22,6 +22,9 @@ Function Out-IniFile {
                       1.1.0 - 2015/07/14 - CB - Improve round-tripping and be a bit more liberal (GitHub Pull #7)
                                            OL - Small Improvments and cleanup
                       1.1.2 - 2015/10/14 - OL - Fixed parameters in nested function
+                      1.1.3 - 2016/08/18 - SS - Moved the get/create code for $FilePath to the Process block since it
+                      				            overwrites files piped in by other functions when it's in the Begin block,
+                      				            added additional debug output.
 
         #Requires -Version 2.0
 
@@ -120,6 +123,11 @@ Function Out-IniFile {
 
     Begin
     {
+        Write-Debug "PsBoundParameters:"
+        $PSBoundParameters.GetEnumerator() | ForEach { Write-Debug $_ }
+        if ($PSBoundParameters['Debug']) { $DebugPreference = 'Continue' }
+        Write-Debug "DebugPreference: $DebugPreference"
+
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
 
         function Out-Keys
@@ -165,13 +173,6 @@ Function Out-IniFile {
         if ($Loose)
             { $delimiter = ' = ' }
 
-        if ($append)
-            {$outfile = Get-Item $FilePath}
-        else
-            {$outFile = New-Item -ItemType file -Path $Filepath -Force:$Force}
-
-		if (!(Test-Path $outFile.FullName)) {Throw "Could not create File"}
-
         #Splatting Parameters
         $parameters = @{
             Encoding     = $Encoding;
@@ -182,6 +183,19 @@ Function Out-IniFile {
 
     Process
     {
+        if ($append)
+        {
+            Write-Debug ("Appending to '{0}'." -f $FilePath)
+            $outfile = Get-Item $FilePath
+        }
+        else
+        {
+            Write-Debug ("Creating new file '{0}'." -f $FilePath)
+            $outFile = New-Item -ItemType file -Path $Filepath -Force:$Force
+        }
+
+	if (!(Test-Path $outFile.FullName)) {Throw "Could not create File"}
+
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Filepath"
         foreach ($i in $InputObject.keys)
         {
@@ -217,9 +231,12 @@ Function Out-IniFile {
     End
     {
         if ($PassThru)
-            { Return (Get-Item $outFile) }
+        {
+            Write-Debug ("Returning file due to PassThru argument.")
+            Return (Get-Item $outFile)
+        }
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
     }
 }
 
-Set-Alias set-ini Out-IniFile
+Set-Alias oif Out-IniFile
