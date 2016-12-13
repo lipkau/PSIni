@@ -59,6 +59,8 @@ Returns the key "Key2" of the section "Category2" from the C:\settings.ini file:
 
  - [Craig Buchanan](https://github.com/craibuc)  
  - [Colin Bate](https://github.com/colinbate)  
+ - [seanjseymour](https://github.com/seanjseymour)  
+ - [Alexis Côté](https://github.com/popojargo)  
 
 ## Documentation
 
