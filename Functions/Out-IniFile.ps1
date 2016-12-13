@@ -216,10 +216,12 @@ Function Out-IniFile {
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$i]"
                 Add-Content -Value "[$i]" `
                             @parameters
-                Out-Keys $InputObject[$i] `
-                         @parameters `
-                         -delimiter $delimiter `
-                         -MyInvocation $MyInvocation
+                if ( $InputObject[$i].Count -gt 0 ) {
+			Out-Keys $InputObject[$i] `
+				 @parameters `
+				 -delimiter $delimiter `
+				 -MyInvocation $MyInvocation
+		}
 
                 Add-Content -Value "" `
                             @parameters
