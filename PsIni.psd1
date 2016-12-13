@@ -10,6 +10,7 @@
 #   2015-07-14 - OL - Merge Pull Request #7
 #   2015-10-14 - OL - Multiple improvments
 #   2016-08-11 - SS - Added Comment, Uncomment, Remove and Update functions
+#   2016-12-13 - OL - release 1.2
 
 @{
 
@@ -17,7 +18,7 @@
 ModuleToProcess = 'PsIni.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1.3'
+ModuleVersion = '1.2.0'
 
 # ID used to uniquely identify this module
 GUID = '98e1dc0f-2f03-4ca1-98bb-fd7b4b6ac652'
@@ -72,9 +73,9 @@ NestedModules = @()
 
 # Functions to export from this module
 FunctionsToExport = @(
+    'Add-IniComment',
     'Get-IniContent',
     'Out-IniFile',
-    'Add-IniComment',
     'Remove-IniComment',
     'Remove-IniEntry',
     'Set-IniContent'
@@ -103,6 +104,26 @@ ModuleList = @()
 FileList = @()
 
 # Private data to pass to the module specified in ModuleToProcess
-PrivateData = ''
+PrivateData = @{
+    PSData = @{
+        # Tags applied to this module. These help with module discovery in online galleries.
+        Tags = @('ini', 'PsIni')
+
+        # A URL to the license for this module.
+        LicenseUri = 'https://github.com/lipkau/PsIni/blob/master/LICENSE'
+
+        # A URL to the main website for this project.
+        ProjectUri = 'http://lipkau.github.io/PsIni'
+
+        # A URL to an icon representing this module.
+        # IconUri = ''
+
+        # ReleaseNotes of this module
+        # ReleaseNotes = ''
+
+        # External dependent modules of this module
+        # ExternalModuleDependencies = ''
+    } # End of PSData hashtable
+} # End of PrivateData hashtable
 
 }

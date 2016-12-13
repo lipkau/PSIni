@@ -85,6 +85,9 @@ Function Add-IniComment {
     #>
 
     [CmdletBinding(DefaultParameterSetName = "File")]
+    [OutputType(
+        [System.Collections.Specialized.OrderedDictionary]
+    )]
     Param
     (
         [Parameter(ParameterSetName="File",Mandatory=$True,Position=0)]
@@ -105,6 +108,7 @@ Function Add-IniComment {
 
         [ValidateNotNullOrEmpty()]
         [String]$Sections,
+
         [String]$SectionDelimiter = ','
     )
 
