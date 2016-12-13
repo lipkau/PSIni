@@ -8,12 +8,12 @@ Function Out-IniFile {
         Write hash content to INI file
 
     .Notes
-        Author		: Oliver Lipkau <oliver@lipkau.net>
-        Blog		: http://oliver.lipkau.net/blog/
-		Source		: https://github.com/lipkau/PsIni
+        Author      : Oliver Lipkau <oliver@lipkau.net>
+        Blog        : http://oliver.lipkau.net/blog/
+        Source      : https://github.com/lipkau/PsIni
                       http://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91
-        Version		: 1.0.0 - 2010/03/12 - OL - Initial release
-                	  1.0.1 - 2012/04/19 - OL - Bugfix/Added example to help (Thx Ingmar Verheij)
+        Version     : 1.0.0 - 2010/03/12 - OL - Initial release
+                      1.0.1 - 2012/04/19 - OL - Bugfix/Added example to help (Thx Ingmar Verheij)
                       1.0.2 - 2014/12/11 - OL - Improved handling for missing output file (Thx SLDR)
                       1.0.3 - 2014/01/06 - CB - removed extra \r\n at end of file
                       1.0.4 - 2015/06/06 - OL - Typo (Thx Dominik)
@@ -23,8 +23,8 @@ Function Out-IniFile {
                                            OL - Small Improvments and cleanup
                       1.1.2 - 2015/10/14 - OL - Fixed parameters in nested function
                       1.1.3 - 2016/08/18 - SS - Moved the get/create code for $FilePath to the Process block since it
-                      				            overwrites files piped in by other functions when it's in the Begin block,
-                      				            added additional debug output.
+                                                overwrites files piped in by other functions when it's in the Begin block,
+                                                added additional debug output.
 
         #Requires -Version 2.0
 
@@ -97,6 +97,7 @@ Function Out-IniFile {
     #>
 
     [CmdletBinding()]
+    [OutputType()]
     Param(
         [switch]$Append,
 
@@ -187,26 +188,24 @@ Function Out-IniFile {
         {
             Write-Debug ("Appending to '{0}'." -f $FilePath)
             $outfile = Get-Item $FilePath
-        }
-        else
-        {
+        } else {
             Write-Debug ("Creating new file '{0}'." -f $FilePath)
             $outFile = New-Item -ItemType file -Path $Filepath -Force:$Force
         }
 
-	if (!(Test-Path $outFile.FullName)) {Throw "Could not create File"}
+        if (!(Test-Path $outFile.FullName)) {Throw "Could not create File"}
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Filepath"
         foreach ($i in $InputObject.keys)
         {
             if (!($InputObject[$i].GetType().GetInterface('IDictionary')))
             {
-                #No Sections
+                #Key value pair
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $i"
-                Add-Content -Value "$i$equal$($InputObject[$i])" `
-                            @parameters
+                Add-Content -Value "$i$equal$($InputObject[$i])" @parameters
 
-            } elseif ($i -eq '_') {
+            } elseif ($i -eq $script:NoSection) {
+                #Key value pair of NoSection
                 Out-Keys $InputObject[$i] `
                          @parameters `
                          -delimiter $delimiter `
@@ -214,17 +213,17 @@ Function Out-IniFile {
             } else {
                 #Sections
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$i]"
-                Add-Content -Value "[$i]" `
-                            @parameters
-                if ( $InputObject[$i].Count -gt 0 ) {
-			Out-Keys $InputObject[$i] `
-				 @parameters `
-				 -delimiter $delimiter `
-				 -MyInvocation $MyInvocation
-		}
 
-                Add-Content -Value "" `
-                            @parameters
+                # Only write section, if it is not a dummy ($script:NoSection)
+                if ($i -ne $script:NoSection) { Add-Content -Value "`n[$i]" @parameters }
+
+                if ( $InputObject[$i].Count) {
+                    Out-Keys $InputObject[$i] `
+                         @parameters `
+                         -delimiter $delimiter `
+                         -MyInvocation $MyInvocation
+                }
+
             }
         }
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished Writing to file: $FilePath"

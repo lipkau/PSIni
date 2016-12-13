@@ -68,7 +68,7 @@ Describe "PsIni functionality" {
 
         #assert
         It "loads the module" {
-            $error.count #| Should Be 0
+            $error.count | Should Be 0
         }
 
     }
@@ -87,7 +87,7 @@ Describe "PsIni functionality" {
         # assert
         It "content matches expected value" {
 
-            $content = "[Category1]`r`nKey1=value1`r`nKey2=Value2`r`n`r`n[Category2]`r`nKey3=Value3`r`nKey4=Value4`r`n`r`n"
+            $content = "`r`n[Category1]`r`nKey1=value1`r`nKey2=Value2`r`n`r`n[Category2]`r`nKey3=Value3`r`nKey4=Value4`r`n"
 
             # http://powershell.org/wp/2013/10/21/why-get-content-aint-yer-friend
             Get-Content $iniFile | Out-String | Should Be $content
@@ -113,7 +113,7 @@ Describe "PsIni functionality" {
         }
 
     }
-    
+
     Context "Updating INI Content" {
 
         # act
