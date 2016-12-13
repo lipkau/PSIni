@@ -68,6 +68,9 @@ Function Get-IniContent {
     #>
 
     [CmdletBinding()]
+    [OutputType(
+        [System.Collections.Specialized.OrderedDictionary]
+    )]
     Param(
         [ValidateNotNullOrEmpty()]
         [Parameter(ValueFromPipeline=$True,Mandatory=$True)]
@@ -118,7 +121,7 @@ Function Get-IniContent {
                 {
                     if (!(test-path "variable:local:section"))
                     {
-                        $section = "_"
+                        $section = $script:NoSection
                         $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                     }
                     $value = $matches[1]
@@ -136,7 +139,7 @@ Function Get-IniContent {
             {
                 if (!(test-path "variable:local:section"))
                 {
-                    $section = "_"
+                    $section = $script:NoSection
                     $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 }
                 $name,$value = $matches[1..2]

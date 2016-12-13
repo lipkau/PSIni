@@ -85,6 +85,9 @@ Function Set-IniContent {
     #>
 
     [CmdletBinding(DefaultParameterSetName = "File")]
+    [OutputType(
+        [System.Collections.IDictionary]
+    )]
     Param
     (
         [Parameter(ParameterSetName="File",Mandatory=$True,Position=0)]
@@ -100,9 +103,9 @@ Function Set-IniContent {
         [ValidateNotNullOrEmpty()]
         [String]$NameValuePairs,
 
-        [String]$NameValueDelimiter = '=',
-        [String]$NameValuePairDelimiter = ',',
-        [String]$SectionDelimiter = ',',
+        [char]$NameValueDelimiter = '=',
+        [char]$NameValuePairDelimiter = ',',
+        [char]$SectionDelimiter = ',',
 
         [Parameter(ParameterSetName="File")]
         [Parameter(ParameterSetName="Object")]

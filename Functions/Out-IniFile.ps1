@@ -97,7 +97,9 @@ Function Out-IniFile {
     #>
 
     [CmdletBinding()]
-    [OutputType()]
+    [OutputType(
+        [System.IO.FileSystemInfo]
+    )]
     Param(
         [switch]$Append,
 

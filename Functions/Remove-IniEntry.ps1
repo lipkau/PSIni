@@ -86,6 +86,9 @@ Function Remove-IniEntry {
     #>
 
     [CmdletBinding(DefaultParameterSetName = "File")]
+    [OutputType(
+        [System.Collections.IDictionary]
+    )]
     Param
     (
         [Parameter(ParameterSetName="File",Mandatory=$True,Position=0)]
