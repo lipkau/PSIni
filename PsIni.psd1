@@ -15,7 +15,7 @@
 @{
 
 # Script module or binary module file associated with this manifest
-ModuleToProcess = 'PsIni.psm1'
+RootModule = 'PsIni.psm1'
 
 # Version number of this module.
 ModuleVersion = '1.2.0'
