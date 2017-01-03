@@ -125,7 +125,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Key3"] = "Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Set-IniContent -Sections 'Category1' -NameValuePairs 'Key1=NewValue1'
+        $content | Set-IniContent -Sections 'Category1' -NameValuePairs @{'Key1'='NewValue1'}
 
         # assert
         It "updates INI content with the new value" {
@@ -145,15 +145,43 @@ Describe "PsIni functionality" {
         $content["Category2"]["Key3"] = "Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Remove-IniEntry -Sections 'Category1' -Keys 'Key1'
+        $content | Remove-IniEntry -Sections 'Category1','Category2' -Keys 'Key1','Key3'
 
         # assert
-        It "removes specified key from INI" {
+        It "removes specified keys from INI" {
             $content['Category1']['Key1'] | Should BeNullOrEmpty
+            $content['Category2']['Key3'] | Should BeNullOrEmpty
         }
 
     }
 
+
+    Context "Commenting out INI Content using internal function" {
+
+        # act
+        $content = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"]["Key1"] = "Value1"
+        $content["Category1"]["Key2"] = "Value2"
+        $content["Category2"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category2"]["Key3"] = "Value3"
+        $content["Category2"]["Key4"] = "Value4"
+
+        Convert-IniEntryToComment $content 'Key2' 'Category1' '#'
+
+        # assert
+        It "removes specified keys from INI" {
+            $content['Category1']['Key2'] | Should BeNullOrEmpty
+        }
+
+        # assert
+        It "updates INI content with the commented out values" {
+            $content['Category1']['Comment1'] | Should Be '#Key2=Value2'
+        }
+
+    }
+
+    
     Context "Commenting out INI Content" {
 
         # act
@@ -165,7 +193,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Key3"] = "Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Add-IniComment -Keys 'Key1,Key4'
+        $content | Add-IniComment -Keys 'Key1','Key4'
 
         # assert
         It "removes specified keys from INI" {
@@ -180,6 +208,39 @@ Describe "PsIni functionality" {
         }
 
     }
+
+
+    Context "Uncommenting INI Content using internal function" {
+
+        # act
+        $content = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category1"]["Key1"] = "Value1"
+        $content["Category1"]["Key2"] = "Value2"
+        $content["Category1"]["Comment1"] = ";Key3=Cat1Value3"
+        $content["Category2"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        $content["Category2"]["Comment1"] = "#Key3=Cat2Value3"
+        $content["Category2"]["Key4"] = "Value4"
+
+        Convert-IniCommentToEntry $content 'Key3' 'Category1' ';'
+
+        # assert
+        It "removes specified comments from INI" {
+            $content['Category1']['Comment1'] | Should BeNullOrEmpty
+        }
+
+        # assert
+        It "updates INI content with the uncommented values" {
+            $content['Category1']['Key3'] | Should Be 'Cat1Value3'
+        }
+
+        # assert
+        It "Leaves key in other similarly named section alone" {
+            $content['Category2']['Comment1'] | Should Be '#Key3=Cat2Value3'
+        }
+
+    }
+
 
     Context "Uncommenting INI Content" {
 
