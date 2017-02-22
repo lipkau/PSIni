@@ -14,6 +14,7 @@ Function Remove-IniEntry {
 		Source		: https://github.com/lipkau/PsIni
                       http://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91
         Version		: 1.0.0 - 2016/08/18 - SS - Initial release
+                    : 1.0.1 - 2016/12/29 - SS - Removed need for delimiters by making Sections and Keys string arrays.
 
         #Requires -Version 2.0
 
@@ -31,29 +32,21 @@ Function Remove-IniEntry {
         Specifies the Hashtable to be modified. Enter a variable that contains the objects or type a command or expression that gets the objects.
 
     .Parameter Keys
-        String of one or more keys to modify, separated by a delimiter. Default is a comma, but this can be changed with -KeyDelimiter. Optional.
-
-    .Parameter KeyDelimiter
-        Specify what character should be used to split the -Keys parameter value.
-        Default: ","
+        String array of one or more keys to limit the changes to, separated by a comma. Optional.
 
     .Parameter Sections
-        String of one or more sections to limit the changes to, separated by a delimiter. Default is a comma, but this can be changed with -SectionDelimiter.
+        String array of one or more sections to limit the changes to, separated by a comma.
         Surrounding section names with square brackets is not necessary but is supported.
         Ini keys that do not have a defined section can be modified by specifying '_' (underscore) for the section.
 
-    .Parameter SectionDelimiter
-        Specify what character should be used to split the -Sections parameter value.
-        Default: ","
-
     .Example
-        $ini = Remove-IniEntry -FilePath "C:\myinifile.ini" -Sections 'Printers' -Keys 'Headers'
+        $ini = Remove-IniEntry -FilePath "C:\myinifile.ini" -Sections 'Printers' -Keys 'Headers','Version'
         -----------
         Description
-        Reads in the INI File c:\myinifile.ini, removes any keys named 'Headers' in the [Printers] section, and saves the modified ini to $ini.
+        Reads in the INI File c:\myinifile.ini, removes any keys named 'Headers' or 'Version' in the [Printers] section, and saves the modified ini to $ini.
 
     .Example
-        Remove-IniEntry -FilePath "C:\myinifile.ini" -Sections 'Terminals,Monitors' -Keys 'Updated' | Out-IniFile "C:\myinifile.ini" -Force
+        Remove-IniEntry -FilePath "C:\myinifile.ini" -Sections 'Terminals','Monitors' -Keys 'Updated' | Out-IniFile "C:\myinifile.ini" -Force
         -----------
         Description
         Reads in the INI File c:\myinifile.ini and removes any keys named 'Updated' in the [Terminals] and [Monitors] sections.
@@ -96,17 +89,13 @@ Function Remove-IniEntry {
         [String]$FilePath,
 
         [Parameter(ParameterSetName="Object",Mandatory=$True,ValueFromPipeline=$True)]
-        [ValidateNotNullOrEmpty()]
         [System.Collections.IDictionary]$InputObject,
 
         [ValidateNotNullOrEmpty()]
-        [String]$Keys,
-
-        [String]$KeyDelimiter = ',',
+        [String[]]$Keys,
 
         [ValidateNotNullOrEmpty()]
-        [String]$Sections,
-        [String]$SectionDelimiter = ','
+        [String[]]$Sections
     )
 
     Begin
@@ -133,7 +122,7 @@ Function Remove-IniEntry {
         # Specific section(s) were requested.
         if ($Sections)
         {
-            foreach ($section in $Sections.Split($SectionDelimiter))
+            foreach ($section in $Sections)
             {
                 # Get rid of whitespace and section brackets.
                 $section = $section.Trim() -replace '[][]',''
@@ -148,7 +137,7 @@ Function Remove-IniEntry {
                 }
                 else
                 {
-                    foreach ($key in $Keys.Split($KeyDelimiter))
+                    foreach ($key in $Keys)
                     {
                         Write-Debug ("Processing '{0}' key." -f $key)
 
@@ -179,7 +168,7 @@ Function Remove-IniEntry {
                 $section = $item.key
                 Write-Debug ("Processing '{0}' section." -f $section)
 
-                foreach ($key in $Keys.Split($KeyDelimiter))
+                foreach ($key in $Keys)
                 {
                     $key = $key.Trim()
                     Write-Debug ("Processing '{0}' key." -f $key)

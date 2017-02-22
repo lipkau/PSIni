@@ -14,6 +14,7 @@ Function Remove-IniComment {
 		Source		: https://github.com/lipkau/PsIni
                       http://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91
         Version		: 1.0.0 - 2016/08/18 - SS - Initial release
+                    : 1.0.1 - 2016/12/29 - SS - Removed need for delimiters by making Sections and Keys string arrays.
 
         #Requires -Version 2.0
 
@@ -36,20 +37,12 @@ Function Remove-IniComment {
         Default: ";"
 
     .Parameter Keys
-        String of one or more keys to modify, separated by a delimiter. Default is a comma, but this can be changed with -KeyDelimiter. Required.
-
-    .Parameter KeyDelimiter
-        Specify what character should be used to split the -Keys parameter value.
-        Default: ","
+        String array of one or more keys to limit the changes to, separated by a comma. Optional.
 
     .Parameter Sections
-        String of one or more sections to limit the changes to, separated by a delimiter. Default is a comma, but this can be changed with -SectionDelimiter.
+        String array of one or more sections to limit the changes to, separated by a comma.
         Surrounding section names with square brackets is not necessary but is supported.
         Ini keys that do not have a defined section can be modified by specifying '_' (underscore) for the section.
-
-    .Parameter SectionDelimiter
-        Specify what character should be used to split the -Sections parameter value.
-        Default: ","
 
     .Example
         $ini = Remove-IniComment -FilePath "C:\myinifile.ini" -Sections 'Printers' -Keys 'Headers'
@@ -58,7 +51,7 @@ Function Remove-IniComment {
         Reads in the INI File c:\myinifile.ini, uncomments out any keys named 'Headers' in the [Printers] section, and saves the modified ini to $ini.
 
     .Example
-        Remove-IniComment -FilePath "C:\myinifile.ini" -Sections 'Terminals,Monitors' -Keys 'Updated' | Out-IniFile "C:\myinifile.ini" -Force
+        Remove-IniComment -FilePath "C:\myinifile.ini" -Sections 'Terminals','Monitors' -Keys 'Updated' | Out-IniFile "C:\myinifile.ini" -Force
         -----------
         Description
         Reads in the INI File c:\myinifile.ini and uncomments out any keys named 'Updated' in the [Terminals] and [Monitors] sections.
@@ -99,15 +92,12 @@ Function Remove-IniComment {
 
         [Parameter(Mandatory = $True)]
         [ValidateNotNullOrEmpty()]
-        [String]$Keys,
-
-        [String]$KeyDelimiter = ',',
+        [String[]]$Keys,
 
         [char[]]$CommentChar = @(";"),
 
         [ValidateNotNullOrEmpty()]
-        [String]$Sections,
-        [String]$SectionDelimiter = ','
+        [String[]]$Sections
     )
 
     Begin
@@ -129,14 +119,14 @@ Function Remove-IniComment {
         # Specific section(s) were requested.
         if ($Sections)
         {
-            foreach ($section in $Sections.Split($SectionDelimiter))
+            foreach ($section in $Sections)
             {
                 # Get rid of whitespace and section brackets.
                 $section = $section.Trim() -replace '[][]',''
 
                 Write-Debug ("Processing '{0}' section." -f $section)
 
-                foreach ($key in $Keys.Split($KeyDelimiter))
+                foreach ($key in $Keys)
                 {
                     Write-Debug ("Processing '{0}' key." -f $key)
 
@@ -161,7 +151,7 @@ Function Remove-IniComment {
                 $section = $item.key
                 Write-Debug ("Processing '{0}' section." -f $section)
 
-                foreach ($key in $Keys.Split($KeyDelimiter))
+                foreach ($key in $Keys)
                 {
                     $key = $key.Trim()
                     Write-Debug ("Processing '{0}' key." -f $key)

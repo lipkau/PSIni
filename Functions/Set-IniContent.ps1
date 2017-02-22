@@ -15,6 +15,8 @@ Function Set-IniContent {
 		Source		: https://github.com/lipkau/PsIni
                       http://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91
         Version		: 1.0.0 - 2016/08/18 - SS - Initial release
+                    : 1.0.1 - 2016/12/29 - SS - Removed need for delimiters by making Sections a string array
+                                                and NameValuePairs a hashtable. Thanks Oliver!
 
         #Requires -Version 2.0
 
@@ -32,48 +34,36 @@ Function Set-IniContent {
         Specifies the Hashtable to be modified. Enter a variable that contains the objects or type a command or expression that gets the objects.
 
     .Parameter NameValuePairs
-        String of one or more key names and values to modify, with the name/value separated by a delimiter and the pairs separated by another delimiter . Required.
-
-    .Parameter NameValueDelimiter
-        Specify what character should be used to split the names and values specified in -NameValuePairs.
-        Default: "="
-
-    .Parameter NameValuePairDelimiter
-        Specify what character should be used to split the specified name-value pairs.
-        Default: ","
+        Hashtable of one or more key names and values to modify. Required.
 
     .Parameter Sections
-        String of one or more sections to limit the changes to, separated by a delimiter. Default is a comma, but this can be changed with -SectionDelimiter.
+        String array of one or more sections to limit the changes to, separated by a comma.
         Surrounding section names with square brackets is not necessary but is supported.
         Ini keys that do not have a defined section can be modified by specifying '_' (underscore) for the section.
 
-    .Parameter SectionDelimiter
-        Specify what character should be used to split the -Sections parameter value.
-        Default: ","
-
     .Example
-        $ini = Set-IniContent -FilePath "C:\myinifile.ini" -Sections 'Printers' -NameValuePairs 'Name With Space=Value1,AnotherName=Value2'
+        $ini = Set-IniContent -FilePath "C:\myinifile.ini" -Sections 'Printers' -NameValuePairs @{'Name With Space' = 'Value1' ; 'AnotherName' = 'Value2'}
         -----------
         Description
         Reads in the INI File c:\myinifile.ini, adds or updates the 'Name With Space' and 'AnotherName' keys in the [Printers] section to the values specified,
         and saves the modified ini to $ini.
 
     .Example
-        Set-IniContent -FilePath "C:\myinifile.ini" -Sections 'Terminals,Monitors' -NameValuePairs 'Updated=FY17Q2' | Out-IniFile "C:\myinifile.ini" -Force
+        Set-IniContent -FilePath "C:\myinifile.ini" -Sections 'Terminals','Monitors' -NameValuePairs @{'Updated=FY17Q2'} | Out-IniFile "C:\myinifile.ini" -Force
         -----------
         Description
         Reads in the INI File c:\myinifile.ini and adds or updates the 'Updated' key in the [Terminals] and [Monitors] sections to the value specified.
         The ini is then piped to Out-IniFile to write the INI File to c:\myinifile.ini. If the file is already present it will be overwritten.
 
     .Example
-        Get-IniContent "C:\myinifile.ini" | Set-IniContent -NameValuePairs 'Headers=True,Update=False' | Out-IniFile "C:\myinifile.ini" -Force
+        Get-IniContent "C:\myinifile.ini" | Set-IniContent -NameValuePairs @{'Headers' = 'True' ; 'Update' = 'False'} | Out-IniFile "C:\myinifile.ini" -Force
         -----------
         Description
         Reads in the INI File c:\myinifile.ini using Get-IniContent, which is then piped to Set-IniContent to add or update the 'Headers'  and 'Update' keys in all sections
         to the specified values. The ini is then piped to Out-IniFile to write the INI File to c:\myinifile.ini. If the file is already present it will be overwritten.
 
     .Example
-        Get-IniContent "C:\myinifile.ini" | Set-IniContent -NameValuePairs 'Updated=FY17Q2' -Sections '_' | Out-IniFile "C:\myinifile.ini" -Force
+        Get-IniContent "C:\myinifile.ini" | Set-IniContent -NameValuePairs @{'Updated'='FY17Q2'} -Sections '_' | Out-IniFile "C:\myinifile.ini" -Force
         -----------
         Description
         Reads in the INI File c:\myinifile.ini using Get-IniContent, which is then piped to Set-IniContent to add or update the 'Updated' key that
@@ -101,16 +91,12 @@ Function Set-IniContent {
         [Parameter(ParameterSetName="File",Mandatory=$True)]
         [Parameter(ParameterSetName="Object",Mandatory=$True)]
         [ValidateNotNullOrEmpty()]
-        [String]$NameValuePairs,
-
-        [char]$NameValueDelimiter = '=',
-        [char]$NameValuePairDelimiter = ',',
-        [char]$SectionDelimiter = ',',
+        [HashTable]$NameValuePairs,
 
         [Parameter(ParameterSetName="File")]
         [Parameter(ParameterSetName="Object")]
         [ValidateNotNullOrEmpty()]
-        [String]$Sections
+        [String[]]$Sections
     )
 
     Begin
@@ -126,30 +112,16 @@ Function Set-IniContent {
         {
             param ($content, $section)
 
-            foreach ($pair in $NameValuePairs.Split($NameValuePairDelimiter))
+            foreach($pair in $NameValuePairs.GetEnumerator())
             {
-                Write-Debug ("Processing '{0}' pair." -f $pair)
-
-                $splitPair = $pair.Split($NameValueDelimiter)
-
-                if ($splitPair.Length -ne 2)
-                {
-                    Write-Warning("$($MyInvocation.MyCommand.Name):: Unable to split '{0}' into a distinct key/value pair." -f $pair)
-                    continue
-                }
-
-                $key = $splitPair[0].Trim()
-                $value = $splitPair[1].Trim()
-                Write-Debug ("Split key is {0}, split value is {1}" -f $key, $value)
-
                 if (!($content[$section]))
                 {
                     Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist, creating it." -f $section)
                     $content[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 }
 
-                Write-Verbose ("$($MyInvocation.MyCommand.Name):: Setting '{0}' key in section {1} to '{2}'." -f $key, $section, $value)
-                $content[$section][$key] = $value
+                Write-Verbose ("$($MyInvocation.MyCommand.Name):: Setting '{0}' key in section {1} to '{2}'." -f $pair.key, $section, $pair.value)
+                $content[$section][$pair.key] = $pair.value
             }
         }
     }
@@ -163,7 +135,7 @@ Function Set-IniContent {
         # Specific section(s) were requested.
         if ($Sections)
         {
-            foreach ($section in $Sections.Split($SectionDelimiter))
+            foreach ($section in $Sections)
             {
                 # Get rid of whitespace and section brackets.
                 $section = $section.Trim() -replace '[][]',''

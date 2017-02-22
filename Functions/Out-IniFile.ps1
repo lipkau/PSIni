@@ -25,6 +25,8 @@ Function Out-IniFile {
                       1.1.3 - 2016/08/18 - SS - Moved the get/create code for $FilePath to the Process block since it
                                                 overwrites files piped in by other functions when it's in the Begin block,
                                                 added additional debug output.
+                      1.1.4 - 2016/12/29 - SS - Support output of a blank ini, e.g. if all sections got removed. This
+                                                required removing [ValidateNotNullOrEmpty()] from InputObject
 
         #Requires -Version 2.0
 
@@ -115,7 +117,6 @@ Function Out-IniFile {
 
         [switch]$Force,
 
-        [ValidateNotNullOrEmpty()]
         [Parameter(ValueFromPipeline=$True,Mandatory=$True)]
         [System.Collections.IDictionary]$InputObject,
 
@@ -159,6 +160,10 @@ Function Out-IniFile {
 
             Process
             {
+                if (!($InputObject.keys))
+                {
+                    Write-Warning ("No data found in '{0}'." -f $FilePath)
+                }
                 Foreach ($key in $InputObject.keys)
                 {
                     if ($key -match "^Comment\d+") {
