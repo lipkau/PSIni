@@ -209,7 +209,7 @@ Function Out-IniFile {
             {
                 #Key value pair
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $i"
-                Add-Content -Value "$i$equal$($InputObject[$i])" @parameters
+                Add-Content -Value "$i$delimiter$($InputObject[$i])" @parameters
 
             } elseif ($i -eq $script:NoSection) {
                 #Key value pair of NoSection
