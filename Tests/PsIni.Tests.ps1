@@ -63,12 +63,11 @@ Describe "PsIni functionality" {
     Context "Load Module" {
 
         #act
-        $error.clear()
-        Import-Module "$ScriptDir\..\..\PsIni" -Force -ErrorAction SilentlyContinue
+        Import-Module "$ScriptDir\..\..\PsIni" -Force
 
         #assert
         It "loads the module" {
-            $error.count | Should Be 0
+            (Get-Module).name -contains "PsIni" | Should Be $true
         }
 
     }
@@ -159,6 +158,9 @@ Describe "PsIni functionality" {
     Context "Commenting out INI Content using internal function" {
 
         # act
+        # load function, as it is not exposed by the manifest
+        . "$ScriptDir\..\Functions\Convert-IniEntryToComment.ps1"
+
         $content = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
         $content["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
         $content["Category1"]["Key1"] = "Value1"
@@ -213,6 +215,9 @@ Describe "PsIni functionality" {
     Context "Uncommenting INI Content using internal function" {
 
         # act
+        # load function, as it is not exposed by the manifest
+        . "$ScriptDir\..\Functions\Convert-IniCommentToEntry.ps1"
+
         $content = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
         $content["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
         $content["Category1"]["Key1"] = "Value1"
