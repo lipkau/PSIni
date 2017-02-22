@@ -1,6 +1,9 @@
+# Windows specific files
+#-----
 Thumbs.db
 desktop.ini
-*.log
-*.bak
-*.cache
+
+# Editor specific files
+#-----
 *.sublime-*
+.vscode\
