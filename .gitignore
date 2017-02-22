@@ -6,4 +6,4 @@ desktop.ini
 # Editor specific files
 #-----
 *.sublime-*
-.vscode\
+.vscode/*
