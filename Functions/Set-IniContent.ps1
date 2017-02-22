@@ -102,7 +102,7 @@ Function Set-IniContent {
     Begin
     {
         Write-Debug "PsBoundParameters:"
-        $PSBoundParameters.GetEnumerator() | ForEach { Write-Debug $_ }
+        $PSBoundParameters.GetEnumerator() | ForEach-Object { Write-Debug $_ }
         if ($PSBoundParameters['Debug']) { $DebugPreference = 'Continue' }
         Write-Debug "DebugPreference: $DebugPreference"
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
