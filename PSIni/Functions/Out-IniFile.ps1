@@ -160,11 +160,11 @@ Function Out-IniFile {
 
             Process
             {
-                if (!($InputObject.keys))
+                if (!($InputObject.get_keys()))
                 {
                     Write-Warning ("No data found in '{0}'." -f $FilePath)
                 }
-                Foreach ($key in $InputObject.keys)
+                Foreach ($key in $InputObject.get_keys())
                 {
                     if ($key -match "^Comment\d+") {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing comment: $key"
@@ -203,7 +203,7 @@ Function Out-IniFile {
         if (!(Test-Path $outFile.FullName)) {Throw "Could not create File"}
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Filepath"
-        foreach ($i in $InputObject.keys)
+        foreach ($i in $InputObject.get_keys())
         {
             if (!($InputObject[$i].GetType().GetInterface('IDictionary')))
             {
