@@ -54,8 +54,8 @@ install:
 before_build:
     - ps: Invoke-Build -Task ShowDebug
 
-# build_script:
-    # - ps: Invoke-Build -Task Build
+build_script:
+    - ps: Invoke-Build -Task Build
 
 # after_build:
     # - cmd: mdspell %releasePath%\**/*.md --ignore-numbers --ignore-acronyms --report
