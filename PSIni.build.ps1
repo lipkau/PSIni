@@ -196,7 +196,7 @@ task Deploy -If ($env:APPVEYOR_REPO_BRANCH -eq 'master' -and (-not($env:APPVEYOR
 task PublishToGallery {
     assert ($env:PSGalleryAPIKey) "No key for the PSGallery"
 
-    Import-Module $releasePath\PSIni.psd1 -ErrorAction Stop
+    Import-Module $releasePath\PSIni\PSIni.psd1 -ErrorAction Stop
     Publish-Module -Name PSIni -NuGetApiKey $env:PSGalleryAPIKey
 }
 
