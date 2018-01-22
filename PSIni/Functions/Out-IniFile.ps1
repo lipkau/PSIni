@@ -37,36 +37,17 @@ Function Out-IniFile {
     .Outputs
         System.IO.FileSystemInfo
 
-    .Parameter Append
-        Adds the output to the end of an existing file, instead of replacing the file contents.
-
-    .Parameter InputObject
-        Specifies the Hashtable to be written to the file. Enter a variable that contains the objects or type a command or expression that gets the objects.
-
-    .Parameter FilePath
-        Specifies the path to the output file.
-
      .Parameter Encoding
-        Specifies the file encoding. The default is UTF8.
 
-    Valid values are:
-
-    -- ASCII:  Uses the encoding for the ASCII (7-bit) character set.
-    -- BigEndianUnicode:  Encodes in UTF-16 format using the big-endian byte order.
-    -- Byte:   Encodes a set of characters into a sequence of bytes.
-    -- String:  Uses the encoding type for a string.
-    -- Unicode:  Encodes in UTF-16 format using the little-endian byte order.
-    -- UTF7:   Encodes in UTF-7 format.
-    -- UTF8:  Encodes in UTF-8 format.
 
      .Parameter Force
-        Allows the cmdlet to overwrite an existing read-only file. Even using the Force parameter, the cmdlet cannot override security restrictions.
+
 
      .Parameter PassThru
-        Passes an object representing the location to the pipeline. By default, this cmdlet does not generate any output.
+
 
      .Parameter Loose
-        Adds spaces around the equal sign when writing the key = value
+
 
     .Example
         Out-IniFile $IniVar "C:\myinifile.ini"
@@ -103,73 +84,95 @@ Function Out-IniFile {
         [System.IO.FileSystemInfo]
     )]
     Param(
-        [switch]$Append,
+        # Adds the output to the end of an existing file, instead of replacing the file contents.
+        [switch]
+        $Append,
 
-        [ValidateSet("Unicode","UTF7","UTF8","ASCII","BigEndianUnicode","Byte","String")]
+        # Specifies the file encoding. The default is UTF8.
+        #
+        # Valid values are:
+        # -- ASCII:  Uses the encoding for the ASCII (7-bit) character set.
+        # -- BigEndianUnicode:  Encodes in UTF-16 format using the big-endian byte order.
+        # -- Byte:   Encodes a set of characters into a sequence of bytes.
+        # -- String:  Uses the encoding type for a string.
+        # -- Unicode:  Encodes in UTF-16 format using the little-endian byte order.
+        # -- UTF7:   Encodes in UTF-7 format.
+        # -- UTF8:  Encodes in UTF-8 format.
+        [ValidateSet("Unicode", "UTF7", "UTF8", "ASCII", "BigEndianUnicode", "Byte", "String")]
         [Parameter()]
-        [string]$Encoding = "UTF8",
+        [string]
+        $Encoding = "UTF8",
 
+        # Specifies the path to the output file.
         [ValidateNotNullOrEmpty()]
-        [ValidateScript({Test-Path $_ -IsValid})]
-        [Parameter(Mandatory=$True,
-                   Position=0)]
-        [string]$FilePath,
+        [ValidateScript( {Test-Path $_ -IsValid} )]
+        [Parameter( Position = 0, Mandatory )]
+        [string]
+        $FilePath,
 
-        [switch]$Force,
+        # Allows the cmdlet to overwrite an existing read-only file. Even using the Force parameter, the cmdlet cannot override security restrictions.
+        [switch]
+        $Force,
 
-        [Parameter(ValueFromPipeline=$True,Mandatory=$True)]
-        [System.Collections.IDictionary]$InputObject,
+        # Specifies the Hashtable to be written to the file. Enter a variable that contains the objects or type a command or expression that gets the objects.
+        [Parameter( Mandatory, ValueFromPipeline )]
+        [System.Collections.IDictionary]
+        $InputObject,
 
-        [switch]$Passthru,
+        # Passes an object representing the location to the pipeline. By default, this cmdlet does not generate any output.
+        [switch]
+        $Passthru,
 
-        [switch]$Loose
+        # Adds spaces around the equal sign when writing the key = value
+        [switch]
+        $Loose
     )
 
-    Begin
-    {
+    Begin {
         Write-Debug "PsBoundParameters:"
         $PSBoundParameters.GetEnumerator() | ForEach-Object { Write-Debug $_ }
-        if ($PSBoundParameters['Debug']) { $DebugPreference = 'Continue' }
+        if ($PSBoundParameters['Debug']) {
+            $DebugPreference = 'Continue'
+        }
         Write-Debug "DebugPreference: $DebugPreference"
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
 
-        function Out-Keys
-        {
+        function Out-Keys {
             param(
                 [ValidateNotNullOrEmpty()]
-                [Parameter(ValueFromPipeline=$True,Mandatory=$True)]
-                [System.Collections.IDictionary]$InputObject,
+                [Parameter( Mandatory, ValueFromPipeline )]
+                [System.Collections.IDictionary]
+                $InputObject,
 
-                [ValidateSet("Unicode","UTF7","UTF8","ASCII","BigEndianUnicode","Byte","String")]
-                [Parameter(Mandatory=$True)]
-                [string]$Encoding = "UTF8",
+                [ValidateSet("Unicode", "UTF7", "UTF8", "ASCII", "BigEndianUnicode", "Byte", "String")]
+                [Parameter( Mandatory )]
+                [string]
+                $Encoding = "UTF8",
 
                 [ValidateNotNullOrEmpty()]
-                [ValidateScript({Test-Path $_ -IsValid})]
-                [Parameter(Mandatory=$True,
-                           ValueFromPipelineByPropertyName=$true)]
-                [string]$Path,
+                [ValidateScript( {Test-Path $_ -IsValid})]
+                [Parameter( Mandatory, ValueFromPipelineByPropertyName )]
+                [string]
+                $Path,
 
-                [Parameter(Mandatory=$True)]
-                $delimiter,
+                [Parameter( Mandatory )]
+                $Delimiter,
 
-                [Parameter(Mandatory=$True)]
+                [Parameter( Mandatory )]
                 $MyInvocation
             )
 
-            Process
-            {
-                if (!($InputObject.get_keys()))
-                {
+            Process {
+                if (!($InputObject.get_keys())) {
                     Write-Warning ("No data found in '{0}'." -f $FilePath)
                 }
-                Foreach ($key in $InputObject.get_keys())
-                {
+                Foreach ($key in $InputObject.get_keys()) {
                     if ($key -match "^Comment\d+") {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing comment: $key"
                         Add-Content -Value "$($InputObject[$key])" -Encoding $Encoding -Path $Path
-                    } else {
+                    }
+                    else {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key"
                         Add-Content -Value "$key$delimiter$($InputObject[$key])" -Encoding $Encoding -Path $Path
                     }
@@ -178,24 +181,24 @@ Function Out-IniFile {
         }
 
         $delimiter = '='
-        if ($Loose)
-            { $delimiter = ' = ' }
+        if ($Loose) {
+            $delimiter = ' = '
+        }
 
-        #Splatting Parameters
+        # Splatting Parameters
         $parameters = @{
-            Encoding     = $Encoding;
-            Path         = $FilePath
+            Encoding = $Encoding;
+            Path     = $FilePath
         }
 
     }
 
-    Process
-    {
-        if ($append)
-        {
+    Process {
+        if ($Append) {
             Write-Debug ("Appending to '{0}'." -f $FilePath)
             $outfile = Get-Item $FilePath
-        } else {
+        }
+        else {
             Write-Debug ("Creating new file '{0}'." -f $FilePath)
             $outFile = New-Item -ItemType file -Path $Filepath -Force:$Force
         }
@@ -203,21 +206,21 @@ Function Out-IniFile {
         if (!(Test-Path $outFile.FullName)) {Throw "Could not create File"}
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Filepath"
-        foreach ($i in $InputObject.get_keys())
-        {
-            if (!($InputObject[$i].GetType().GetInterface('IDictionary')))
-            {
+        foreach ($i in $InputObject.get_keys()) {
+            if (!($InputObject[$i].GetType().GetInterface('IDictionary'))) {
                 #Key value pair
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $i"
                 Add-Content -Value "$i$delimiter$($InputObject[$i])" @parameters
 
-            } elseif ($i -eq $script:NoSection) {
+            }
+            elseif ($i -eq $script:NoSection) {
                 #Key value pair of NoSection
                 Out-Keys $InputObject[$i] `
-                         @parameters `
-                         -delimiter $delimiter `
-                         -MyInvocation $MyInvocation
-            } else {
+                    @parameters `
+                    -Delimiter $delimiter `
+                    -MyInvocation $MyInvocation
+            }
+            else {
                 #Sections
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$i]"
 
@@ -226,9 +229,9 @@ Function Out-IniFile {
 
                 if ( $InputObject[$i].Count) {
                     Out-Keys $InputObject[$i] `
-                         @parameters `
-                         -delimiter $delimiter `
-                         -MyInvocation $MyInvocation
+                        @parameters `
+                        -Delimiter $delimiter `
+                        -MyInvocation $MyInvocation
                 }
 
             }
@@ -236,12 +239,10 @@ Function Out-IniFile {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished Writing to file: $FilePath"
     }
 
-    End
-    {
-        if ($PassThru)
-        {
+    End {
+        if ($PassThru) {
             Write-Debug ("Returning file due to PassThru argument.")
-            Return (Get-Item $outFile)
+            Write-Output (Get-Item $outFile)
         }
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
     }

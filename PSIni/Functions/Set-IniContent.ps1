@@ -27,20 +27,6 @@ Function Set-IniContent {
     .Outputs
         System.Collections.Specialized.OrderedDictionary
 
-    .Parameter FilePath
-        Specifies the path to the input file.
-
-    .Parameter InputObject
-        Specifies the Hashtable to be modified. Enter a variable that contains the objects or type a command or expression that gets the objects.
-
-    .Parameter NameValuePairs
-        Hashtable of one or more key names and values to modify. Required.
-
-    .Parameter Sections
-        String array of one or more sections to limit the changes to, separated by a comma.
-        Surrounding section names with square brackets is not necessary but is supported.
-        Ini keys that do not have a defined section can be modified by specifying '_' (underscore) for the section.
-
     .Example
         $ini = Set-IniContent -FilePath "C:\myinifile.ini" -Sections 'Printers' -NameValuePairs @{'Name With Space' = 'Value1' ; 'AnotherName' = 'Value2'}
         -----------
@@ -80,89 +66,80 @@ Function Set-IniContent {
     )]
     Param
     (
-        [Parameter(ParameterSetName="File",Mandatory=$True,Position=0)]
+        # Specifies the path to the input file.
+        [Parameter( Position = 0, Mandatory, ParameterSetName = "File" )]
         [ValidateNotNullOrEmpty()]
-        [String]$FilePath,
+        [String]
+        $FilePath,
 
-        [Parameter(ParameterSetName="Object",Mandatory=$True,ValueFromPipeline=$True)]
+        # Specifies the Hashtable to be modified.
+        # Enter a variable that contains the objects or type a command or expression that gets the objects.
+        [Parameter( Mandatory, ValueFromPipeline, ParameterSetName = "Object")]
         [ValidateNotNullOrEmpty()]
-        [System.Collections.IDictionary]$InputObject,
+        [System.Collections.IDictionary]
+        $InputObject,
 
-        [Parameter(ParameterSetName="File",Mandatory=$True)]
-        [Parameter(ParameterSetName="Object",Mandatory=$True)]
+        # Hashtable of one or more key names and values to modify. Required.
+        [Parameter( Mandatory, ParameterSetName = "File")]
+        [Parameter( Mandatory, ParameterSetName = "Object")]
         [ValidateNotNullOrEmpty()]
-        [String]$NameValuePairs,
+        [HashTable]
+        $NameValuePairs,
 
-        [char]$NameValueDelimiter = '=',
-        [char]$NameValuePairDelimiter = ',',
-        [char]$SectionDelimiter = ',',
-
-        [Parameter(ParameterSetName="File")]
-        [Parameter(ParameterSetName="Object")]
+        # String array of one or more sections to limit the changes to, separated by a comma.
+        # Surrounding section names with square brackets is not necessary but is supported.
+        # Ini keys that do not have a defined section can be modified by specifying '_' (underscore) for the section.
+        [Parameter( ParameterSetName = "File" )]
+        [Parameter( ParameterSetName = "Object" )]
         [ValidateNotNullOrEmpty()]
-        [String[]]$Sections
+        [String[]]
+        $Sections
     )
 
-    Begin
-    {
+    Begin {
         Write-Debug "PsBoundParameters:"
         $PSBoundParameters.GetEnumerator() | ForEach-Object { Write-Debug $_ }
-        if ($PSBoundParameters['Debug']) { $DebugPreference = 'Continue' }
+        if ($PSBoundParameters['Debug']) {
+            $DebugPreference = 'Continue'
+        }
         Write-Debug "DebugPreference: $DebugPreference"
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
 
         # Update or add the name/value pairs to the section.
-        Function Update-IniEntry
-        {
+        Function Update-IniEntry {
             param ($content, $section)
 
-            foreach ($pair in $NameValuePairs.Split($NameValuePairDelimiter)) {
-
-                $splitPair = $pair.Split($NameValueDelimiter)
-
-                if ($splitPair.Length -ne 2) {
-                    Write-Warning("$($MyInvocation.MyCommand.Name):: Unable to split '{0}' into a distinct key/value pair." -f $pair)
-                    continue
-                }
-
-                $key = $splitPair[0].Trim()
-                $value = $splitPair[1].Trim()
-                Write-Debug ("Split key is {0}, split value is {1}" -f $key, $value)
-
+            foreach ($pair in $NameValuePairs.GetEnumerator()) {
                 if (!($content[$section])) {
                     Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist, creating it." -f $section)
                     $content[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 }
 
-                Write-Verbose ("$($MyInvocation.MyCommand.Name):: Setting '{0}' key in section {1} to '{2}'." -f $key, $section, $value)
-                $content[$section][$key] = $value
+                Write-Verbose ("$($MyInvocation.MyCommand.Name):: Setting '{0}' key in section {1} to '{2}'." -f $pair.key, $section, $pair.value)
+                $content[$section][$pair.key] = $pair.value
             }
         }
     }
     # Update the specified keys in the list, either in the specified section or in all sections.
-    Process
-    {
+    Process {
         # Get the ini from either a file or object passed in.
         if ($PSCmdlet.ParameterSetName -eq 'File') { $content = Get-IniContent $FilePath }
         if ($PSCmdlet.ParameterSetName -eq 'Object') { $content = $InputObject }
 
         # Specific section(s) were requested.
-        if ($Sections)
-        {
-            foreach ($section in $Sections.Split($SectionDelimiter))
-            {
+        if ($Sections) {
+            foreach ($section in $Sections) {
                 # Get rid of whitespace and section brackets.
-                $section = $section.Trim() -replace '[][]',''
+                $section = $section.Trim() -replace '[][]', ''
 
                 Write-Debug ("Processing '{0}' section." -f $section)
 
                 Update-IniEntry $content $section
             }
         }
-        else # No section supplied, go through the entire ini since changes apply to all sections.
-        {
-            foreach ($item in $content.GetEnumerator())
-            {
+        else {
+            # No section supplied, go through the entire ini since changes apply to all sections.
+            foreach ($item in $content.GetEnumerator()) {
                 $section = $item.key
 
                 Write-Debug ("Processing '{0}' section." -f $section)
@@ -170,10 +147,9 @@ Function Set-IniContent {
                 Update-IniEntry $content $section
             }
         }
-        return $content
+        Write-Output $content
     }
-    End
-    {
+    End {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
     }
 }

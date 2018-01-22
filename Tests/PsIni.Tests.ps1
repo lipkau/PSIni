@@ -6,7 +6,7 @@ $Module = "$root\PSIni"
 $Functions = "$root\PSIni\Functions"
 Set-Location $ScriptDir
 
-$manifestPath   = "$Module\PsIni.psd1"
+$manifestPath = "$Module\PsIni.psd1"
 
 Describe -Tags 'VersionChecks' "PsIni manifest" {
     $script:manifest = $null
@@ -27,26 +27,6 @@ Describe -Tags 'VersionChecks' "PsIni manifest" {
     It "has a valid version in the manifest" {
         $script:manifest.Version -as [Version] | Should Not BeNullOrEmpty
     }
-
-    # if (Get-Command git.exe -ErrorAction SilentlyContinue) {
-    #     $script:tagVersion = $null
-    #     It "is tagged with a valid version" {
-    #         $thisCommit = git.exe log --decorate --oneline HEAD~1..HEAD
-
-    #         if ($thisCommit -match 'tag:\s*(\d+(?:\.\d+)*)')
-    #         {
-    #             $script:tagVersion = $matches[1]
-    #         }
-
-    #         $script:tagVersion                  | Should Not BeNullOrEmpty
-    #         $script:tagVersion -as [Version]    | Should Not BeNullOrEmpty
-    #     }
-
-    #     It "all versions are the same" {
-    #         $script:manifest.Version -as [Version] | Should be ( $script:tagVersion -as [Version] )
-    #     }
-
-    # }
 }
 
 Describe "PsIni functionality" {
@@ -127,7 +107,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Key3"] = "Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Set-IniContent -Sections 'Category1' -NameValuePairs 'Key1=NewValue1'
+        $content | Set-IniContent -Sections 'Category1' -NameValuePairs @{'Key1' = 'NewValue1'}
 
         # assert
         It "updates INI content with the new value" {
@@ -147,7 +127,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Key3"] = "Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Remove-IniEntry -Sections 'Category1','Category2' -Keys 'Key1','Key3'
+        $content | Remove-IniEntry -Sections 'Category1', 'Category2' -Keys 'Key1', 'Key3'
 
         # assert
         It "removes specified keys from INI" {
@@ -186,7 +166,7 @@ Describe "PsIni functionality" {
 
     }
 
-    
+
     Context "Commenting out INI Content" {
 
         # act
@@ -198,7 +178,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Key3"] = "Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Add-IniComment -Keys 'Key1','Key4'
+        $content | Add-IniComment -Keys 'Key1', 'Key4'
 
         # assert
         It "removes specified keys from INI" {
@@ -262,7 +242,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Comment1"] = "#Key3=Cat2Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        [char[]]$commentChars = @(";","#")
+        [char[]]$commentChars = @(";", "#")
         $content | Remove-IniComment -Keys 'Key3' -CommentChar $commentChars
 
         # assert
@@ -282,7 +262,7 @@ Describe "PsIni functionality" {
 }
 
 Describe 'Style rules' {
-    $psiniRoot = (Get-Module PsIni).ModuleBase
+    $psiniRoot = $Module
 
     $files = @(
         Get-ChildItem $psiniRoot -Include *.ps1, *.psm1

@@ -25,20 +25,6 @@ Function Remove-IniEntry {
     .Outputs
         System.Collections.Specialized.OrderedDictionary
 
-    .Parameter FilePath
-        Specifies the path to the input file.
-
-    .Parameter InputObject
-        Specifies the Hashtable to be modified. Enter a variable that contains the objects or type a command or expression that gets the objects.
-
-    .Parameter Keys
-        String array of one or more keys to limit the changes to, separated by a comma. Optional.
-
-    .Parameter Sections
-        String array of one or more sections to limit the changes to, separated by a comma.
-        Surrounding section names with square brackets is not necessary but is supported.
-        Ini keys that do not have a defined section can be modified by specifying '_' (underscore) for the section.
-
     .Example
         $ini = Remove-IniEntry -FilePath "C:\myinifile.ini" -Sections 'Printers' -Keys 'Headers','Version'
         -----------
@@ -84,109 +70,111 @@ Function Remove-IniEntry {
     )]
     Param
     (
-        [Parameter(ParameterSetName="File",Mandatory=$True,Position=0)]
+        # Specifies the path to the input file.
+        [Parameter( Position = 0, Mandatory, ParameterSetName = "File")]
         [ValidateNotNullOrEmpty()]
-        [String]$FilePath,
+        [String]
+        $FilePath,
 
-        [Parameter(ParameterSetName="Object",Mandatory=$True,ValueFromPipeline=$True)]
-        [System.Collections.IDictionary]$InputObject,
+        # Specifies the Hashtable to be modified.
+        # Enter a variable that contains the objects or type a command or expression that gets the objects.
+        [Parameter( Mandatory, ValueFromPipeline, ParameterSetName = "Object" )]
+        [System.Collections.IDictionary]
+        $InputObject,
+
+        # String array of one or more keys to limit the changes to, separated by a comma. Optional.
+        [ValidateNotNullOrEmpty()]
+        [String[]]
+        $Keys,
 
         [ValidateNotNullOrEmpty()]
-        [String[]]$Keys,
-
-        [ValidateNotNullOrEmpty()]
-        [String[]]$Sections
+        [String[]]
+        $Sections
     )
 
-    Begin
-    {
+    Begin {
         Write-Debug "PsBoundParameters:"
         $PSBoundParameters.GetEnumerator() | ForEach-Object { Write-Debug $_ }
-        if ($PSBoundParameters['Debug']) { $DebugPreference = 'Continue' }
+        if ($PSBoundParameters['Debug']) {
+            $DebugPreference = 'Continue'
+        }
         Write-Debug "DebugPreference: $DebugPreference"
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
     }
     # Remove the specified keys in the list, either in the specified section or in all sections.
-    Process
-    {
+    Process {
         # Get the ini from either a file or object passed in.
         if ($PSCmdlet.ParameterSetName -eq 'File') { $content = Get-IniContent $FilePath }
         if ($PSCmdlet.ParameterSetName -eq 'Object') { $content = $InputObject }
 
-        if (!$Keys -and !$Sections)
-        {
+        if (!$Keys -and !$Sections) {
             Write-Verbose ("No sections or keys provided, exiting.")
-            return $content
+            Write-Output $content
         }
 
         # Specific section(s) were requested.
-        if ($Sections)
-        {
-            foreach ($section in $Sections)
-            {
+        if ($Sections) {
+            foreach ($section in $Sections) {
                 # Get rid of whitespace and section brackets.
-                $section = $section.Trim() -replace '[][]',''
+                $section = $section.Trim() -replace '[][]', ''
 
                 Write-Debug ("Processing '{0}' section." -f $section)
 
                 # If the user wants to remove an entire section, there will be a section specified but no keys.
-                if (!$Keys)
-                {
+                if (!$Keys) {
                     Write-Verbose ("Deleting entire section '{0}'." -f $section)
                     $content.Remove($section)
                 }
-                else
-                {
-                    foreach ($key in $Keys)
-                    {
+                else {
+                    foreach ($key in $Keys) {
                         Write-Debug ("Processing '{0}' key." -f $key)
 
                         $key = $key.Trim()
 
-                        if ($content[$section]) { $currentValue = $content[$section][$key] }
-                        else
-                        {
+                        if ($content[$section]) {
+                            $currentValue = $content[$section][$key]
+                        }
+                        else {
                             Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist." -f $section)
                             # Break out of the loop after this, because we don't want to check further keys for this non-existent section.
                             break
                         }
 
-                        if ($currentValue)
-                        {
+                        if ($currentValue) {
                             Write-Verbose ("Removing {0} key from {1} section." -f $key, $section)
                             $content[$section].Remove($key)
                         }
-                        else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist." -f $key) }
+                        else {
+                            Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist." -f $key)
+                        }
                     }
                 }
             }
         }
-        else # No section supplied, go through the entire ini since changes apply to all sections.
-        {
-            foreach ($item in $content.GetEnumerator())
-            {
+        else {
+            # No section supplied, go through the entire ini since changes apply to all sections.
+            foreach ($item in $content.GetEnumerator()) {
                 $section = $item.key
                 Write-Debug ("Processing '{0}' section." -f $section)
 
-                foreach ($key in $Keys)
-                {
+                foreach ($key in $Keys) {
                     $key = $key.Trim()
                     Write-Debug ("Processing '{0}' key." -f $key)
 
-                    if ($content[$section][$key])
-                    {
+                    if ($content[$section][$key]) {
                         Write-Verbose ("Removing {0} key from {1} section." -f $key, $section)
                         $content[$section].Remove($key)
                     }
-                    else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist in {1} section." -f $key, $section) }
+                    else {
+                        Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' key does not exist in {1} section." -f $key, $section)
+                    }
                 }
             }
         }
 
-        return $content
+        Write-Output $content
     }
-    End
-    {
+    End {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
     }
 }
