@@ -1,16 +1,6 @@
-﻿# Enforce WorkingDir
-#--------------------------------------------------
-$Script:ScriptDir = Split-Path -Path $MyInvocation.MyCommand.Path -parent
-$root = "$ScriptDir\.."
-$Module = "$root\PSIni"
-$Functions = "$root\PSIni\Functions"
-Set-Location $ScriptDir
+﻿Describe "Out-IniFile" {
 
-$testFile = (Split-Path -Leaf $MyInvocation.MyCommand.Path).Replace(".Tests.", ".")
-# functions and tests stored in separate directories; adjusting dot-sourcing
-. "$Functions\$testFile"
-
-Describe "Out-IniFile" {
+    Import-Module (Join-Path $PSScriptRoot "../PSIni") -Force -ErrorAction Stop
 
     Context "Alias" {
 

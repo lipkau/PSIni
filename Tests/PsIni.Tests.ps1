@@ -27,26 +27,6 @@ Describe -Tags 'VersionChecks' "PsIni manifest" {
     It "has a valid version in the manifest" {
         $script:manifest.Version -as [Version] | Should Not BeNullOrEmpty
     }
-
-    # if (Get-Command git.exe -ErrorAction SilentlyContinue) {
-    #     $script:tagVersion = $null
-    #     It "is tagged with a valid version" {
-    #         $thisCommit = git.exe log --decorate --oneline HEAD~1..HEAD
-
-    #         if ($thisCommit -match 'tag:\s*(\d+(?:\.\d+)*)')
-    #         {
-    #             $script:tagVersion = $matches[1]
-    #         }
-
-    #         $script:tagVersion                  | Should Not BeNullOrEmpty
-    #         $script:tagVersion -as [Version]    | Should Not BeNullOrEmpty
-    #     }
-
-    #     It "all versions are the same" {
-    #         $script:manifest.Version -as [Version] | Should be ( $script:tagVersion -as [Version] )
-    #     }
-
-    # }
 }
 
 Describe "PsIni functionality" {
@@ -282,7 +262,7 @@ Describe "PsIni functionality" {
 }
 
 Describe 'Style rules' {
-    $psiniRoot = (Get-Module PsIni).ModuleBase
+    $psiniRoot = $Module
 
     $files = @(
         Get-ChildItem $psiniRoot -Include *.ps1, *.psm1
