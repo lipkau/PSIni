@@ -91,7 +91,11 @@ Function Set-IniContent {
         [Parameter(ParameterSetName="File",Mandatory=$True)]
         [Parameter(ParameterSetName="Object",Mandatory=$True)]
         [ValidateNotNullOrEmpty()]
-        [HashTable]$NameValuePairs,
+        [String]$NameValuePairs,
+
+        [char]$NameValueDelimiter = '=',
+        [char]$NameValuePairDelimiter = ',',
+        [char]$SectionDelimiter = ',',
 
         [Parameter(ParameterSetName="File")]
         [Parameter(ParameterSetName="Object")]
@@ -112,16 +116,26 @@ Function Set-IniContent {
         {
             param ($content, $section)
 
-            foreach($pair in $NameValuePairs.GetEnumerator())
-            {
-                if (!($content[$section]))
-                {
+            foreach ($pair in $NameValuePairs.Split($NameValuePairDelimiter)) {
+
+                $splitPair = $pair.Split($NameValueDelimiter)
+
+                if ($splitPair.Length -ne 2) {
+                    Write-Warning("$($MyInvocation.MyCommand.Name):: Unable to split '{0}' into a distinct key/value pair." -f $pair)
+                    continue
+                }
+
+                $key = $splitPair[0].Trim()
+                $value = $splitPair[1].Trim()
+                Write-Debug ("Split key is {0}, split value is {1}" -f $key, $value)
+
+                if (!($content[$section])) {
                     Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist, creating it." -f $section)
                     $content[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 }
 
-                Write-Verbose ("$($MyInvocation.MyCommand.Name):: Setting '{0}' key in section {1} to '{2}'." -f $pair.key, $section, $pair.value)
-                $content[$section][$pair.key] = $pair.value
+                Write-Verbose ("$($MyInvocation.MyCommand.Name):: Setting '{0}' key in section {1} to '{2}'." -f $key, $section, $value)
+                $content[$section][$key] = $value
             }
         }
     }
@@ -135,7 +149,7 @@ Function Set-IniContent {
         # Specific section(s) were requested.
         if ($Sections)
         {
-            foreach ($section in $Sections)
+            foreach ($section in $Sections.Split($SectionDelimiter))
             {
                 # Get rid of whitespace and section brackets.
                 $section = $section.Trim() -replace '[][]',''
