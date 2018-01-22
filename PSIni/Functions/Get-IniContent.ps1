@@ -33,17 +33,6 @@ Function Get-IniContent {
     .Outputs
         System.Collections.Specialized.OrderedDictionary
 
-    .Parameter FilePath
-        Specifies the path to the input file.
-
-    .Parameter CommentChar
-        Specify what characters should be describe a comment.
-        Lines starting with the characters provided will be rendered as comments.
-        Default: ";"
-
-    .Parameter IgnoreComments
-        Remove lines determined to be comments from the resulting dictionary.
-
     .Example
         $FileContent = Get-IniContent "C:\myinifile.ini"
         -----------
@@ -72,55 +61,62 @@ Function Get-IniContent {
         [System.Collections.Specialized.OrderedDictionary]
     )]
     Param(
+        # Specifies the path to the input file.
         [ValidateNotNullOrEmpty()]
-        [Parameter(ValueFromPipeline=$True,Mandatory=$True)]
-        [string]$FilePath,
-        [char[]]$CommentChar = @(";"),
-        [switch]$IgnoreComments
+        [Parameter( Mandatory, ValueFromPipeline )]
+        [string]
+        $FilePath,
+
+        # Specify what characters should be describe a comment.
+        # Lines starting with the characters provided will be rendered as comments.
+        # Default: ";"
+        [char[]]
+        $CommentChar = @(";"),
+
+        # Remove lines determined to be comments from the resulting dictionary.
+        [switch]
+        $IgnoreComments
     )
 
-    Begin
-    {
+    Begin {
         Write-Debug "PsBoundParameters:"
         $PSBoundParameters.GetEnumerator() | ForEach-Object { Write-Debug $_ }
-        if ($PSBoundParameters['Debug']) { $DebugPreference = 'Continue' }
+        if ($PSBoundParameters['Debug']) {
+            $DebugPreference = 'Continue'
+        }
         Write-Debug "DebugPreference: $DebugPreference"
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
 
         $commentRegex = "^([$($CommentChar -join '')].*)$"
+
         Write-Debug ("commentRegex is {0}." -f $commentRegex)
     }
 
-    Process
-    {
+    Process {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $Filepath"
 
         $ini = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
 
-        if (!(Test-Path $Filepath))
-        {
+        if (!(Test-Path $Filepath)) {
             Write-Verbose ("Warning: `"{0}`" was not found." -f $Filepath)
-            return $ini
+            Write-Output $ini
         }
 
         $commentCount = 0
-        switch -regex -file $FilePath
-        {
-            "^\s*\[(.+)\]\s*$" # Section
-            {
+        switch -regex -file $FilePath {
+            "^\s*\[(.+)\]\s*$" {
+                # Section
                 $section = $matches[1]
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding section : $section"
                 $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 $CommentCount = 0
                 continue
             }
-            $commentRegex # Comment
-            {
-                if (!$IgnoreComments)
-                {
-                    if (!(test-path "variable:local:section"))
-                    {
+            $commentRegex {
+                # Comment
+                if (!$IgnoreComments) {
+                    if (!(test-path "variable:local:section")) {
                         $section = $script:NoSection
                         $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                     }
@@ -131,29 +127,31 @@ Function Get-IniContent {
                     Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding $name with value: $value"
                     $ini[$section][$name] = $value
                 }
-                else { Write-Debug ("Ignoring comment {0}." -f $matches[1]) }
+                else {
+                    Write-Debug ("Ignoring comment {0}." -f $matches[1])
+                }
 
                 continue
             }
-            "(.+?)\s*=\s*(.*)" # Key
-            {
-                if (!(test-path "variable:local:section"))
-                {
+            "(.+?)\s*=\s*(.*)" {
+                # Key
+                if (!(test-path "variable:local:section")) {
                     $section = $script:NoSection
                     $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 }
-                $name,$value = $matches[1..2]
+                $name, $value = $matches[1..2]
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
                 $ini[$section][$name] = $value
                 continue
             }
         }
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished Processing file: $FilePath"
-        Return $ini
+        Write-Output $ini
     }
 
-    End
-        {Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"}
+    End {
+        Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
+    }
 }
 
 Set-Alias gic Get-IniContent

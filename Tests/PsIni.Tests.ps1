@@ -186,7 +186,7 @@ Describe "PsIni functionality" {
 
     }
 
-    
+
     Context "Commenting out INI Content" {
 
         # act

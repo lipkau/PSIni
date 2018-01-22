@@ -25,26 +25,6 @@ Function Add-IniComment {
     .Outputs
         System.Collections.Specialized.OrderedDictionary
 
-    .Parameter FilePath
-        Specifies the path to the input file.
-
-    .Parameter InputObject
-        Specifies the Hashtable to be modified. Enter a variable that contains the objects or type a command or expression that gets the objects.
-
-    .Parameter CommentChar
-        Specify what character should be used to comment out entries.
-        Note: This parameter is a char array to maintain compatibility with the other functions.
-        However, only the first character is used to comment out entries.
-        Default: ";"
-
-    .Parameter Keys
-        String array of one or more keys to limit the changes to, separated by a comma. Optional.
-
-    .Parameter Sections
-        String array of one or more sections to limit the changes to, separated by a comma.
-        Surrounding section names with square brackets is not necessary but is supported.
-        Ini keys that do not have a defined section can be modified by specifying '_' (underscore) for the section.
-
     .Example
         $ini = Add-IniComment -FilePath "C:\myinifile.ini" -Sections 'Printers' -Keys 'Headers','Footers'
         -----------
@@ -83,91 +63,109 @@ Function Add-IniComment {
     )]
     Param
     (
-        [Parameter(ParameterSetName="File",Mandatory=$True,Position=0)]
+        # Specifies the path to the input file.
+        [Parameter( Position = 0, Mandatory, ParameterSetName = "File" )]
         [ValidateNotNullOrEmpty()]
-        [String]$FilePath,
+        [String]
+        $FilePath,
 
-        [Parameter(ParameterSetName="Object",Mandatory=$True,ValueFromPipeline=$True)]
+        # Specifies the Hashtable to be modified. Enter a variable that contains the objects or type a command or expression that gets the objects.
+        [Parameter( Mandatory, ValueFromPipeline, ParameterSetName = "Object" )]
         [ValidateNotNullOrEmpty()]
-        [System.Collections.IDictionary]$InputObject,
+        [System.Collections.IDictionary]
+        $InputObject,
 
-        [Parameter(Mandatory = $True)]
+        # String array of one or more keys to limit the changes to, separated by a comma. Optional.
+        [Parameter( Mandatory )]
         [ValidateNotNullOrEmpty()]
-        [String[]]$Keys,
+        [String[]]
+        $Keys,
 
-        [char[]]$CommentChar = @(";"),
+        # Specify what character should be used to comment out entries.
+        # Note: This parameter is a char array to maintain compatibility with the other functions.
+        # However, only the first character is used to comment out entries.
+        # Default: ";"
+        [char[]]
+        $CommentChar = @(";"),
 
+        # String array of one or more sections to limit the changes to, separated by a comma.
+        # Surrounding section names with square brackets is not necessary but is supported.
+        # Ini keys that do not have a defined section can be modified by specifying '_' (underscore) for the section.
         [ValidateNotNullOrEmpty()]
-        [String[]]$Sections
+        [String[]]
+        $Sections
     )
 
-    Begin
-    {
+    Begin {
         Write-Debug "PsBoundParameters:"
         $PSBoundParameters.GetEnumerator() | ForEach-Object { Write-Debug $_ }
-        if ($PSBoundParameters['Debug']) { $DebugPreference = 'Continue' }
+        if ($PSBoundParameters['Debug']) {
+            $DebugPreference = 'Continue'
+        }
         Write-Debug "DebugPreference: $DebugPreference"
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
     }
-    # Comment out the specified keys in the list, either in the specified section or in all sections.
-    Process
-    {
+
+    Process {
         # Get the ini from either a file or object passed in.
         if ($PSCmdlet.ParameterSetName -eq 'File') { $content = Get-IniContent $FilePath }
         if ($PSCmdlet.ParameterSetName -eq 'Object') { $content = $InputObject }
 
         # Specific section(s) were requested.
-        if ($Sections)
-        {
-            foreach ($section in $Sections)
-            {
+        if ($Sections) {
+            foreach ($section in $Sections) {
                 # Get rid of whitespace and section brackets.
-                $section = $section.Trim() -replace '[][]',''
+                $section = $section.Trim() -replace '[][]', ''
 
                 Write-Debug ("Processing '{0}' section." -f $section)
 
-                foreach ($key in $Keys)
-                {
+                foreach ($key in $Keys) {
                     Write-Debug ("Processing '{0}' key." -f $key)
 
                     $key = $key.Trim()
 
-                    if ($content[$section]) { $currentValue = $content[$section][$key] }
-                    else
-                    {
+                    if ($content[$section]) {
+                        $currentValue = $content[$section][$key]
+                    }
+                    else {
                         Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist." -f $section)
                         # Break out of the loop after this, because we don't want to check further keys for this non-existent section.
                         break
                     }
 
-                    if ($currentValue) { Convert-IniEntryToComment $content $key $section $CommentChar }
-                    else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '[{0}][{1}]' does not exist." -f $section, $key) }
+                    if ($currentValue) {
+                        Convert-IniEntryToComment $content $key $section $CommentChar
+                    }
+                    else {
+                        Write-Verbose ("$($MyInvocation.MyCommand.Name):: '[{0}][{1}]' does not exist." -f $section, $key)
+                    }
                 }
             }
         }
-        else # No section supplied, go through the entire ini since changes apply to all sections.
-        {
-            foreach ($item in $content.GetEnumerator())
-            {
+        else {
+            # No section supplied, go through the entire ini since changes apply to all sections.
+            foreach ($item in $content.GetEnumerator()) {
                 $section = $item.key
                 Write-Debug ("Processing '{0}' section." -f $section)
 
-                foreach ($key in $Keys)
-                {
+                foreach ($key in $Keys) {
                     $key = $key.Trim()
                     Write-Debug ("Processing '{0}' key." -f $key)
 
-                    if ($content[$section][$key]) { Convert-IniEntryToComment $content $key $section $CommentChar }
-                    else { Write-Verbose ("$($MyInvocation.MyCommand.Name):: '[{0}][{1}]' does not exist." -f $section, $key) }
+                    if ($content[$section][$key]) {
+                        Convert-IniEntryToComment $content $key $section $CommentChar
+                    }
+                    else {
+                        Write-Verbose ("$($MyInvocation.MyCommand.Name):: '[{0}][{1}]' does not exist." -f $section, $key)
+                    }
                 }
             }
         }
 
-        return $content
+        Write-Output $content
     }
-    End
-    {
+    End {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
     }
 }
