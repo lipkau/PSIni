@@ -127,7 +127,7 @@ Describe "PsIni functionality" {
         $content["Category2"]["Key3"] = "Value3"
         $content["Category2"]["Key4"] = "Value4"
 
-        $content | Set-IniContent -Sections 'Category1' -NameValuePairs @{'Key1'='NewValue1'}
+        $content | Set-IniContent -Sections 'Category1' -NameValuePairs 'Key1=NewValue1'
 
         # assert
         It "updates INI content with the new value" {

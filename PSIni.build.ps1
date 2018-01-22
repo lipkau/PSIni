@@ -156,7 +156,6 @@ task GetVersion {
     }
     $script:Version = New-Object -TypeName System.Version -ArgumentList $currentVersion.Major,
     $currentVersion.Minor,
-    $currentVersion.Build,
     $newRevision
 }
 
