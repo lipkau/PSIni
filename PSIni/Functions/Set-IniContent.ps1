@@ -80,31 +80,26 @@ Function Set-IniContent {
     )]
     Param
     (
-        [Parameter(ParameterSetName="File",Mandatory=$True,Position=0)]
+        [Parameter(ParameterSetName = "File", Mandatory = $True, Position = 0)]
         [ValidateNotNullOrEmpty()]
         [String]$FilePath,
 
-        [Parameter(ParameterSetName="Object",Mandatory=$True,ValueFromPipeline=$True)]
+        [Parameter(ParameterSetName = "Object", Mandatory = $True, ValueFromPipeline = $True)]
         [ValidateNotNullOrEmpty()]
         [System.Collections.IDictionary]$InputObject,
 
-        [Parameter(ParameterSetName="File",Mandatory=$True)]
-        [Parameter(ParameterSetName="Object",Mandatory=$True)]
+        [Parameter(ParameterSetName = "File", Mandatory = $True)]
+        [Parameter(ParameterSetName = "Object", Mandatory = $True)]
         [ValidateNotNullOrEmpty()]
-        [String]$NameValuePairs,
+        [HashTable]$NameValuePairs,
 
-        [char]$NameValueDelimiter = '=',
-        [char]$NameValuePairDelimiter = ',',
-        [char]$SectionDelimiter = ',',
-
-        [Parameter(ParameterSetName="File")]
-        [Parameter(ParameterSetName="Object")]
+        [Parameter(ParameterSetName = "File")]
+        [Parameter(ParameterSetName = "Object")]
         [ValidateNotNullOrEmpty()]
         [String[]]$Sections
     )
 
-    Begin
-    {
+    Begin {
         Write-Debug "PsBoundParameters:"
         $PSBoundParameters.GetEnumerator() | ForEach-Object { Write-Debug $_ }
         if ($PSBoundParameters['Debug']) { $DebugPreference = 'Continue' }
@@ -112,70 +107,51 @@ Function Set-IniContent {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
 
         # Update or add the name/value pairs to the section.
-        Function Update-IniEntry
-        {
+        Function Update-IniEntry {
             param ($content, $section)
 
-            foreach ($pair in $NameValuePairs.Split($NameValuePairDelimiter)) {
-
-                $splitPair = $pair.Split($NameValueDelimiter)
-
-                if ($splitPair.Length -ne 2) {
-                    Write-Warning("$($MyInvocation.MyCommand.Name):: Unable to split '{0}' into a distinct key/value pair." -f $pair)
-                    continue
-                }
-
-                $key = $splitPair[0].Trim()
-                $value = $splitPair[1].Trim()
-                Write-Debug ("Split key is {0}, split value is {1}" -f $key, $value)
-
+            foreach ($pair in $NameValuePairs.GetEnumerator()) {
                 if (!($content[$section])) {
                     Write-Verbose ("$($MyInvocation.MyCommand.Name):: '{0}' section does not exist, creating it." -f $section)
                     $content[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 }
 
-                Write-Verbose ("$($MyInvocation.MyCommand.Name):: Setting '{0}' key in section {1} to '{2}'." -f $key, $section, $value)
-                $content[$section][$key] = $value
+                Write-Verbose ("$($MyInvocation.MyCommand.Name):: Setting '{0}' key in section {1} to '{2}'." -f $pair.key, $section, $pair.value)
+                $content[$section][$pair.key] = $pair.value
             }
         }
     }
     # Update the specified keys in the list, either in the specified section or in all sections.
-    Process
-    {
+    Process {
         # Get the ini from either a file or object passed in.
         if ($PSCmdlet.ParameterSetName -eq 'File') { $content = Get-IniContent $FilePath }
         if ($PSCmdlet.ParameterSetName -eq 'Object') { $content = $InputObject }
 
         # Specific section(s) were requested.
-        if ($Sections)
-        {
-            foreach ($section in $Sections.Split($SectionDelimiter))
-            {
+        if ($Sections) {
+            foreach ($section in $Sections) {
                 # Get rid of whitespace and section brackets.
-                $section = $section.Trim() -replace '[][]',''
+                $section = $section.Trim() -replace '[][]', ''
 
                 Write-Debug ("Processing '{0}' section." -f $section)
 
                 Update-IniEntry $content $section
             }
         }
-        else # No section supplied, go through the entire ini since changes apply to all sections.
-        {
-            foreach ($item in $content.GetEnumerator())
-            {
-                $section = $item.key
+        else # No section supplied, go through the entire ini since changes apply to all sections. {
+        foreach ($item in $content.GetEnumerator()) {
+            $section = $item.key
 
-                Write-Debug ("Processing '{0}' section." -f $section)
+            Write-Debug ("Processing '{0}' section." -f $section)
 
-                Update-IniEntry $content $section
-            }
+            Update-IniEntry $content $section
         }
-        return $content
     }
-    End
-    {
-        Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
-    }
+    return $content
+}
+End {
+    Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
+}
 }
 
 Set-Alias sic Set-IniContent
