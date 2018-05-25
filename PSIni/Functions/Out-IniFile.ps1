@@ -12,21 +12,6 @@ Function Out-IniFile {
         Blog        : http://oliver.lipkau.net/blog/
         Source      : https://github.com/lipkau/PsIni
                       http://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91
-        Version     : 1.0.0 - 2010/03/12 - OL - Initial release
-                      1.0.1 - 2012/04/19 - OL - Bugfix/Added example to help (Thx Ingmar Verheij)
-                      1.0.2 - 2014/12/11 - OL - Improved handling for missing output file (Thx SLDR)
-                      1.0.3 - 2014/01/06 - CB - removed extra \r\n at end of file
-                      1.0.4 - 2015/06/06 - OL - Typo (Thx Dominik)
-                      1.0.5 - 2015/06/18 - OL - Migrate to semantic versioning (GitHub issue#4)
-                      1.0.6 - 2015/06/18 - OL - Remove check for .ini extension (GitHub Issue#6)
-                      1.1.0 - 2015/07/14 - CB - Improve round-tripping and be a bit more liberal (GitHub Pull #7)
-                                           OL - Small Improvments and cleanup
-                      1.1.2 - 2015/10/14 - OL - Fixed parameters in nested function
-                      1.1.3 - 2016/08/18 - SS - Moved the get/create code for $FilePath to the Process block since it
-                                                overwrites files piped in by other functions when it's in the Begin block,
-                                                added additional debug output.
-                      1.1.4 - 2016/12/29 - SS - Support output of a blank ini, e.g. if all sections got removed. This
-                                                required removing [ValidateNotNullOrEmpty()] from InputObject
 
         #Requires -Version 2.0
 
@@ -36,18 +21,6 @@ Function Out-IniFile {
 
     .Outputs
         System.IO.FileSystemInfo
-
-     .Parameter Encoding
-
-
-     .Parameter Force
-
-
-     .Parameter PassThru
-
-
-     .Parameter Loose
-
 
     .Example
         Out-IniFile $IniVar "C:\myinifile.ini"
@@ -125,7 +98,13 @@ Function Out-IniFile {
 
         # Adds spaces around the equal sign when writing the key = value
         [switch]
-        $Loose
+        $Loose,
+
+        # Writes the file as "pretty" as possible
+        #
+        # Adds an extra linebreak between Sections
+        [switch]
+        $Pretty
     )
 
     Begin {
@@ -194,6 +173,8 @@ Function Out-IniFile {
     }
 
     Process {
+        $extraLF = ""
+
         if ($Append) {
             Write-Debug ("Appending to '{0}'." -f $FilePath)
             $outfile = Get-Item $FilePath
@@ -225,7 +206,10 @@ Function Out-IniFile {
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$i]"
 
                 # Only write section, if it is not a dummy ($script:NoSection)
-                if ($i -ne $script:NoSection) { Add-Content -Value "`n[$i]" @parameters }
+                if ($i -ne $script:NoSection) { Add-Content -Value "$extraLF[$i]" @parameters }
+                if ($Pretty) {
+                    $extraLF = "`r`n"
+                }
 
                 if ( $InputObject[$i].Count) {
                     Out-Keys $InputObject[$i] `
