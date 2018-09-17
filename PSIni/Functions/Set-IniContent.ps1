@@ -67,21 +67,21 @@ Function Set-IniContent {
     Param
     (
         # Specifies the path to the input file.
-        [Parameter( Position = 0, Mandatory, ParameterSetName = "File" )]
+        [Parameter( Position = 0, Mandatory = $true, ParameterSetName = "File" )]
         [ValidateNotNullOrEmpty()]
         [String]
         $FilePath,
 
         # Specifies the Hashtable to be modified.
         # Enter a variable that contains the objects or type a command or expression that gets the objects.
-        [Parameter( Mandatory, ValueFromPipeline, ParameterSetName = "Object")]
+        [Parameter( Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = "Object")]
         [ValidateNotNullOrEmpty()]
         [System.Collections.IDictionary]
         $InputObject,
 
         # Hashtable of one or more key names and values to modify. Required.
-        [Parameter( Mandatory, ParameterSetName = "File")]
-        [Parameter( Mandatory, ParameterSetName = "Object")]
+        [Parameter( Mandatory = $true, ParameterSetName = "File")]
+        [Parameter( Mandatory = $true, ParameterSetName = "Object")]
         [ValidateNotNullOrEmpty()]
         [HashTable]
         $NameValuePairs,

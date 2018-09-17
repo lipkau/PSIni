@@ -71,14 +71,14 @@ Function Remove-IniEntry {
     Param
     (
         # Specifies the path to the input file.
-        [Parameter( Position = 0, Mandatory, ParameterSetName = "File")]
+        [Parameter( Position = 0, Mandatory = $true, ParameterSetName = "File")]
         [ValidateNotNullOrEmpty()]
         [String]
         $FilePath,
 
         # Specifies the Hashtable to be modified.
         # Enter a variable that contains the objects or type a command or expression that gets the objects.
-        [Parameter( Mandatory, ValueFromPipeline, ParameterSetName = "Object" )]
+        [Parameter( Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = "Object" )]
         [System.Collections.IDictionary]
         $InputObject,
 

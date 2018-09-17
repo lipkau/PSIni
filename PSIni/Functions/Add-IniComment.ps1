@@ -64,19 +64,19 @@ Function Add-IniComment {
     Param
     (
         # Specifies the path to the input file.
-        [Parameter( Position = 0, Mandatory, ParameterSetName = "File" )]
+        [Parameter( Position = 0, Mandatory = $true, ParameterSetName = "File" )]
         [ValidateNotNullOrEmpty()]
         [String]
         $FilePath,
 
         # Specifies the Hashtable to be modified. Enter a variable that contains the objects or type a command or expression that gets the objects.
-        [Parameter( Mandatory, ValueFromPipeline, ParameterSetName = "Object" )]
+        [Parameter( Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = "Object" )]
         [ValidateNotNullOrEmpty()]
         [System.Collections.IDictionary]
         $InputObject,
 
         # String array of one or more keys to limit the changes to, separated by a comma. Optional.
-        [Parameter( Mandatory )]
+        [Parameter( Mandatory = $true )]
         [ValidateNotNullOrEmpty()]
         [String[]]
         $Keys,
@@ -85,7 +85,7 @@ Function Add-IniComment {
         # Note: This parameter is a char array to maintain compatibility with the other functions.
         # However, only the first character is used to comment out entries.
         # Default: ";"
-        [char[]]
+        [Char[]]
         $CommentChar = @(";"),
 
         # String array of one or more sections to limit the changes to, separated by a comma.

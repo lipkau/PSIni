@@ -63,18 +63,18 @@ Function Get-IniContent {
     Param(
         # Specifies the path to the input file.
         [ValidateNotNullOrEmpty()]
-        [Parameter( Mandatory, ValueFromPipeline )]
-        [string]
+        [Parameter( Mandatory = $true, ValueFromPipeline = $true )]
+        [String]
         $FilePath,
 
         # Specify what characters should be describe a comment.
         # Lines starting with the characters provided will be rendered as comments.
         # Default: ";"
-        [char[]]
+        [Char[]]
         $CommentChar = @(";"),
 
         # Remove lines determined to be comments from the resulting dictionary.
-        [switch]
+        [Switch]
         $IgnoreComments
     )
 
