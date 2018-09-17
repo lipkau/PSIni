@@ -64,19 +64,19 @@ Function Remove-IniComment {
     Param
     (
         # Specifies the path to the input file.
-        [Parameter( Position = 0,  Mandatory, ParameterSetName = "File" )]
+        [Parameter( Position = 0,  Mandatory = $true, ParameterSetName = "File" )]
         [ValidateNotNullOrEmpty()]
         [String]
         $FilePath,
 
         # Specifies the Hashtable to be modified. Enter a variable that contains the objects or type a command or expression that gets the objects.
-        [Parameter( Mandatory, ValueFromPipeline, ParameterSetName = "Object" )]
+        [Parameter( Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = "Object" )]
         [ValidateNotNullOrEmpty()]
         [System.Collections.IDictionary]
         $InputObject,
 
         # String array of one or more keys to limit the changes to, separated by a comma. Optional.
-        [Parameter(Mandatory)]
+        [Parameter( Mandatory = $true )]
         [ValidateNotNullOrEmpty()]
         [String[]]
         $Keys,
@@ -84,7 +84,7 @@ Function Remove-IniComment {
         # Specify what characters should be describe a comment.
         # Lines starting with the characters provided will be rendered as comments.
         # Default: ";"
-        [char[]]
+        [Char[]]
         $CommentChar = @(";"),
 
         # String array of one or more sections to limit the changes to, separated by a comma.

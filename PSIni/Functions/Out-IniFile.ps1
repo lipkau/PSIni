@@ -73,37 +73,37 @@ Function Out-IniFile {
         # -- UTF8:  Encodes in UTF-8 format.
         [ValidateSet("Unicode", "UTF7", "UTF8", "ASCII", "BigEndianUnicode", "Byte", "String")]
         [Parameter()]
-        [string]
+        [String]
         $Encoding = "UTF8",
 
         # Specifies the path to the output file.
         [ValidateNotNullOrEmpty()]
         [ValidateScript( {Test-Path $_ -IsValid} )]
-        [Parameter( Position = 0, Mandatory )]
-        [string]
+        [Parameter( Position = 0, Mandatory = $true )]
+        [String]
         $FilePath,
 
         # Allows the cmdlet to overwrite an existing read-only file. Even using the Force parameter, the cmdlet cannot override security restrictions.
-        [switch]
+        [Switch]
         $Force,
 
         # Specifies the Hashtable to be written to the file. Enter a variable that contains the objects or type a command or expression that gets the objects.
-        [Parameter( Mandatory, ValueFromPipeline )]
+        [Parameter( Mandatory = $true, ValueFromPipeline = $true )]
         [System.Collections.IDictionary]
         $InputObject,
 
         # Passes an object representing the location to the pipeline. By default, this cmdlet does not generate any output.
-        [switch]
+        [Switch]
         $Passthru,
 
         # Adds spaces around the equal sign when writing the key = value
-        [switch]
+        [Switch]
         $Loose,
 
         # Writes the file as "pretty" as possible
         #
         # Adds an extra linebreak between Sections
-        [switch]
+        [Switch]
         $Pretty
     )
 
