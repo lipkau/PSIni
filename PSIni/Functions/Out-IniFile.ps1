@@ -200,13 +200,13 @@ Function Out-IniFile {
                 Add-Content -Value "$i$delimiter$($InputObject[$i])" @parameters
 
             }
-#            elseif ($i -eq $script:NoSection) {
-#                #Key value pair of NoSection
-#                Out-Keys $InputObject[$i] `
-#                    @parameters `
-#                    -Delimiter $delimiter `
-#                    -MyInvocation $MyInvocation
-#            }
+            elseif ($i -eq $script:NoSection) {
+                #Key value pair of NoSection
+                Out-Keys $InputObject[$i] `
+                    @parameters `
+                    -Delimiter $delimiter `
+                    -MyInvocation $MyInvocation
+            }
             else {
                 #Sections
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$i]"
