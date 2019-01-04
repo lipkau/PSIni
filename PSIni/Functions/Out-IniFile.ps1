@@ -153,13 +153,9 @@ Function Out-IniFile {
                     }
                     else {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key"
-                        if ($InputObject[$key] -is [string]) {
-                            Add-Content -Value "$key$delimiter$($InputObject[$key])" -Encoding $Encoding -Path $Path
-                        } else {
-                            Foreach ($value in $InputObject[$key]) {
-                                Add-Content -Value "$key$delimiter$($value)" -Encoding $Encoding -Path $Path
-                            }
-                        }
+                        $InputObject[$key] |
+                            ForEach-Object { "$key$delimiter$_)" } |
+                            Add-Content -Encoding $Encoding -Path $Path
                     }
                 }
             }
