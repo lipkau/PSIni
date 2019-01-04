@@ -153,7 +153,13 @@ Function Out-IniFile {
                     }
                     else {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key"
-                        Add-Content -Value "$key$delimiter$($InputObject[$key])" -Encoding $Encoding -Path $Path
+                        if ($InputObject[$key] -is [string]) {
+                            Add-Content -Value "$key$delimiter$($InputObject[$key])" -Encoding $Encoding -Path $Path
+                        } else {
+                            Foreach ($value in $InputObject[$key]) {
+                                Add-Content -Value "$key$delimiter$($value)" -Encoding $Encoding -Path $Path
+                            }
+                        }
                     }
                 }
             }
@@ -194,13 +200,13 @@ Function Out-IniFile {
                 Add-Content -Value "$i$delimiter$($InputObject[$i])" @parameters
 
             }
-            elseif ($i -eq $script:NoSection) {
-                #Key value pair of NoSection
-                Out-Keys $InputObject[$i] `
-                    @parameters `
-                    -Delimiter $delimiter `
-                    -MyInvocation $MyInvocation
-            }
+#            elseif ($i -eq $script:NoSection) {
+#                #Key value pair of NoSection
+#                Out-Keys $InputObject[$i] `
+#                    @parameters `
+#                    -Delimiter $delimiter `
+#                    -MyInvocation $MyInvocation
+#            }
             else {
                 #Sections
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$i]"
