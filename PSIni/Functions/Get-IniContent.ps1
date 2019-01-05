@@ -141,7 +141,11 @@ Function Get-IniContent {
                 }
                 $name, $value = $matches[1..2]
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
-                $ini[$section][$name] = $value
+                if (-not $ini[$section][$name]) {
+                    $ini[$section][$name] = @($value)
+                } else {
+                        $ini[$section][$name] += $value
+                }
                 continue
             }
         }
