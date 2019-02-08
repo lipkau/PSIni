@@ -131,6 +131,7 @@ Function Out-IniFile {
                 [ValidateNotNullOrEmpty()]
                 [ValidateScript( {Test-Path $_ -IsValid})]
                 [Parameter( Mandatory, ValueFromPipelineByPropertyName )]
+                [Alias("Path")]
                 [string]
                 $FilePath,
 
