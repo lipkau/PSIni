@@ -1,3 +1,4 @@
+Set-StrictMode -Version Latest
 Function Out-IniFile {
     <#
     .Synopsis
