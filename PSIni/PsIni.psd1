@@ -18,7 +18,7 @@
     RootModule             = 'PsIni.psm1'
 
     # Version number of this module.
-    ModuleVersion          = '2.0.0'
+    ModuleVersion          = '3.0.0'
 
     # ID used to uniquely identify this module
     GUID                   = '98e1dc0f-2f03-4ca1-98bb-fd7b4b6ac652'
