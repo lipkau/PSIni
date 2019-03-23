@@ -40,7 +40,7 @@ Describe "PsIni functionality" {
     $dictIn["Category1"]["Key1"] = "Value1"
     $dictIn["Category1"]["Key2"] = "Value2"
     $dictIn["Category2"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-    $dictIn["Category2"]["Key3"] = "Value3"
+    $dictIn["Category2"]["Key3"] = @("Value3.1", "Value3.2", "Value3.3")
     $dictIn["Category2"]["Key4"] = "Value4"
 
     Context "Load Module" {
@@ -69,7 +69,7 @@ Describe "PsIni functionality" {
         # assert
         It "content matches expected value" {
 
-            $content = "[Category1]`r`nKey1=value1`r`nKey2=Value2`r`n[Category2]`r`nKey3=Value3`r`nKey4=Value4`r`n"
+            $content = "[Category1]`r`nKey1=value1`r`nKey2=Value2`r`n[Category2]`r`nKey3=Value3.1`r`nKey3=Value3.2`r`nKey3=Value3.3`r`nKey4=Value4`r`n"
 
             Get-Content $iniFile -Raw | Should Be $content
 
@@ -91,7 +91,7 @@ Describe "PsIni functionality" {
         # assert
         It "content matches expected value" {
 
-            $content = "[Category1]`r`nKey1=value1`r`nKey2=Value2`r`n`r`n[Category2]`r`nKey3=Value3`r`nKey4=Value4`r`n"
+            $content = "[Category1]`r`nKey1=value1`r`nKey2=Value2`r`n`r`n[Category2]`r`nKey3=Value3.1`r`nKey3=Value3.2`r`nKey3=Value3.3`r`nKey4=Value4`r`n"
 
             Get-Content $iniFile -Raw | Should Be $content
 
@@ -101,9 +101,11 @@ Describe "PsIni functionality" {
 
     Context "Reading INI" {
 
-        # act
+        #arrange
         Out-IniFile -InputObject $dictIn -FilePath $iniFile
-        $dictOut = Get-IniContent -FilePath $iniFile
+
+        # act
+        $global:dictOut = Get-IniContent -FilePath $iniFile
 
         # assert
         It "creates a OrderedDictionary from an INI file" {
@@ -113,6 +115,17 @@ Describe "PsIni functionality" {
         # assert
         It "content matches original hashtable" {
             Compare-Object $dictIn $dictOut
+        }
+
+        #assert
+        It "reads sames keys into an [array]" {
+            $dictOut["Category2"]["Key3"].gettype().FullName | Should -Be "System.Collections.ArrayList"
+        }
+
+        It "keeps non repeating keys as [string]" {
+            $dictOut["Category1"]["Key1"] | Should -BeOfType [String]
+            $dictOut["Category1"]["Key2"] | Should -BeOfType [String]
+            $dictOut["Category2"]["Key4"] | Should -BeOfType [String]
         }
 
     }

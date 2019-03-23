@@ -144,7 +144,19 @@ Function Get-IniContent {
                 }
                 $name, $value = $matches[1, 3]
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
-                $ini[$section][$name] = $value
+                if (-not $ini[$section][$name]) {
+                    $ini[$section][$name] = $value
+                }
+                else {
+                    if ($ini[$section][$name] -is [string]) {
+                        $ini[$section][$name] = [System.Collections.ArrayList]::new()
+                        $ini[$section][$name].Add($ini[$section][$name]) | Out-Null
+                        $ini[$section][$name].Add($value) | Out-Null
+                    }
+                    else {
+                        $ini[$section][$name].Add($value) | Out-Null
+                    }
+                }
                 continue
             }
         }
