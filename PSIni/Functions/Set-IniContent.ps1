@@ -1,4 +1,3 @@
-Set-StrictMode -Version Latest
 Function Set-IniContent {
     <#
     .Synopsis

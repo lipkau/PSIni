@@ -1,5 +1,4 @@
-﻿Set-StrictMode -Version Latest
-Function Get-IniContent {
+﻿Function Get-IniContent {
     <#
     .Synopsis
         Gets the content of an INI file
@@ -88,7 +87,9 @@ Function Get-IniContent {
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
 
-        $commentRegex = "^([$($CommentChar -join '')].*)$"
+        $commentRegex = "^\s*([$($CommentChar -join '')].*)$"
+        $sectionRegex = "^\s*\[(.+)\]\s*$"
+        $keyRegex     = "^\s*(.+?)\s*=\s*(['`"]?)(.*)\2\s*$"
 
         Write-Debug ("commentRegex is {0}." -f $commentRegex)
     }
@@ -97,6 +98,7 @@ Function Get-IniContent {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $Filepath"
 
         $ini = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        #$ini = @{}
 
         if (!(Test-Path $Filepath)) {
             Write-Verbose ("Warning: `"{0}`" was not found." -f $Filepath)
@@ -105,7 +107,7 @@ Function Get-IniContent {
 
         $commentCount = 0
         switch -regex -file $FilePath {
-            "^\s*\[(.+)\]\s*$" {
+            $sectionRegex {
                 # Section
                 $section = $matches[1]
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding section : $section"
@@ -133,13 +135,13 @@ Function Get-IniContent {
 
                 continue
             }
-            "(.+?)\s*=\s*(.*)" {
+            $keyRegex {
                 # Key
                 if (!(test-path "variable:local:section")) {
                     $section = $script:NoSection
                     $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                 }
-                $name, $value = $matches[1..2]
+                $name, $value = $matches[1, 3]
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
                 if (-not $ini[$section][$name]) {
                     $ini[$section][$name] = $value
