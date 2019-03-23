@@ -1,4 +1,3 @@
-Set-StrictMode -Version Latest
 Function Remove-IniComment {
     <#
     .Synopsis
