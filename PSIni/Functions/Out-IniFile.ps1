@@ -1,4 +1,4 @@
-﻿Set-StrictMode -Version Latest
+Set-StrictMode -Version Latest
 Function Out-IniFile {
     <#
     .Synopsis
@@ -132,8 +132,9 @@ Function Out-IniFile {
                 [ValidateNotNullOrEmpty()]
                 [ValidateScript( {Test-Path $_ -IsValid})]
                 [Parameter( Mandatory, ValueFromPipelineByPropertyName )]
+                [Alias("Path")]
                 [string]
-                $Path,
+                $FilePath,
 
                 [Parameter( Mandatory )]
                 $Delimiter,
@@ -149,13 +150,13 @@ Function Out-IniFile {
                 Foreach ($key in $InputObject.get_keys()) {
                     if ($key -match "^Comment\d+") {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing comment: $key"
-                        Add-Content -Value "$($InputObject[$key])" -Encoding $Encoding -Path $Path
+                        "$($InputObject[$key])" | Out-File -Encoding $Encoding -FilePath $FilePath -Append
                     }
                     else {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key"
                         $InputObject[$key] |
                             ForEach-Object { "$key$delimiter$_" } |
-                            Add-Content -Encoding $Encoding -Path $Path
+                            Out-File -Encoding $Encoding -FilePath $FilePath -Append
                     }
                 }
             }
@@ -169,7 +170,7 @@ Function Out-IniFile {
         # Splatting Parameters
         $parameters = @{
             Encoding = $Encoding;
-            Path     = $FilePath
+            FilePath = $FilePath
         }
 
     }
@@ -193,7 +194,7 @@ Function Out-IniFile {
             if (!($InputObject[$i].GetType().GetInterface('IDictionary'))) {
                 #Key value pair
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $i"
-                Add-Content -Value "$i$delimiter$($InputObject[$i])" @parameters
+                "$i$delimiter$($InputObject[$i])" | Out-File -Append @parameters
 
             }
             elseif ($i -eq $script:NoSection) {
@@ -208,7 +209,7 @@ Function Out-IniFile {
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$i]"
 
                 # Only write section, if it is not a dummy ($script:NoSection)
-                if ($i -ne $script:NoSection) { Add-Content -Value "$extraLF[$i]" @parameters }
+                if ($i -ne $script:NoSection) { "$extraLF[$i]"  | Out-File -Append @parameters }
                 if ($Pretty) {
                     $extraLF = "`r`n"
                 }
