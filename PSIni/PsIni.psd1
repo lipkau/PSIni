@@ -1,6 +1,6 @@
 ﻿@{
     RootModule             = 'PsIni.psm1'
-    ModuleVersion          = '3.0.0'
+    ModuleVersion          = '3.1.0'
     GUID                   = '98e1dc0f-2f03-4ca1-98bb-fd7b4b6ac652'
     Author                 = 'Oliver Lipkau <oliver@lipkau.net>'
     CompanyName            = 'Unknown'
