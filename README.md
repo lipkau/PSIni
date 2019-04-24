@@ -11,7 +11,6 @@
 * [Installation](#installation)
 * [Examples](#examples)
 * [Authors/Contributors](#authorscontributors)
-* [Documentation](#documentation)
 
 ## Description
 
@@ -21,11 +20,6 @@ Work with INI files in PowerShell using hashtables.
 
 This code was originally a blog post for [Hey Scripting Guy](http://blogs.technet.com/b/heyscriptingguy)
 > [Use PowerShell to Work with Any INI File](http://blogs.technet.com/b/heyscriptingguy/archive/2011/08/20/use-powershell-to-work-with-any-ini-file.aspx)
-
-The individual functions have been published to microsoft's Script Gallery:
-
-* [Get-IniContent](http://gallery.technet.microsoft.com/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91)
-* [Out-IniFile](http://gallery.technet.microsoft.com/scriptcenter/7d7c867f-026e-4620-bf32-eca99b4e42f4)
 
 ## Installation
 
@@ -82,7 +76,3 @@ $FileContent["Category2"]["Key2"]
 * [Konstantin Heil](https://github.com/heilkn)
 * [SeverinLeonhardt](https://github.com/SeverinLeonhardt)
 * [davidhayesbc](https://github.com/davidhayesbc)
-
-## Documentation
-
-[Wiki Documentation](https://github.com/lipkau/PsIni/wiki/)
