@@ -31,3 +31,4 @@ $script:NoSection = "_"
 # private functions
 . "$PSScriptRoot\Private\Convert-IniCommentToEntry.ps1"
 . "$PSScriptRoot\Private\Convert-IniEntryToComment.ps1"
+. "$PSScriptRoot\Private\Write-DebugMessage.ps1"
