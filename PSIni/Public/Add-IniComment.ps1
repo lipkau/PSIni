@@ -1,3 +1,5 @@
+#requires -Version 2.0
+
 Function Add-IniComment {
     <#
     .Synopsis
@@ -15,7 +17,6 @@ Function Add-IniComment {
         Version		: 1.0.0 - 2016/08/18 - SS - Initial release
                     : 1.0.1 - 2016/12/29 - SS - Removed need for delimiters by making Sections and Keys string arrays.
 
-        #Requires -Version 2.0
 
     .Inputs
         System.String

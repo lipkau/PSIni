@@ -23,11 +23,11 @@ $script:NoSection = "_"
 # public functions
 . "$PSScriptRoot\Public\Import-Ini.ps1"
 . "$PSScriptRoot\Public\Export-Ini.ps1"
-. "$PSScriptRoot\Functions\Add-IniComment.ps1"
-. "$PSScriptRoot\Functions\Remove-IniComment.ps1"
-. "$PSScriptRoot\Functions\Remove-IniEntry.ps1"
-. "$PSScriptRoot\Functions\Set-IniContent.ps1"
+. "$PSScriptRoot\Public\Add-IniComment.ps1"
+. "$PSScriptRoot\Public\Remove-IniComment.ps1"
+. "$PSScriptRoot\Public\Remove-IniEntry.ps1"
+. "$PSScriptRoot\Public\Set-IniContent.ps1"
 
 # private functions
-. "$PSScriptRoot\Functions\Convert-IniCommentToEntry.ps1"
-. "$PSScriptRoot\Functions\Convert-IniEntryToComment.ps1"
+. "$PSScriptRoot\Private\Convert-IniCommentToEntry.ps1"
+. "$PSScriptRoot\Private\Convert-IniEntryToComment.ps1"
