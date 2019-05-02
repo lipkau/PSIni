@@ -58,7 +58,7 @@ Describe "PsIni functionality" {
     Context "Writing INI" {
 
         # act
-        $dictIn | Out-IniFile -FilePath $iniFile
+        $dictIn | Export-Ini -FilePath $iniFile
 
         # assert
         It "creates a file" {
@@ -80,7 +80,7 @@ Describe "PsIni functionality" {
     Context "Writing pretty INI" {
 
         # act
-        $dictIn | Out-IniFile -FilePath $iniFile -Pretty
+        $dictIn | Export-Ini -FilePath $iniFile -Pretty
 
         # assert
         It "creates a file" {

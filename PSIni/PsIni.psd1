@@ -20,7 +20,7 @@
     NestedModules          = @()
     FunctionsToExport      = @(
         'Add-IniComment',
-        'Out-IniFile',
+        'Export-Ini',
         'Import-Ini',
         'Remove-IniComment',
         'Remove-IniEntry',
@@ -30,7 +30,7 @@
     VariablesToExport      = @()
     AliasesToExport        = @(
         'ipi',
-        'oif',
+        'epini',
         'aic',
         'ric',
         'rie',

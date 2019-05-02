@@ -1,18 +1,12 @@
-Function Out-IniFile {
+#requires -Version 3.0
+
+function Export-Ini {
     <#
     .Synopsis
         Write hash content to INI file
 
     .Description
         Write hash content to INI file
-
-    .Notes
-        Author      : Oliver Lipkau <oliver@lipkau.net>
-        Blog        : http://oliver.lipkau.net/blog/
-        Source      : https://github.com/lipkau/PsIni
-                      http://gallery.technet.microsoft.com/scriptcenter/ea40c1ef-c856-434b-b8fb-ebd7a76e8d91
-
-        #Requires -Version 2.0
 
     .Inputs
         System.String
@@ -22,19 +16,19 @@ Function Out-IniFile {
         System.IO.FileSystemInfo
 
     .Example
-        Out-IniFile $IniVar "C:\myinifile.ini"
+        Export-Ini $IniVar "C:\myinifile.ini"
         -----------
         Description
         Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini
 
     .Example
-        $IniVar | Out-IniFile "C:\myinifile.ini" -Force
+        $IniVar | Export-Ini "C:\myinifile.ini" -Force
         -----------
         Description
         Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini and overwrites the file if it is already present
 
     .Example
-        $file = Out-IniFile $IniVar "C:\myinifile.ini" -PassThru
+        $file = Export-Ini $IniVar "C:\myinifile.ini" -PassThru
         -----------
         Description
         Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini and saves the file into $file
@@ -43,34 +37,50 @@ Function Out-IniFile {
         $Category1 = @{“Key1”=”Value1”;”Key2”=”Value2”}
         $Category2 = @{“Key1”=”Value1”;”Key2”=”Value2”}
         $NewINIContent = @{“Category1”=$Category1;”Category2”=$Category2}
-        Out-IniFile -InputObject $NewINIContent -FilePath "C:\MyNewFile.ini"
+        Export-Ini -InputObject $NewINIContent -FilePath "C:\MyNewFile.ini"
         -----------
         Description
         Creating a custom Hashtable and saving it to C:\MyNewFile.ini
     .Link
-        Get-IniContent
+        Import-Ini
+        ConvertFrom-Ini
+        ConvertTo-Ini
     #>
 
     [CmdletBinding()]
     [OutputType(
         [System.IO.FileSystemInfo]
     )]
-    Param(
+    param(
         # Adds the output to the end of an existing file, instead of replacing the file contents.
-        [switch]
+        [Switch]
         $Append,
 
         # Specifies the file encoding. The default is UTF8.
-        #
-        # Valid values are:
-        # -- ASCII:  Uses the encoding for the ASCII (7-bit) character set.
-        # -- BigEndianUnicode:  Encodes in UTF-16 format using the big-endian byte order.
-        # -- Byte:   Encodes a set of characters into a sequence of bytes.
-        # -- String:  Uses the encoding type for a string.
-        # -- Unicode:  Encodes in UTF-16 format using the little-endian byte order.
-        # -- UTF7:   Encodes in UTF-7 format.
-        # -- UTF8:  Encodes in UTF-8 format.
-        [ValidateSet("Unicode", "UTF7", "UTF8", "ASCII", "BigEndianUnicode", "Byte", "String")]
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript(
+            {
+                if ($PSVersionTable.PSVersion.Major -ge 6) {
+                    $allowedEncodings = ((Get-Command Out-File).Parameters['Encoding'].Attributes | Where-Object { $_ -is [ArgumentCompletions] })[0].CompleteArgument('Out-File', 'Encoding', '*', $null, @{}).CompletionText
+                }
+                else {
+                    $allowedEncodings = ((Get-Command Out-File).Parameters['Encoding'].Attributes | Where-Object { $_.TypeId -eq [ValidateSet] })[0].ValidValues
+                }
+
+                if ($_ -notin $allowedEncodings) {
+                    $errorItem = [System.Management.Automation.ErrorRecord]::new(
+                        ([System.ArgumentException]"Invalid Encoding"),
+                        'InvalidEncoding',
+                        [System.Management.Automation.ErrorCategory]::InvalidType,
+                        $_
+                    )
+                    $errorItem.ErrorDetails = "Cannot validate argument on parameter 'Encoding'. The argument `"$_`" does not belong to the set `"$($allowedEncodings -join ", ")`" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again."
+                    $PSCmdlet.ThrowTerminatingError($errorItem)
+                }
+
+                return $true
+            }
+        )]
         [Parameter()]
         [String]
         $Encoding = "UTF8",
@@ -106,14 +116,7 @@ Function Out-IniFile {
         $Pretty
     )
 
-    Begin {
-        Write-Debug "PsBoundParameters:"
-        $PSBoundParameters.GetEnumerator() | ForEach-Object { Write-Debug $_ }
-        if ($PSBoundParameters['Debug']) {
-            $DebugPreference = 'Continue'
-        }
-        Write-Debug "DebugPreference: $DebugPreference"
-
+    begin {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
 
         function Out-Keys {
@@ -123,30 +126,30 @@ Function Out-IniFile {
                 [System.Collections.IDictionary]
                 $InputObject,
 
-                [ValidateSet("Unicode", "UTF7", "UTF8", "ASCII", "BigEndianUnicode", "Byte", "String")]
                 [Parameter( Mandatory )]
-                [string]
+                [String]
                 $Encoding = "UTF8",
 
                 [ValidateNotNullOrEmpty()]
                 [ValidateScript( {Test-Path $_ -IsValid})]
                 [Parameter( Mandatory, ValueFromPipelineByPropertyName )]
                 [Alias("Path")]
-                [string]
+                [String]
                 $FilePath,
 
                 [Parameter( Mandatory )]
+                [String]
                 $Delimiter,
 
                 [Parameter( Mandatory )]
                 $MyInvocation
             )
 
-            Process {
+            process {
                 if (!($InputObject.get_keys())) {
                     Write-Warning ("No data found in '{0}'." -f $FilePath)
                 }
-                Foreach ($key in $InputObject.get_keys()) {
+                foreach ($key in $InputObject.get_keys()) {
                     if ($key -match "^Comment\d+") {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing comment: $key"
                         "$($InputObject[$key])" | Out-File -Encoding $Encoding -FilePath $FilePath -Append
@@ -174,7 +177,7 @@ Function Out-IniFile {
 
     }
 
-    Process {
+    process {
         $extraLF = ""
 
         if ($Append) {
@@ -225,13 +228,27 @@ Function Out-IniFile {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished Writing to file: $FilePath"
     }
 
-    End {
+    end {
         if ($PassThru) {
             Write-Debug ("Returning file due to PassThru argument.")
             Write-Output (Get-Item $outFile)
         }
+
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
     }
 }
 
-Set-Alias oif Out-IniFile
+Set-Alias epini Export-Ini
+
+Register-ArgumentCompleter -CommandName Export-Ini -ParameterName Encoding -ScriptBlock {
+    if ($PSVersionTable.PSVersion.Major -ge 6) {
+        $allowedEncodings = ((Get-Command Out-File).Parameters['Encoding'].Attributes | Where-Object { $_ -is [ArgumentCompletions] })[0].CompleteArgument('Out-File', 'Encoding', '*', $null, @{}).CompletionText
+    }
+    else {
+        $allowedEncodings = ((Get-Command Out-File).Parameters['Encoding'].Attributes | Where-Object { $_.TypeId -eq [ValidateSet] })[0].ValidValues
+    }
+
+    $allowedEncodings |
+        Where-Object { $_ -like "$wordToComplete*" } |
+        ForEach-Object { [System.Management.Automation.CompletionResult]::new( $_, $_, [System.Management.Automation.CompletionResultType]::ParameterValue, $_ ) }
+}

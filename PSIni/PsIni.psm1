@@ -22,7 +22,7 @@ $script:NoSection = "_"
 
 # public functions
 . "$PSScriptRoot\Public\Import-Ini.ps1"
-. "$PSScriptRoot\Functions\Out-IniFile.ps1"
+. "$PSScriptRoot\Public\Export-Ini.ps1"
 . "$PSScriptRoot\Functions\Add-IniComment.ps1"
 . "$PSScriptRoot\Functions\Remove-IniComment.ps1"
 . "$PSScriptRoot\Functions\Remove-IniEntry.ps1"
