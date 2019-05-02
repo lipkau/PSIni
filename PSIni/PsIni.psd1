@@ -20,8 +20,8 @@
     NestedModules          = @()
     FunctionsToExport      = @(
         'Add-IniComment',
-        'Get-IniContent',
         'Out-IniFile',
+        'Import-Ini',
         'Remove-IniComment',
         'Remove-IniEntry',
         'Set-IniContent'
@@ -29,7 +29,7 @@
     CmdletsToExport        = @()
     VariablesToExport      = @()
     AliasesToExport        = @(
-        'gic',
+        'ipi',
         'oif',
         'aic',
         'ric',

@@ -99,37 +99,6 @@ Describe "PsIni functionality" {
 
     }
 
-    Context "Reading INI" {
-
-        #arrange
-        Out-IniFile -InputObject $dictIn -FilePath $iniFile
-
-        # act
-        $global:dictOut = Get-IniContent -FilePath $iniFile
-
-        # assert
-        It "creates a OrderedDictionary from an INI file" {
-            ($dictOut.GetType()) | Should Be System.Collections.Specialized.OrderedDictionary
-        }
-
-        # assert
-        It "content matches original hashtable" {
-            Compare-Object $dictIn $dictOut
-        }
-
-        #assert
-        It "reads sames keys into an [array]" {
-            $dictOut["Category2"]["Key3"].gettype().FullName | Should -Be "System.Collections.ArrayList"
-        }
-
-        It "keeps non repeating keys as [string]" {
-            $dictOut["Category1"]["Key1"] | Should -BeOfType [String]
-            $dictOut["Category1"]["Key2"] | Should -BeOfType [String]
-            $dictOut["Category2"]["Key4"] | Should -BeOfType [String]
-        }
-
-    }
-
     Context "Updating INI Content" {
 
         # act
@@ -171,7 +140,6 @@ Describe "PsIni functionality" {
 
     }
 
-
     Context "Commenting out INI Content using internal function" {
 
         # act
@@ -200,7 +168,6 @@ Describe "PsIni functionality" {
 
     }
 
-
     Context "Commenting out INI Content" {
 
         # act
@@ -227,7 +194,6 @@ Describe "PsIni functionality" {
         }
 
     }
-
 
     Context "Uncommenting INI Content using internal function" {
 
@@ -262,7 +228,6 @@ Describe "PsIni functionality" {
         }
 
     }
-
 
     Context "Uncommenting INI Content" {
 
