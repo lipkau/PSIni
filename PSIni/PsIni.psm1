@@ -1,4 +1,4 @@
-<#
+﻿<#
     .Synopsis
         This Module contains functions to manage INI files
 
@@ -23,12 +23,6 @@ $script:NoSection = "_"
 # public functions
 . "$PSScriptRoot\Public\Import-Ini.ps1"
 . "$PSScriptRoot\Public\Export-Ini.ps1"
-. "$PSScriptRoot\Public\Add-IniComment.ps1"
-. "$PSScriptRoot\Public\Remove-IniComment.ps1"
-. "$PSScriptRoot\Public\Remove-IniEntry.ps1"
-. "$PSScriptRoot\Public\Set-IniContent.ps1"
 
 # private functions
-. "$PSScriptRoot\Private\Convert-IniCommentToEntry.ps1"
-. "$PSScriptRoot\Private\Convert-IniEntryToComment.ps1"
 . "$PSScriptRoot\Private\Write-DebugMessage.ps1"

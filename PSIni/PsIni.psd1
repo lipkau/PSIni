@@ -19,12 +19,10 @@
     FormatsToProcess       = @()
     NestedModules          = @()
     FunctionsToExport      = @(
-        'Add-IniComment',
+        'ConvertFrom-Ini',
+        'ConvertTo-Ini',
         'Export-Ini',
-        'Import-Ini',
-        'Remove-IniComment',
-        'Remove-IniEntry',
-        'Set-IniContent'
+        'Import-Ini'
     )
     CmdletsToExport        = @()
     VariablesToExport      = @()
