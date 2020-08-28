@@ -1,4 +1,4 @@
-#requires -Version 3.0
+﻿#requires -Version 5
 
 function Export-Ini {
     <#
@@ -41,6 +41,7 @@ function Export-Ini {
         -----------
         Description
         Creating a custom Hashtable and saving it to C:\MyNewFile.ini
+
     .Link
         Import-Ini
         ConvertFrom-Ini
@@ -48,191 +49,103 @@ function Export-Ini {
     #>
 
     [CmdletBinding()]
-    [OutputType(
-        [System.IO.FileSystemInfo]
-    )]
+    [OutputType( [System.IO.FileSystemInfo] )]
     param(
         # Adds the output to the end of an existing file, instead of replacing the file contents.
         [Switch]
         $Append,
 
-        # Specifies the file encoding. The default is UTF8.
-        [ValidateNotNullOrEmpty()]
-        [ValidateScript(
-            {
-                if ($PSVersionTable.PSVersion.Major -ge 6) {
-                    $allowedEncodings = ((Get-Command Out-File).Parameters['Encoding'].Attributes | Where-Object { $_ -is [ArgumentCompletions] })[0].CompleteArgument('Out-File', 'Encoding', '*', $null, @{}).CompletionText
-                }
-                else {
-                    $allowedEncodings = ((Get-Command Out-File).Parameters['Encoding'].Attributes | Where-Object { $_.TypeId -eq [ValidateSet] })[0].ValidValues
-                }
-
-                if ($_ -notin $allowedEncodings) {
-                    $errorItem = [System.Management.Automation.ErrorRecord]::new(
-                        ([System.ArgumentException]"Invalid Encoding"),
-                        'InvalidEncoding',
-                        [System.Management.Automation.ErrorCategory]::InvalidType,
-                        $_
-                    )
-                    $errorItem.ErrorDetails = "Cannot validate argument on parameter 'Encoding'. The argument `"$_`" does not belong to the set `"$($allowedEncodings -join ", ")`" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again."
-                    $PSCmdlet.ThrowTerminatingError($errorItem)
-                }
-
-                return $true
-            }
-        )]
+        # Specifies the file encoding.
+        # The default is UTF8.
         [Parameter()]
+        [ValidateScript( { Invoke-ConditionalParameterValidationEncoding -InputObject $_ } )]
         [String]
         $Encoding = "UTF8",
 
         # Specifies the path to the output file.
-        [ValidateNotNullOrEmpty()]
-        [ValidateScript( {Test-Path $_ -IsValid} )]
-        [Parameter( Position = 0, Mandatory = $true )]
+        [Parameter( Position = 0, Mandatory )]
+        [ValidateScript( { Invoke-ConditionalParameterValidationPath -InputObject $_ } )]
         [String]
-        $FilePath,
+        $Path,
 
-        # Allows the cmdlet to overwrite an existing read-only file. Even using the Force parameter, the cmdlet cannot override security restrictions.
+        # Allows the cmdlet to overwrite an existing read-only file.
+        # Even using the Force parameter, the cmdlet cannot override security restrictions.
+        [Parameter()]
         [Switch]
         $Force,
 
-        # Specifies the Hashtable to be written to the file. Enter a variable that contains the objects or type a command or expression that gets the objects.
-        [Parameter( Mandatory = $true, ValueFromPipeline = $true )]
+        # Determines the format of how to write the file.
+        #
+        # The following values are supported:
+        #  - pretty: will write the file with an empty line between sections and whitespaces arround the `=` sign
+        #  - minified: will write the file in as few characters as possible
+        [Parameter()]
+        [ValidateSet("pretty", "minified")]
+        [String]
+        $Format = "pretty",
+
+        # Specifies the Hashtable to be written to the file.
+        # Enter a variable that contains the objects or type a command or expression that gets the objects.
+        [Parameter( Mandatory, ValueFromPipeline )]
         [System.Collections.IDictionary]
         $InputObject,
 
-        # Passes an object representing the location to the pipeline. By default, this cmdlet does not generate any output.
+        # Passes an object representing the location to the pipeline.
+        # By default, this cmdlet does not generate any output.
+        [Parameter()]
         [Switch]
         $Passthru,
 
-        # Adds spaces around the equal sign when writing the key = value
+        # Will not write comments to the output file
+        [Parameter()]
         [Switch]
-        $Loose,
-
-        # Writes the file as "pretty" as possible
-        #
-        # Adds an extra linebreak between Sections
-        [Switch]
-        $Pretty
+        $IgnoreComments
     )
 
     begin {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
 
-        function Out-Keys {
-            param(
-                [ValidateNotNullOrEmpty()]
-                [Parameter( Mandatory, ValueFromPipeline )]
-                [System.Collections.IDictionary]
-                $InputObject,
+        $delimiter = if ($Format -eq "pretty") { ' = ' } else { '=' }
 
-                [Parameter( Mandatory )]
-                [String]
-                $Encoding = "UTF8",
-
-                [ValidateNotNullOrEmpty()]
-                [ValidateScript( {Test-Path $_ -IsValid})]
-                [Parameter( Mandatory, ValueFromPipelineByPropertyName )]
-                [Alias("Path")]
-                [String]
-                $FilePath,
-
-                [Parameter( Mandatory )]
-                [String]
-                $Delimiter,
-
-                [Parameter( Mandatory )]
-                $MyInvocation
-            )
-
-            process {
-                if (!($InputObject.get_keys())) {
-                    Write-Warning ("No data found in '{0}'." -f $FilePath)
-                }
-                foreach ($key in $InputObject.get_keys()) {
-                    if ($key -match "^Comment\d+") {
-                        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing comment: $key"
-                        "$($InputObject[$key])" | Out-File -Encoding $Encoding -FilePath $FilePath -Append
-                    }
-                    else {
-                        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key"
-                        $InputObject[$key] |
-                            ForEach-Object { "$key$delimiter$_" } |
-                            Out-File -Encoding $Encoding -FilePath $FilePath -Append
-                    }
-                }
-            }
+        $fileParameters = @{
+            Append   = $true
+            Encoding = $Encoding
+            FilePath = $Path
+            Force    = $Force
         }
-
-        $delimiter = '='
-        if ($Loose) {
-            $delimiter = ' = '
-        }
-
-        # Splatting Parameters
-        $parameters = @{
-            Encoding = $Encoding;
-            FilePath = $FilePath
-        }
-
+        Write-DebugMessage "Using the following paramters when writing to file:"
+        Write-DebugMessage ($fileParameters | Out-String)
     }
 
     process {
-        $extraLF = ""
-
-        if ($Append) {
-            Write-Debug ("Appending to '{0}'." -f $FilePath)
-            $outfile = Get-Item $FilePath
-        }
-        else {
-            Write-Debug ("Creating new file '{0}'." -f $FilePath)
-            $outFile = New-Item -ItemType file -Path $Filepath -Force:$Force
+        if ((Test-Path -Path $Path) -and (-not ($Append))) {
+            Remove-Item -Path $Path -Force:$Force
         }
 
-        if (!(Test-Path $outFile.FullName)) {Throw "Could not create File"}
+        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Path"
+        foreach ($section in $InputObject.Keys) {
+            Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$section]"
 
-        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Filepath"
-        foreach ($i in $InputObject.get_keys()) {
-            if (!($InputObject[$i].GetType().GetInterface('IDictionary'))) {
-                #Key value pair
-                Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $i"
-                "$i$delimiter$($InputObject[$i])" | Out-File -Append @parameters
+            if ($section -ne $script:NoSection) { Out-File -InputObject "[$section]" @fileParameters }
 
+            $outKeysParam = @{
+                InputObject    = $InputObject[$section]
+                Delimiter      = $delimiter
+                IgnoreComments = $IgnoreComments
+                CommentChar    = ";"
             }
-            elseif ($i -eq $script:NoSection) {
-                #Key value pair of NoSection
-                Out-Keys $InputObject[$i] `
-                    @parameters `
-                    -Delimiter $delimiter `
-                    -MyInvocation $MyInvocation
-            }
-            else {
-                #Sections
-                Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$i]"
+            Out-Keys @outKeysParam @fileParameters
 
-                # Only write section, if it is not a dummy ($script:NoSection)
-                if ($i -ne $script:NoSection) { "$extraLF[$i]"  | Out-File -Append @parameters }
-                if ($Pretty) {
-                    $extraLF = "`r`n"
-                }
-
-                if ( $InputObject[$i].Count) {
-                    Out-Keys $InputObject[$i] `
-                        @parameters `
-                        -Delimiter $delimiter `
-                        -MyInvocation $MyInvocation
-                }
-
-            }
+            if ($Format -eq "pretty") { Out-File -InputObject "" @fileParameters }
         }
-        Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished Writing to file: $FilePath"
+
+        Remove-EmptyLines @fileParameters
+
+        Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished writing to file: $Path"
     }
 
     end {
-        if ($PassThru) {
-            Write-Debug ("Returning file due to PassThru argument.")
-            Write-Output (Get-Item $outFile)
-        }
+        if ($PassThru) { Get-Item -Path $Path }
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
     }
@@ -241,14 +154,14 @@ function Export-Ini {
 Set-Alias epini Export-Ini
 
 Register-ArgumentCompleter -CommandName Export-Ini -ParameterName Encoding -ScriptBlock {
-    if ($PSVersionTable.PSVersion.Major -ge 6) {
-        $allowedEncodings = ((Get-Command Out-File).Parameters['Encoding'].Attributes | Where-Object { $_ -is [ArgumentCompletions] })[0].CompleteArgument('Out-File', 'Encoding', '*', $null, @{}).CompletionText
+    Get-AllowedEncoding |
+    Where-Object { $_ -like "$wordToComplete*" } |
+    ForEach-Object {
+        [System.Management.Automation.CompletionResult]::new(
+            $_,
+            $_,
+            [System.Management.Automation.CompletionResultType]::ParameterValue,
+            $_
+        )
     }
-    else {
-        $allowedEncodings = ((Get-Command Out-File).Parameters['Encoding'].Attributes | Where-Object { $_.TypeId -eq [ValidateSet] })[0].ValidValues
-    }
-
-    $allowedEncodings |
-        Where-Object { $_ -like "$wordToComplete*" } |
-        ForEach-Object { [System.Management.Automation.CompletionResult]::new( $_, $_, [System.Management.Automation.CompletionResultType]::ParameterValue, $_ ) }
 }

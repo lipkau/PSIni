@@ -25,4 +25,10 @@ $script:NoSection = "_"
 . "$PSScriptRoot\Public\Export-Ini.ps1"
 
 # private functions
+. "$PSScriptRoot\Private\Get-AllowedEncoding.ps1"
+. "$PSScriptRoot\Private\Invoke-ConditionalParameterValidationEncoding.ps1"
+. "$PSScriptRoot\Private\Invoke-ConditionalParameterValidationPath.ps1"
+. "$PSScriptRoot\Private\isNumeric.ps1"
+. "$PSScriptRoot\Private\Out-Keys.ps1"
+. "$PSScriptRoot\Private\Remove-EmptyLines.ps1"
 . "$PSScriptRoot\Private\Write-DebugMessage.ps1"
