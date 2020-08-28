@@ -73,8 +73,6 @@ task Test RapidTest
 
 # Synopsis: Using the "Fast" Test Suit
 task RapidTest PesterTests
-# Synopsis: Using the complete Test Suit, which includes all supported Powershell versions
-task FullTest TestVersions
 
 # Synopsis: Warn about not empty git status if .git exists.
 task GitStatus -If (Test-Path .git) {
@@ -82,17 +80,6 @@ task GitStatus -If (Test-Path .git) {
     if ($status) {
         Write-Warning "Git status: $($status -join ', ')"
     }
-}
-
-task TestVersions TestPS3, TestPS4, TestPS4, TestPS5
-task TestPS3 {
-    exec {powershell.exe -Version 3 -NoProfile Invoke-Build PesterTests}
-}
-task TestPS4 {
-    exec {powershell.exe -Version 4 -NoProfile Invoke-Build PesterTests}
-}
-task TestPS5 {
-    exec {powershell.exe -Version 5 -NoProfile Invoke-Build PesterTests}
 }
 
 # Synopsis: Invoke Pester Tests
