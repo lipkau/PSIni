@@ -21,6 +21,7 @@
 $script:NoSection = "_"
 
 # public functions
+. "$PSScriptRoot\Public\ConvertFrom-Ini.ps1"
 . "$PSScriptRoot\Public\Import-Ini.ps1"
 . "$PSScriptRoot\Public\Export-Ini.ps1"
 

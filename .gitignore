@@ -1,5 +1,6 @@
 # Ignore configuration files
 *.ini
+!Tests/*.ini
 
 # Ignore all files beginning with a dot (.)
 .*
