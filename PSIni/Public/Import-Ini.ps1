@@ -1,4 +1,4 @@
-﻿#requires -Version 2.0
+﻿#requires -Version 5
 
 function Import-Ini {
     <#
@@ -7,7 +7,6 @@ function Import-Ini {
 
     .Description
         Gets the content of an INI file and returns it as a hashtable
-
 
     .Inputs
         System.String
@@ -41,19 +40,19 @@ function Import-Ini {
     #>
 
     [CmdletBinding()]
-    [OutputType(
-        [System.Collections.Specialized.OrderedDictionary]
-    )]
+    [OutputType( [System.Collections.Specialized.OrderedDictionary] )]
     param(
         # Specifies the path to the input file.
+        [Parameter( Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName )]
         [ValidateNotNullOrEmpty()]
-        [Parameter( Mandatory = $true, ValueFromPipeline = $true )]
+        [Alias("PSPath", "FullName")]
         [String[]]
         $Path,
 
         # Specify what characters should be describe a comment.
         # Lines starting with the characters provided will be rendered as comments.
         # Default: ";"
+        [Parameter()]
         [Char[]]
         $CommentChar = @(";"),
 
@@ -65,13 +64,14 @@ function Import-Ini {
     begin {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
 
-        $commentRegex = "^\s*([$($CommentChar -join '')].*)$"
+        $listOfCommentChars = $CommentChar -join ''
+        $commentRegex = "^\s*[$listOfCommentChars](.*)$"
         $sectionRegex = "^\s*\[(.+)\]\s*$"
-        $keyRegex = "^\s*(.+?)\s*=\s*(['`"]?)(.*)\2\s*$"
+        $keyRegex = "^\s*([^$listOfCommentChars]+?)\s*=\s*(['`"]?)(.*)\2\s*$"
 
-        Write-DebugMessage ("commentRegex is {0}." -f $commentRegex)
-        Write-DebugMessage ("section is {0}." -f $sectionRegex)
-        Write-DebugMessage ("key is {0}." -f $keyRegex)
+        Write-DebugMessage ("commentRegex is $commentRegex")
+        Write-DebugMessage ("sectionRegex is $sectionRegex")
+        Write-DebugMessage ("keyRegex is $keyRegex")
     }
 
     process {
@@ -79,8 +79,9 @@ function Import-Ini {
             Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $file"
 
             $ini = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+            $section = $null
 
-            if (!(Test-Path $file)) {
+            if (-not (Test-Path -Path $file)) {
                 Write-Error "Could not find file '$file'"
             }
 
@@ -96,31 +97,30 @@ function Import-Ini {
                 }
                 $commentRegex {
                     # Comment
-                    if (!$IgnoreComments) {
-                        if (!(test-path "variable:local:section")) {
+                    if (-not $IgnoreComments) {
+                        if (-not $section) {
                             $section = $script:NoSection
                             $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                         }
-                        $value = $matches[1]
+                        $value = $matches[1].Trim()
                         $CommentCount++
-                        Write-DebugMessage ("Incremented CommentCount is now {0}." -f $CommentCount)
-                        $name = "Comment" + $CommentCount
+                        Write-DebugMessage ("Incremented CommentCount is now $CommentCount.")
+                        $name = "Comment$CommentCount"
                         Write-Debug "$($MyInvocation.MyCommand.Name):: Adding $name with value: $value"
                         $ini[$section][$name] = $value
                     }
                     else {
-                        Write-DebugMessage ("Ignoring comment {0}." -f $matches[1])
+                        Write-DebugMessage ("Ignoring comment $($matches[1]).")
                     }
-
                     continue
                 }
                 $keyRegex {
                     # Key
-                    if (!(test-path "variable:local:section")) {
+                    if (-not $section) {
                         $section = $script:NoSection
                         $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                     }
-                    $name, $value = $matches[1, 3]
+                    $name, $value = $matches[1].Trim(), $matches[3].Trim()
                     Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
                     if (-not $ini[$section][$name]) {
                         $ini[$section][$name] = $value
@@ -130,11 +130,8 @@ function Import-Ini {
                             $oldValue = $ini[$section][$name]
                             $ini[$section][$name] = [System.Collections.ArrayList]::new()
                             $null = $ini[$section][$name].Add($oldValue)
-                            $null = $ini[$section][$name].Add($value)
                         }
-                        else {
-                            $null = $ini[$section][$name].Add($value)
-                        }
+                        $null = $ini[$section][$name].Add($value)
                     }
                     continue
                 }
@@ -149,4 +146,4 @@ function Import-Ini {
     }
 }
 
-Set-Alias ipi Import-Ini
+Set-Alias ipini Import-Ini
