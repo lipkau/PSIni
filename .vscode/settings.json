@@ -6,18 +6,22 @@
     "files.insertFinalNewline": true,
     "editor.tabSize": 4,
     "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
-    "powershell.codeFormatting.openBraceOnSameLine": true,
-    "powershell.codeFormatting.newLineAfterOpenBrace": true,
-    "powershell.codeFormatting.newLineAfterCloseBrace": true,
-    "powershell.codeFormatting.whitespaceBeforeOpenBrace": true,
-    "powershell.codeFormatting.whitespaceBeforeOpenParen": true,
-    "powershell.codeFormatting.whitespaceAroundOperator": true,
-    "powershell.codeFormatting.whitespaceAfterSeparator": true,
-    "[markdown]": {
-        "editor.wordwrap": "on",
-        "editor.renderWhitespace": "all",
-        "editor.acceptSuggestionOnEnter": false,
-        "editor.rulers": [80],
-        "editor.trimAutoWhitespace": false
+    "powershell.codeFormatting.preset": "Stroustrup",
+    "powershell.codeFormatting.ignoreOneLineBlock": true,
+    "[powershell]": {
+        "files.encoding": "utf8bom"
     },
+    "[markdown]": {
+        "editor.renderWhitespace": "all",
+        "editor.acceptSuggestionOnEnter": "off",
+        "editor.rulers": [
+            80
+        ],
+        "editor.trimAutoWhitespace": false,
+        "files.trimTrailingWhitespace": false
+    },
+    "[ini]": {
+        "editor.trimAutoWhitespace": false,
+        "files.trimTrailingWhitespace": false
+    }
 }
