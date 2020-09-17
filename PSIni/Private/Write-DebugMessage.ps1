@@ -1,9 +1,7 @@
-function Write-DebugMessage {
+﻿function Write-DebugMessage {
     [CmdletBinding()]
     param(
-        [Parameter(
-            ValueFromPipeline = $true
-        )]
+        [Parameter( ValueFromPipeline )]
         $Message
     )
 

@@ -21,7 +21,7 @@ Import-Module BuildHelpers
 Set-StrictMode -Version Latest
 
 # region debug information
-task ShowDebug {
+Task ShowDebug {
     Write-Build Gray
     Write-Build Gray ('Project name:               {0}' -f $env:APPVEYOR_PROJECT_NAME)
     Write-Build Gray ('Project root:               {0}' -f $env:APPVEYOR_BUILD_FOLDER)
@@ -45,7 +45,7 @@ task ShowDebug {
 }
 
 # Synopsis: Install pandoc to .\Tools\
-# task InstallPandoc -If (-not (Test-Path Tools\pandoc.exe)) {
+# Task InstallPandoc -If (-not (Test-Path Tools\pandoc.exe)) {
 #     # Setup
 #     if (-not (Test-Path "$BuildRoot\Tools")) {
 #         $null = New-Item -Path "$BuildRoot\Tools" -ItemType Directory
@@ -69,28 +69,28 @@ task ShowDebug {
 # endregion
 
 # region test
-task Test RapidTest
+Task Test RapidTest
 
 # Synopsis: Using the "Fast" Test Suit
-task RapidTest PesterTests
+Task RapidTest PesterTests
 
 # Synopsis: Warn about not empty git status if .git exists.
-task GitStatus -If (Test-Path .git) {
-    $status = exec { git status -s }
+Task GitStatus -If (Test-Path .git) {
+    $status = Exec { git status -s }
     if ($status) {
         Write-Warning "Git status: $($status -join ', ')"
     }
 }
 
 # Synopsis: Invoke Pester Tests
-task PesterTests {
+Task PesterTests {
     try {
         $result = Invoke-Pester -PassThru -OutputFile "$BuildRoot\TestResult.xml" -OutputFormat "NUnitXml"
         if ($env:APPVEYOR_PROJECT_NAME) {
             Add-TestResultToAppveyor -TestFile "$BuildRoot\TestResult.xml"
             Remove-Item "$BuildRoot\TestResult.xml" -Force
         }
-        assert ($result.FailedCount -eq 0) "$($result.FailedCount) Pester test(s) failed."
+        Assert ($result.FailedCount -eq 0) "$($result.FailedCount) Pester test(s) failed."
     }
     catch {
         throw
@@ -100,11 +100,11 @@ task PesterTests {
 
 # region build
 # Synopsis: Build shippable release
-# task Build GenerateRelease, GenerateDocs, UpdateManifest
-task Build GenerateRelease, UpdateManifest
+# Task Build GenerateRelease, GenerateDocs, UpdateManifest
+Task Build GenerateRelease, UpdateManifest
 
 # Synopsis: Generate .\Release structure
-task GenerateRelease {
+Task GenerateRelease {
     # Setup
     if (-not (Test-Path "$releasePath\PSIni")) {
         $null = New-Item -Path "$releasePath\PSIni" -ItemType Directory
@@ -122,13 +122,13 @@ task GenerateRelease {
 }
 
 # Synopsis: Update the manifest of the module
-task UpdateManifest GetVersion, {
+Task UpdateManifest GetVersion, {
     Update-Metadata -Path "$releasePath\PSIni\PSIni.psd1" -PropertyName ModuleVersion -Value $script:Version
     # Update-Metadata -Path "$releasePath\PSIni\PSIni.psd1" -PropertyName FileList -Value (Get-ChildItem $releasePath\PSIni\PSIni -Recurse).Name
     Set-ModuleFunctions -Name "$releasePath\PSIni\PSIni.psd1"
 }
 
-task GetVersion {
+Task GetVersion {
     $manifestContent = Get-Content -Path "$releasePath\PSIni\PSIni.psd1" -Raw
     if ($manifestContent -notmatch '(?<=ModuleVersion\s+=\s+'')(?<ModuleVersion>.*)(?='')') {
         throw "Module version was not found in manifest file,"
@@ -147,10 +147,10 @@ task GetVersion {
 }
 
 # Synopsis: Generate documentation
-# task GenerateDocs GenerateMarkdown, ConvertMarkdown
+# Task GenerateDocs GenerateMarkdown, ConvertMarkdown
 
 # # Synopsis: Generate markdown documentation with platyPS
-# task GenerateMarkdown {
+# Task GenerateMarkdown {
 #     Import-Module platyPS -Force
 #     Import-Module "$releasePath\PSIni.psd1" -Force
 #     $null = New-MarkdownHelp -Module PSIni -OutputFolder "$releasePath\PSIni\docs" -Force
@@ -167,43 +167,43 @@ task GetVersion {
 #     }
 # }
 # Synopsis: Converts *.md and *.markdown files to *.htm
-# task ConvertMarkdown -Partial @ConvertMarkdown InstallPandoc, {process {
+# Task ConvertMarkdown -Partial @ConvertMarkdown InstallPandoc, {process {
 #         Write-Build Green "Converting File: $_"
-#         exec { Tools\pandoc.exe $_ --standalone --from=markdown_github "--output=$2" }
+#         Exec { Tools\pandoc.exe $_ --standalone --from=markdown_github "--output=$2" }
 #     }
 # }
 # endregion
 
 # region publish
-task Deploy -If ($env:APPVEYOR_REPO_BRANCH -eq 'master' -and (-not($env:APPVEYOR_PULL_REQUEST_NUMBER))) RemoveMarkdown, {
+Task Deploy -If ($env:APPVEYOR_REPO_BRANCH -eq 'master' -and (-not($env:APPVEYOR_PULL_REQUEST_NUMBER))) RemoveMarkdown, {
     Remove-Module PSIni -ErrorAction SilentlyContinue
 }, PublishToGallery
 
-task PublishToGallery {
-    assert ($env:PSGalleryAPIKey) "No key for the PSGallery"
+Task PublishToGallery {
+    Assert ($env:PSGalleryAPIKey) "No key for the PSGallery"
 
     Import-Module $releasePath\PSIni\PSIni.psd1 -ErrorAction Stop
     Publish-Module -Name PSIni -NuGetApiKey $env:PSGalleryAPIKey
 }
 
 # Synopsis: Push with a version tag.
-task PushRelease GitStatus, GetVersion, {
+Task PushRelease GitStatus, GetVersion, {
     # Done in appveyor.yml with deploy provider.
     # This is needed, as I don't know how to athenticate (2-factor) in here.
-    exec { git checkout master }
-    $changes = exec { git status --short }
-    assert (!$changes) "Please, commit changes."
+    Exec { git checkout master }
+    $changes = Exec { git status --short }
+    Assert (!$changes) "Please, commit changes."
 
-    exec { git push }
-    exec { git tag -a "v$Version" -m "v$Version" }
-    exec { git push origin "v$Version" }
+    Exec { git push }
+    Exec { git tag -a "v$Version" -m "v$Version" }
+    Exec { git push origin "v$Version" }
 }
 # endregion
 
 #region Cleaning tasks
-task Clean RemoveGeneratedFiles
+Task Clean RemoveGeneratedFiles
 # Synopsis: Remove generated and temp files.
-task RemoveGeneratedFiles {
+Task RemoveGeneratedFiles {
     $itemsToRemove = @(
         'Release'
         '*.htm'
@@ -213,9 +213,9 @@ task RemoveGeneratedFiles {
 }
 
 # Synopsis: Remove Markdown files from Release
-task RemoveMarkdown -If { Get-ChildItem "$releasePath\PSIni\*.md" -Recurse } {
+Task RemoveMarkdown -If { Get-ChildItem "$releasePath\PSIni\*.md" -Recurse } {
     Remove-Item -Path "$releasePath\PSIni" -Include "*.md" -Recurse
 }
 # endregion
 
-task . ShowDebug, Test, Build, Deploy #, Clean
+Task . ShowDebug, Test, Build, Deploy #, Clean

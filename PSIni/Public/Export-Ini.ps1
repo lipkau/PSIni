@@ -136,6 +136,8 @@ function Export-Ini {
             }
             Out-Keys @outKeysParam @fileParameters
 
+            # TODO: what when the Input is only a simple hash?
+
             if ($Format -eq "pretty") { Out-File -InputObject "" @fileParameters }
         }
 

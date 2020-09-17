@@ -8,6 +8,7 @@
     "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
     "powershell.codeFormatting.preset": "Stroustrup",
     "powershell.codeFormatting.ignoreOneLineBlock": true,
+    "powershell.scriptAnalysis.enable": true,
     "[powershell]": {
         "files.encoding": "utf8bom"
     },
