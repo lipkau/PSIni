@@ -7,7 +7,7 @@ function Install-Dependency {
         $Scope = "CurrentUser"
     )
 
-    [Microsoft.PowerShell.Commands.ModuleSpecification[]]$RequiredModules = Import-LocalizedData -BaseDirectory $PSScriptRoot -FileName "build.requirements.psd1"
+    [Microsoft.PowerShell.Commands.ModuleSpecification[]]$RequiredModules = Import-LocalizedData -BaseDirectory "$PSScriptRoot/../.." -FileName "build.requirements.psd1"
     $Policy = (Get-PSRepository PSGallery).InstallationPolicy
     try {
         Set-PSRepository PSGallery -InstallationPolicy Trusted
