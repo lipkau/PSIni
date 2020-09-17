@@ -66,7 +66,7 @@ function ConvertTo-Ini {
 
     process {
         # use json to limit the depth and sanitize data types
-        $data = ConvertTo-Json $InputObject | ConvertFrom-Json -Depth 3
+        $data = ConvertTo-Json $InputObject | ConvertFrom-Json
 
         $output = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
 
