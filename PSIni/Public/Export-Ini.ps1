@@ -51,6 +51,18 @@ function Export-Ini {
     [CmdletBinding()]
     [OutputType( [System.IO.FileSystemInfo] )]
     param(
+        # Specifies the Hashtable to be written to the file.
+        # Enter a variable that contains the objects or type a command or expression that gets the objects.
+        [Parameter( Mandatory, ValueFromPipeline )]
+        [System.Collections.IDictionary]
+        $InputObject,
+
+        # Specifies the path to the output file.
+        [Parameter( Mandatory )]
+        [ValidateScript( { Invoke-ConditionalParameterValidationPath -InputObject $_ } )]
+        [String]
+        $Path,
+
         # Adds the output to the end of an existing file, instead of replacing the file contents.
         [Switch]
         $Append,
@@ -61,12 +73,6 @@ function Export-Ini {
         [ValidateScript( { Invoke-ConditionalParameterValidationEncoding -InputObject $_ } )]
         [String]
         $Encoding = "UTF8",
-
-        # Specifies the path to the output file.
-        [Parameter( Position = 0, Mandatory )]
-        [ValidateScript( { Invoke-ConditionalParameterValidationPath -InputObject $_ } )]
-        [String]
-        $Path,
 
         # Allows the cmdlet to overwrite an existing read-only file.
         # Even using the Force parameter, the cmdlet cannot override security restrictions.
@@ -84,12 +90,6 @@ function Export-Ini {
         [String]
         $Format = "pretty",
 
-        # Specifies the Hashtable to be written to the file.
-        # Enter a variable that contains the objects or type a command or expression that gets the objects.
-        [Parameter( Mandatory, ValueFromPipeline )]
-        [System.Collections.IDictionary]
-        $InputObject,
-
         # Passes an object representing the location to the pipeline.
         # By default, this cmdlet does not generate any output.
         [Parameter()]
@@ -99,7 +99,14 @@ function Export-Ini {
         # Will not write comments to the output file
         [Parameter()]
         [Switch]
-        $IgnoreComments
+        $IgnoreComments,
+
+        # Does not add trailing = sign to keys without value.
+        # This behavior is needed for specific OS files, such as:
+        # https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/winpeshlini-reference-launching-an-app-when-winpe-starts
+        [Parameter()]
+        [Switch]
+        $SkipTrailingEqualSign
     )
 
     begin {
@@ -129,10 +136,11 @@ function Export-Ini {
             if ($section -ne $script:NoSection) { Out-File -InputObject "[$section]" @fileParameters }
 
             $outKeysParam = @{
-                InputObject    = $InputObject[$section]
-                Delimiter      = $delimiter
-                IgnoreComments = $IgnoreComments
-                CommentChar    = ";"
+                InputObject           = $InputObject[$section]
+                Delimiter             = $delimiter
+                IgnoreComments        = $IgnoreComments
+                CommentChar           = ";"
+                SkipTrailingEqualSign = $SkipTrailingEqualSign
             }
             Out-Keys @outKeysParam @fileParameters
 

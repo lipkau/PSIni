@@ -67,6 +67,11 @@ Describe "Export-Ini" -Tag "Unit" {
             $additionalObject["Additional"]["Key1"] = "Value1"
 
             $additionalFileContent = "[Additional]${lf}Key1 = Value1${lf}"
+
+            $objectWithEmptyKeys = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+            $objectWithEmptyKeys["NoValues"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+            $objectWithEmptyKeys["NoValues"]["Key1"] = $null
+            $objectWithEmptyKeys["NoValues"]["Key2"] = ""
         }
 
         It "saves an object as ini file" {
@@ -163,6 +168,24 @@ Describe "Export-Ini" -Tag "Unit" {
             Export-Ini @commonParameter -InputObject $defaultObject -Encoding "utf32"
 
             (Get-FileEncoding -Path $testPath).Encoding | Should -Be "UTF32-LE"
+        }
+
+        It "writes out keys without a value" {
+            Export-Ini @commonParameter -InputObject $objectWithEmptyKeys -Format minified
+
+            $fileContent = Get-Content -Path $testPath -Raw
+            $expectedFileContent = "[NoValues]${lf}Key1=${lf}Key2=${lf}"
+
+            $fileContent | Should -Be $expectedFileContent
+        }
+
+        It "writes out keys without trailing equal sign when no value is assigned" {
+            Export-Ini @commonParameter -InputObject $objectWithEmptyKeys -Format minified -SkipTrailingEqualSign
+
+            $fileContent = Get-Content -Path $testPath -Raw
+            $expectedFileContent = "[NoValues]${lf}Key1${lf}Key2${lf}"
+
+            $fileContent | Should -Be $expectedFileContent
         }
     }
 }
