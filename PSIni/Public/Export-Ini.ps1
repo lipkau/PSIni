@@ -42,6 +42,21 @@ function Export-Ini {
         Description
         Creating a custom Hashtable and saving it to C:\MyNewFile.ini
 
+    .Example
+        $Winpeshl = @{
+            LaunchApp = @{
+                AppPath = %"SYSTEMDRIVE%\Fabrikam\shell.exe"
+            }
+            LaunchApps = @{
+                "%SYSTEMDRIVE%\Fabrikam\app1.exe" = $null
+                '%SYSTEMDRIVE%\Fabrikam\app2.exe, /s "C:\Program Files\App3"' = $null
+            }
+        }
+        Export-Ini -InputObject $Winpeshl -FilePath "winpeshl.ini" -SkipTrailingEqualSign
+        -----------
+        Description
+        Example as per https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/winpeshlini-reference-launching-an-app-when-winpe-starts
+
     .Link
         Import-Ini
         ConvertFrom-Ini
