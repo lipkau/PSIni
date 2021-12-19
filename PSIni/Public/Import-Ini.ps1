@@ -135,6 +135,19 @@ function Import-Ini {
                     }
                     continue
                 }
+                Default {
+                    # No match
+                    # As seen in https://github.com/lipkau/PsIni/issues/65, some software writes keys without
+                    # the `=` sign.
+                    if (-not $section) {
+                        $section = $script:NoSection
+                        $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+                    }
+                    $name = $_
+                    Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name without a value"
+                    $ini[$section][$name] = $null
+                    continue
+                }
             }
 
             $ini
