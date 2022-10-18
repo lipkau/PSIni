@@ -148,8 +148,9 @@
                 }
                 else {
                     if ($ini[$section][$name] -is [string]) {
+                        $firstValue = $ini[$section][$name]
                         $ini[$section][$name] = [System.Collections.ArrayList]::new()
-                        $ini[$section][$name].Add($ini[$section][$name]) | Out-Null
+                        $ini[$section][$name].Add($firstValue) | Out-Null
                         $ini[$section][$name].Add($value) | Out-Null
                     }
                     else {
