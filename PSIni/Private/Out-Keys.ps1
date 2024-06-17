@@ -35,7 +35,11 @@
 
         [Parameter()]
         [Switch]
-        $IgnoreComments
+        $IgnoreComments,
+
+        [Parameter()]
+        [Switch]
+        $SkipTrailingEqualSign
     )
 
     begin {
@@ -61,6 +65,11 @@
                     Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing comment: $key"
                     Out-File -InputObject "$CommentChar$($InputObject[$key])" @outFileParameter
                 }
+            }
+            elseif (-not $InputObject[$key]) {
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key without value"
+                $keyToWrite = if ($SkipTrailingEqualSign) { "$key" } else { "$key$delimiter" }
+                Out-File -InputObject $keyToWrite @outFileParameter
             }
             else {
                 foreach ($entry in $InputObject[$key]) {

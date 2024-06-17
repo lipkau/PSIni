@@ -50,7 +50,7 @@ Describe "ConvertFrom-Ini" -Tag "Unit" {
         It "has the ini sections and keys without a section as root properties" {
             $convertedObject = ConvertFrom-Ini -Path $iniFile
 
-            ($convertedObject | Get-Member -MemberType *Property).Name | Should -Be @("Arrays", "Comment1", "Key", "Strings")
+            ($convertedObject | Get-Member -MemberType *Property).Name | Should -Be @("Arrays", "Comment1", "Key", "NoValues", "Strings")
         }
 
         It "treats the value of a key as string" {
