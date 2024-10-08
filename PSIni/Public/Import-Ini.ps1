@@ -97,7 +97,7 @@ function Import-Ini {
                     $section = $matches[1]
                     Write-Debug "$($MyInvocation.MyCommand.Name):: Adding section : $section"
                     $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-                    $CommentCount = 0
+                    $commentCount = 0
                     continue
                 }
                 $commentRegex {
@@ -108,9 +108,9 @@ function Import-Ini {
                             $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                         }
                         $value = $matches[1].Trim()
-                        $CommentCount++
-                        Write-DebugMessage ("Incremented CommentCount is now $CommentCount.")
-                        $name = "Comment$CommentCount"
+                        $commentCount++
+                        Write-DebugMessage ("Incremented commentCount is now $commentCount.")
+                        $name = "Comment$commentCount"
                         Write-Debug "$($MyInvocation.MyCommand.Name):: Adding $name with value: $value"
                         $ini[$section][$name] = $value
                     }
