@@ -41,14 +41,14 @@ Describe "Import-Ini" -Tag "Unit" {
         It "loads the sections as expected" {
             $dictOut = Import-Ini -Path $iniFile
 
-            $dictOut.Keys | Should -Be "_", "Strings", "Arrays", "NoValues"
+            $dictOut.Keys | Should -Be "_", "Strings", "Arrays", "NoValues", "EmptySection"
         }
 
         It "uses a module-wide variable for the keys that don't have a section" {
             InModuleScope PsIni { $script:NoSection = "NoName" }
             $dictOut = Import-Ini -Path $iniFile
 
-            $dictOut.Keys | Should -Be "NoName", "Strings", "Arrays", "NoValues"
+            $dictOut.Keys | Should -Be "NoName", "Strings", "Arrays", "NoValues", "EmptySection"
             $dictOut["NoName"]["Key"] | Should -Be "With No Section"
         }
 
@@ -126,6 +126,14 @@ Describe "Import-Ini" -Tag "Unit" {
             $withoutComments["Strings"].Keys | Should -HaveCount 17
             $withComments["Strings"].Keys | Should -Contain "Comment1"
             $withoutComments["Strings"].Keys | Should -Not -Contain "Comment1"
+        }
+
+        It "ignores empty sections when -IgnoreEmptySections is provided" {
+            $withEmptySections = Import-Ini -Path $iniFile
+            $withoutEmptySections = Import-Ini -Path $iniFile -IgnoreEmptySections
+
+            $withEmptySections.Keys | Should -Contain "EmptySection"
+            $withoutEmptySections.Keys | Should -Not -Contain "EmptySection"
         }
 
         It "stores keys without a value" {
