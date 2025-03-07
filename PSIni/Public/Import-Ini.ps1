@@ -58,7 +58,11 @@ function Import-Ini {
 
         # Remove lines determined to be comments from the resulting dictionary.
         [Switch]
-        $IgnoreComments
+        $IgnoreComments,
+
+        # Remove sections without any key
+        [Switch]
+        $IgnoreEmptySections
     )
 
     begin {
@@ -149,7 +153,18 @@ function Import-Ini {
                     continue
                 }
             }
-
+            if($IgnoreEmptySections){
+                $ToRemove = [System.Collections.ArrayList]@()
+                foreach($Section in $ini.Keys){
+                    if(($ini[$Section]).Count -eq 0){
+                        $null = $ToRemove.Add($Section)
+                    }
+                }
+                foreach($Section in $ToRemove){
+                    Write-Verbose "$($MyInvocation.MyCommand.Name):: Removing empty section $Section"
+                    $null = $ini.Remove($Section)
+                }
+            }
             $ini
         }
     }
