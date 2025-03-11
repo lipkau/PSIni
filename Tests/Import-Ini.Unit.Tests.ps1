@@ -147,5 +147,11 @@ Describe "Import-Ini" -Tag "Unit" {
 
             $dictOut["NoValues"]["Key2"] | Should -BeNullOrEmpty
         }
+
+        It "stores keys without a value and trims surrounding whitespace" {
+            $dictOut = Import-Ini -Path $iniFile
+
+            $dictOut["NoValues"]["Key`3"] | Should -BeNullOrEmpty
+        }
     }
 }
