@@ -1,4 +1,4 @@
-﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.0" }
+﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.7"; MaximumVersion = "5.999" }
 
 Describe "Style rules" -Tag "Unit" {
     BeforeAll {
@@ -7,7 +7,7 @@ Describe "Style rules" -Tag "Unit" {
     }
 
 
-    It 'PsIni source files contain no trailing whitespace' {
+    It 'PSIni source files contain no trailing whitespace' {
         $badLines = @(
             foreach ($file in $files) {
                 $lines = [System.IO.File]::ReadAllLines($file.FullName)
@@ -26,7 +26,7 @@ Describe "Style rules" -Tag "Unit" {
         }
     }
 
-    It 'PsIni Source Files all end with a newline' {
+    It 'PSIni Source Files all end with a newline' {
         $badFiles = @(
             foreach ($file in $files) {
                 $string = [System.IO.File]::ReadAllText($file.FullName)

@@ -1,4 +1,4 @@
-﻿function Out-Keys {
+﻿function Out-Key {
     param(
         [Parameter()]
         [Switch]

@@ -1,6 +1,4 @@
-﻿#requires -Version 5
-
-function ConvertFrom-Ini {
+﻿function ConvertFrom-Ini {
     <#
     .Synopsis
         Transform the content of an INI file to a Powershell object

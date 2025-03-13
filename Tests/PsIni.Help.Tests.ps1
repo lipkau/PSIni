@@ -1,19 +1,16 @@
-﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.0" }
-
-New-Module PesterEx -ScriptBlock {
-    function BeforeDiscovery ([ScriptBlock] $ScriptBlock) {
-        . $ScriptBlock
-    }
-} -PassThru | Import-Module
+﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.7"; MaximumVersion = "5.999" }
 
 Describe "Help tests" -Tag "Documentation", "Build" {
     BeforeAll {
-        Remove-Module PsIni -ErrorAction SilentlyContinue
-        Import-Module (Join-Path $PSScriptRoot "../PSIni") -Force -ErrorAction Stop
+        . "$PSScriptRoot/Helpers/Resolve-ModuleSource.ps1"
+        $script:moduleToTest = Resolve-ModuleSource
 
-        $module = Get-Module PsIni
+        Remove-Module PSIni -ErrorAction SilentlyContinue
+        Import-Module $moduleToTest -Force -ErrorAction Stop
 
-        $DefaultParams = @(
+        $script:module = Get-Module PSIni
+
+        $script:DefaultParams = @(
             'Verbose'
             'Debug'
             'ErrorAction'
@@ -28,9 +25,8 @@ Describe "Help tests" -Tag "Documentation", "Build" {
             'WhatIf'
             'Confirm'
         )
-    }
-    BeforeDiscovery {
-        $commands = Get-Command -Module PsIni -CommandType Cmdlet, Function | Foreach-Object { @{
+
+        $script:commands = Get-Command -Module PSIni -CommandType Cmdlet, Function | ForEach-Object { @{
                 Command     = $_
                 CommandName = $_.Name
                 Help        = (Get-Help $_.Name)
@@ -40,34 +36,28 @@ Describe "Help tests" -Tag "Documentation", "Build" {
 
     Describe "Help content" {
         It "has a synopsis for <CommandName>" -TestCases $commands {
-            param($command, $CommandName, $Help)
             $help.Synopsis | Should -Not -BeNullOrEmpty
         }
 
         It "has a syntax for <CommandName>" -TestCases $commands {
-            param($command, $CommandName, $Help)
             $help.syntax | Should -Not -BeNullOrEmpty
         }
 
         It "has a description for <CommandName>" -TestCases $commands {
-            param($command, $CommandName, $Help)
             $help.Description.Text -join '' | Should -Not -BeNullOrEmpty
         }
 
         It "has examples for <CommandName>" -TestCases $commands {
-            param($command, $CommandName, $Help)
             ($help.Examples.Example | Select-Object -First 1).Code | Should -Not -BeNullOrEmpty
         }
 
-        It "has desciptions for all examples for <CommandName>" -TestCases $commands {
-            param($command, $CommandName, $Help)
+        It "has descriptions for all examples for <CommandName>" -TestCases $commands {
             foreach ($example in ($help.Examples.Example)) {
                 $example.remarks.Text | Should -Not -BeNullOrEmpty
             }
         }
 
         It "has at least as many examples as ParameterSets for <CommandName>" -TestCases $commands {
-            param($command, $CommandName, $Help)
             ($help.Examples.Example | Measure-Object).Count | Should -BeGreaterOrEqual $command.ParameterSets.Count
         }
 

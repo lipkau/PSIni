@@ -1,6 +1,4 @@
-﻿#requires -Version 5
-
-function Export-Ini {
+﻿function Export-Ini {
     <#
     .Synopsis
         Write hash content to INI file
@@ -157,14 +155,15 @@ function Export-Ini {
                 CommentChar           = ";"
                 SkipTrailingEqualSign = $SkipTrailingEqualSign
             }
-            Out-Keys @outKeysParam @fileParameters
+            Out-Key @outKeysParam @fileParameters
 
             # TODO: what when the Input is only a simple hash?
 
             if ($Format -eq "pretty") { Out-File -InputObject "" @fileParameters }
         }
 
-        Remove-EmptyLines @fileParameters
+        $fileParameters.Remove("Append")
+        Remove-EmptyLine @fileParameters
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished writing to file: $Path"
     }
@@ -180,13 +179,13 @@ Set-Alias epini Export-Ini
 
 Register-ArgumentCompleter -CommandName Export-Ini -ParameterName Encoding -ScriptBlock {
     Get-AllowedEncoding |
-    Where-Object { $_ -like "$wordToComplete*" } |
-    ForEach-Object {
-        [System.Management.Automation.CompletionResult]::new(
-            $_,
-            $_,
-            [System.Management.Automation.CompletionResultType]::ParameterValue,
-            $_
-        )
-    }
+        Where-Object { $_ -like "$wordToComplete*" } |
+        ForEach-Object {
+            [System.Management.Automation.CompletionResult]::new(
+                $_,
+                $_,
+                [System.Management.Automation.CompletionResultType]::ParameterValue,
+                $_
+            )
+        }
 }

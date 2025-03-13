@@ -1,9 +1,12 @@
-﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.0" }
+﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.7"; MaximumVersion = "5.999" }
 
-Describe "PsIni integration tests" -Tag "Integration" {
+Describe "PSIni integration tests" -Tag "Integration" {
     BeforeAll {
-        Remove-Module PsIni -ErrorAction SilentlyContinue
-        Import-Module (Join-Path $PSScriptRoot "../PSIni") -Force -ErrorAction Stop
+        . "$PSScriptRoot/Helpers/Resolve-ModuleSource.ps1"
+        $script:moduleToTest = Resolve-ModuleSource
+
+        Remove-Module PSIni -ErrorAction SilentlyContinue
+        Import-Module $moduleToTest -Force -ErrorAction Stop
 
         $dictIn = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
         $dictIn["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
@@ -15,7 +18,7 @@ Describe "PsIni integration tests" -Tag "Integration" {
     }
     BeforeEach {
         Export-Ini -InputObject $dictIn -Path "TestDrive:\output.ini" -Force -ErrorAction Stop
-        $dictOut = Import-Ini -Path "TestDrive:\output.ini" -ErrorAction Stop
+        $script:dictOut = Import-Ini -Path "TestDrive:\output.ini" -ErrorAction Stop
     }
 
     It "content matches original hashtable" {

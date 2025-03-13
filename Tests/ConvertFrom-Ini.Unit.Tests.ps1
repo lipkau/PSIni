@@ -1,14 +1,17 @@
-﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.0" }
+﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.0"; MaximumVersion = "5.999" }
 
 Describe "ConvertFrom-Ini" -Tag "Unit" {
     BeforeAll {
-        Remove-Module PsIni -ErrorAction SilentlyContinue
-        Import-Module (Join-Path $PSScriptRoot "../PSIni") -Force -ErrorAction Stop
+        . "$PSScriptRoot/Helpers/Resolve-ModuleSource.ps1"
+        $script:moduleToTest = Resolve-ModuleSource
+
+        Remove-Module PSIni -ErrorAction SilentlyContinue
+        Import-Module $moduleToTest -Force -ErrorAction Stop
     }
 
     Describe "Signature" {
         BeforeAll {
-            $command = Get-Command -Name ConvertFrom-Ini
+            $script:command = Get-Command -Name ConvertFrom-Ini
         }
 
         It "has a parameter '<parameter>' of type '<type>'" -TestCases @(
@@ -20,12 +23,12 @@ Describe "ConvertFrom-Ini" -Tag "Unit" {
         }
     }
 
-    Describe "Behavior" {
+    Describe "Behaviors" {
         BeforeAll {
-            $iniFile = Join-Path $PSScriptRoot "sample.ini"
+            $script:iniFile = Join-Path $PSScriptRoot "sample.ini"
         }
         BeforeEach {
-            Remove-Module PsIni -ErrorAction SilentlyContinue
+            Remove-Module PSIni -ErrorAction SilentlyContinue
             Import-Module (Join-Path $PSScriptRoot "../PSIni") -Force -ErrorAction Stop
         }
 

@@ -1,6 +1,4 @@
-﻿#requires -Version 5
-
-function Import-Ini {
+﻿function Import-Ini {
     <#
     .Synopsis
         Gets the content of an INI file
@@ -144,7 +142,7 @@ function Import-Ini {
                 }
                 Default {
                     # No match
-                    # As seen in https://github.com/lipkau/PsIni/issues/65, some software writes keys without
+                    # As seen in https://github.com/lipkau/PSIni/issues/65, some software writes keys without
                     # the `=` sign.
                     if (-not $section) {
                         $section = $script:NoSection
@@ -158,14 +156,14 @@ function Import-Ini {
                     continue
                 }
             }
-            if($IgnoreEmptySections){
+            if ($IgnoreEmptySections) {
                 $ToRemove = [System.Collections.ArrayList]@()
-                foreach($Section in $ini.Keys){
-                    if(($ini[$Section]).Count -eq 0){
+                foreach ($Section in $ini.Keys) {
+                    if (($ini[$Section]).Count -eq 0) {
                         $null = $ToRemove.Add($Section)
                     }
                 }
-                foreach($Section in $ToRemove){
+                foreach ($Section in $ToRemove) {
                     Write-Verbose "$($MyInvocation.MyCommand.Name):: Removing empty section $Section"
                     $null = $ini.Remove($Section)
                 }

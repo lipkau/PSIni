@@ -1,3 +1,9 @@
 ﻿$content = Import-Ini .\settings.ini
+
+Write-Output "Before removing key4"
+$content["category2"].Keys
+
+Write-Output "After removing key4"
 $content["category2"].Remove("key4")
-if (!$content["category2"]["key4"]) { Write-Host "content[category2][key4] no longer exists." }
+$content["category2"].Keys
+

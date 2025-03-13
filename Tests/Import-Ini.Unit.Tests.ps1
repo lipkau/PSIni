@@ -1,14 +1,17 @@
-﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.0" }
+﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.7"; MaximumVersion = "5.999" }
 
 Describe "Import-Ini" -Tag "Unit" {
     BeforeAll {
-        Remove-Module PsIni -ErrorAction SilentlyContinue
-        Import-Module (Join-Path $PSScriptRoot "../PSIni") -Force -ErrorAction Stop
+        . "$PSScriptRoot/Helpers/Resolve-ModuleSource.ps1"
+        $script:moduleToTest = Resolve-ModuleSource
+
+        Remove-Module PSIni -ErrorAction SilentlyContinue
+        Import-Module $moduleToTest -Force -ErrorAction Stop
     }
 
     Describe "Signature" {
         BeforeAll {
-            $command = Get-Command -Name Import-Ini
+            $script:command = Get-Command -Name Import-Ini
         }
 
         It "exports an alias 'ipini'" {
@@ -25,12 +28,12 @@ Describe "Import-Ini" -Tag "Unit" {
         }
     }
 
-    Describe "Behavior" {
+    Describe "Behaviors" {
         BeforeAll {
-            $iniFile = Join-Path $PSScriptRoot "sample.ini"
+            $script:iniFile = Join-Path $PSScriptRoot "sample.ini"
         }
         BeforeEach {
-            Remove-Module PsIni -ErrorAction SilentlyContinue
+            Remove-Module PSIni -ErrorAction SilentlyContinue
             Import-Module (Join-Path $PSScriptRoot "../PSIni") -Force -ErrorAction Stop
         }
 
@@ -45,7 +48,7 @@ Describe "Import-Ini" -Tag "Unit" {
         }
 
         It "uses a module-wide variable for the keys that don't have a section" {
-            InModuleScope PsIni { $script:NoSection = "NoName" }
+            InModuleScope PSIni { $script:NoSection = "NoName" }
             $dictOut = Import-Ini -Path $iniFile
 
             $dictOut.Keys | Should -Be "NoName", "Strings", "Arrays", "NoValues", "EmptySection"

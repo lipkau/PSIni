@@ -4,26 +4,24 @@
 
     .Notes
         Author       : Oliver Lipkau <https://github.com/lipkau>
-        Contributers : https://github.com/lipkau/PsIni/graphs/contributors
-        Homepage     : http://lipkau.github.io/PsIni/
+        Contributors : https://github.com/lipkau/PSIni/graphs/contributors
+        Homepage     : http://lipkau.github.io/PSIni/
 
 #>
 
+#region Configuration
 # Name of the Section, in case the ini file had none
 # Available in the scope of the module as `$script:NoSection`
 $script:NoSection = "_"
+#endregion Configuration
 
-# public functions
-. "$PSScriptRoot\Public\ConvertFrom-Ini.ps1"
-. "$PSScriptRoot\Public\ConvertTo-Ini.ps1"
-. "$PSScriptRoot\Public\Import-Ini.ps1"
-. "$PSScriptRoot\Public\Export-Ini.ps1"
+#region LoadFunctions
+$PublicFunctions = @( Get-ChildItem -Path "$PSScriptRoot/Public/*.ps1" -ErrorAction SilentlyContinue )
+$PrivateFunctions = @( Get-ChildItem -Path "$PSScriptRoot/Private/*.ps1" -ErrorAction SilentlyContinue )
 
-# private functions
-. "$PSScriptRoot\Private\Get-AllowedEncoding.ps1"
-. "$PSScriptRoot\Private\Invoke-ConditionalParameterValidationEncoding.ps1"
-. "$PSScriptRoot\Private\Invoke-ConditionalParameterValidationPath.ps1"
-. "$PSScriptRoot\Private\isNumeric.ps1"
-. "$PSScriptRoot\Private\Out-Keys.ps1"
-. "$PSScriptRoot\Private\Remove-EmptyLines.ps1"
-. "$PSScriptRoot\Private\Write-DebugMessage.ps1"
+# Dot source the functions
+foreach ($file in @($PublicFunctions + $PrivateFunctions)) {
+    . $file.FullName
+}
+Export-ModuleMember -Function $PublicFunctions.BaseName -Alias *
+#endregion LoadFunctions

@@ -1,11 +1,11 @@
 ﻿@{
-    RootModule             = 'PsIni.psm1'
-    ModuleVersion          = '3.1.0'
+    RootModule             = 'PSIni.psm1'
+    ModuleVersion          = '3.1.4'
     GUID                   = '98e1dc0f-2f03-4ca1-98bb-fd7b4b6ac652'
     Author                 = 'Oliver Lipkau <oliver@lipkau.net>'
     CompanyName            = 'Unknown'
     Copyright              = '(c) 2013 Oliver Lipkau. All rights reserved.'
-    Description            = 'Convert hashtable to INI file and back. @ http://lipkau.github.io/PsIni/'
+    Description            = 'Convert hashtable to INI file and back. @ http://lipkau.github.io/PSIni/'
     PowerShellVersion      = '3.0'
     PowerShellHostName     = ''
     PowerShellHostVersion  = ''
@@ -38,9 +38,9 @@
     FileList               = @()
     PrivateData            = @{
         PSData = @{
-            Tags       = @('ini', 'PsIni')
-            LicenseUri = 'https://github.com/lipkau/PsIni/blob/master/LICENSE'
-            ProjectUri = 'http://lipkau.github.io/PsIni'
+            Tags       = @('ini', 'PSIni')
+            LicenseUri = 'https://github.com/lipkau/PSIni/blob/master/LICENSE'
+            ProjectUri = 'http://lipkau.github.io/PSIni'
             # IconUri = ''
             # ReleaseNotes = ''
             # ExternalModuleDependencies = ''

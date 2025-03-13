@@ -1,16 +1,16 @@
-# Thanks to mklement0
+﻿# Thanks to mklement0
 # https://stackoverflow.com/a/55341293/8176975
 
 
-# Import the PsIni module.
+# Import the PSIni module.
 # If necessary, install it first, for the current user.
 $ErrorActionPreference = 'Stop' # Abort, if something unexpectedly goes wrong.
 try {
-    Import-Module PsIni
+    Import-Module PSIni
 }
 catch {
-    Install-Module -Scope CurrentUser PsIni
-    Import-Module PsIni
+    Install-Module -Scope CurrentUser PSIni
+    Import-Module PSIni
 }
 
 # Create an ordered hashtable that is the in-memory representation of the
@@ -20,7 +20,7 @@ $iniFileContent = [ordered] @{
     # The nested hashtable contains that section's entries.
     XXX = [ordered] @{
         # IMPORTANT:
-        #  * The PsIni module only supports STRING values.
+        #  * The PSIni module only supports STRING values.
         #  * While you can assign values of different types in-memory, they are
         #    CONVERTED TO STRINGS with .ToString() and READ AS STRINGS later
         #    by Import-Ini.

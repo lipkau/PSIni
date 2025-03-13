@@ -1,15 +1,13 @@
-﻿#requires -Version 5
-
-function ConvertTo-Ini {
+﻿function ConvertTo-Ini {
     <#
     .Synopsis
         Transform a Powershell Object to a format that can be stored as an INI file.
 
     .Description
-        Will transform any given object to a nested (one leve) OrderedDictionary that can be stored as an INI file.
+        Will transform any given object to a nested (one level) OrderedDictionary that can be stored as an INI file.
 
         Any nesting that goes beyond 1 level will be stored using the `toString()` method.
-        Caution: using this cmdlet via pipeline might result in unwanted behavior, as the key might be duplicated.
+        Caution: using this cmdlet via pipeline might result in unwanted behaviors, as the key might be duplicated.
 
     .Example
         Get-ChildItem | ConvertTo-Ini
@@ -57,6 +55,7 @@ function ConvertTo-Ini {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
 
         function New-Array {
+            [System.Diagnostics.CodeAnalysis.SuppressMessage('PSUseShouldProcessForStateChangingFunctions', '')]
             param($InputObject)
             $output = [System.Collections.ArrayList]::new()
             foreach ($item in $InputObject) { $null = $output.Add([String]($item)) }

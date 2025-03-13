@@ -1,19 +1,22 @@
-﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.0" }
+﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.7"; MaximumVersion = "5.999" }
 
 Describe "Export-Ini" -Tag "Unit" {
     BeforeAll {
-        Remove-Module PsIni -ErrorAction SilentlyContinue
-        Import-Module (Join-Path $PSScriptRoot "../PSIni") -Force
+        . "$PSScriptRoot/Helpers/Resolve-ModuleSource.ps1"
+        $script:moduleToTest = Resolve-ModuleSource
+
+        Remove-Module PSIni -ErrorAction SilentlyContinue
+        Import-Module $moduleToTest -Force -ErrorAction Stop
 
         . (Join-Path $PSScriptRoot "./Helpers/Get-FileEncoding.ps1")
 
-        $lf = if (($PSVersionTable.ContainsKey("Platform")) -and ($PSVersionTable.Platform -ne "Win32NT")) { "`n" }
+        $script:lf = if (($PSVersionTable.ContainsKey("Platform")) -and ($PSVersionTable.Platform -ne "Win32NT")) { "`n" }
         else { "`r`n" }
     }
 
     Describe "Signature" {
         BeforeAll {
-            $command = Get-Command -Name Export-Ini
+            $script:command = Get-Command -Name Export-Ini
         }
 
         It "exports an alias 'epini'" {
@@ -43,11 +46,11 @@ Describe "Export-Ini" -Tag "Unit" {
         }
     }
 
-    Describe "Behavior" {
+    Describe "Behaviors" {
         BeforeEach {
             $testPath = "TestDrive:\output$(Get-Random).ini"
 
-            $commonParameter = @{
+            $script:commonParameter = @{
                 Path        = $testPath
                 ErrorAction = "Stop"
             }
@@ -60,13 +63,13 @@ Describe "Export-Ini" -Tag "Unit" {
             $defaultObject["Category2"]["Comment1"] = "Key1 = Value1"
             $defaultObject["Category2"]["Comment2"] = "Key2 = Value2"
 
-            $defaultFileContent = "[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}${lf}[Category2]${lf};Key1 = Value1${lf};Key2 = Value2${lf}"
+            $script:defaultFileContent = "[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}${lf}[Category2]${lf};Key1 = Value1${lf};Key2 = Value2${lf}"
 
             $additionalObject = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
             $additionalObject["Additional"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
             $additionalObject["Additional"]["Key1"] = "Value1"
 
-            $additionalFileContent = "[Additional]${lf}Key1 = Value1${lf}"
+            $script:additionalFileContent = "[Additional]${lf}Key1 = Value1${lf}"
 
             $objectWithEmptyKeys = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
             $objectWithEmptyKeys["NoValues"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
@@ -81,7 +84,7 @@ Describe "Export-Ini" -Tag "Unit" {
             $fileContent | Should -Be $defaultFileContent
         }
 
-        It "accepts the inputobject via pipeline" {
+        It "accepts the InputObject via pipeline" {
             $defaultObject | Export-Ini @commonParameter
             Test-Path -Path $testPath | Should -Be $true
         }
@@ -94,7 +97,7 @@ Describe "Export-Ini" -Tag "Unit" {
             $fileContent | Should -Be ($defaultFileContent + $additionalFileContent)
         }
 
-        It "it overwrite any exisinting file when using -Force" {
+        It "it overwrite any existing file when using -Force" {
             Export-Ini @commonParameter -InputObject $defaultObject
             Get-Content -Path $testPath -Raw | Should -Not -Be $additionalFileContent
 

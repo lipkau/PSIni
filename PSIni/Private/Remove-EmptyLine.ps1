@@ -1,7 +1,6 @@
-function Remove-EmptyLines {
+﻿function Remove-EmptyLine {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage('PSUseShouldProcessForStateChangingFunctions', '')]
     param(
-        $Append,
-
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [String]
@@ -19,5 +18,5 @@ function Remove-EmptyLines {
     else { "\n" }
 
     $content = (Get-Content -Path $FilePath -Raw) -replace "(${lf})*$", "" -replace "(${lf}){3,}", ""
-    Set-Content -Value $content -Path $FilePath -Encoding $Encoding -Force
+    Set-Content -Value $content -Path $FilePath -Encoding $Encoding -Force:$Force
 }
