@@ -1,9 +1,5 @@
 ﻿function Out-Key {
     param(
-        [Parameter()]
-        [Switch]
-        $Append,
-
         [Parameter( Mandatory )]
         [Char]
         $CommentChar,
@@ -16,15 +12,6 @@
         [ValidateNotNullOrEmpty()]
         [System.Collections.IDictionary]
         $InputObject,
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [String]
-        $Encoding = "UTF8",
-
-        [Parameter()]
-        [Switch]
-        $Force,
 
         [Parameter()]
         [Switch]
