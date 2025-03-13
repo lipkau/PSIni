@@ -14,23 +14,22 @@ $OS, $OSVersion = Get-HostInformation
 # }
 # TODO: validate the git tag is greater than the last release
 
-Task DebugInfo {
+Task ShowDebugInfo {
     Write-Build Gray
-    Write-Build Gray ('Running in:                 {0}' -f $env:BHBuildSystem)
+    Write-Build Gray ('BHBuildSystem:              {0}' -f $env:BHBuildSystem)
     Write-Build Gray '-------------------------------------------------------'
-    Write-Build Gray
-    Write-Build Gray ('Project name:               {0}' -f $env:BHProjectName)
-    Write-Build Gray ('Project root:               {0}' -f $env:BHProjectPath)
-    Write-Build Gray ('Build Path:                 {0}' -f $env:BHBuildOutput)
-    Write-Build Gray ('Current (online) Version:   {0}' -f $env:CurrentOnlineVersion)
+    Write-Build Gray ('BHProjectName               {0}' -f $env:BHProjectName)
+    Write-Build Gray ('BHModulePath:               {0}' -f $env:BHModulePath)
+    Write-Build Gray ('BHProjectPath:              {0}' -f $env:BHProjectPath)
+    Write-Build Gray ('BHPSModuleManifest:         {0}' -f $env:BHPSModuleManifest)
+    Write-Build Gray ('BHBuildOutput:              {0}' -f $env:BHBuildOutput)
+    Write-Build Gray ('CurrentOnlineVersion:       {0}' -f $env:CurrentOnlineVersion)
     Write-Build Gray '-------------------------------------------------------'
-    Write-Build Gray
-    Write-Build Gray ('Branch:                     {0}' -f $env:BHBranchName)
-    Write-Build Gray ('Commit:                     {0}' -f $env:BHCommitMessage)
-    Write-Build Gray ('Build #:                    {0}' -f $env:BHBuildNumber)
-    Write-Build Gray ('Next Version:               {0}' -f $env:NextBuildVersion)
+    Write-Build Gray ('BHBranchName:               {0}' -f $env:BHBranchName)
+    Write-Build Gray ('BHCommitMessage:            {0}' -f $env:BHCommitMessage)
+    Write-Build Gray ('BHBuildNumber               {0}' -f $env:BHBuildNumber)
+    Write-Build Gray ('NextBuildVersion            {0}' -f $env:NextBuildVersion)
     Write-Build Gray '-------------------------------------------------------'
-    Write-Build Gray
     Write-Build Gray ('PowerShell version:         {0}' -f $PSVersionTable.PSVersion.ToString())
     Write-Build Gray ('OS:                         {0}' -f $OS)
     Write-Build Gray ('OS Version:                 {0}' -f $OSVersion)
@@ -48,6 +47,7 @@ Task Build Clean, {
     }
     # TODO:
     # replace data in manifest
+    exit 1
 }, CopyModuleFiles, CompileModule
 
 # Synopsis: Generate ./release structure
