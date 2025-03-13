@@ -29,7 +29,7 @@
         $file = Export-Ini $IniVar "C:\myinifile.ini" -PassThru
         -----------
         Description
-        Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini and saves the file into $file
+        Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini and saves the file into $file. Writes exported data to console, as a powershell object.
 
     .Example
         $Category1 = @{“Key1”=”Value1”;”Key2”=”Value2”}
