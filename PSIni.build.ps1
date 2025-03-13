@@ -8,7 +8,7 @@ Import-Module (Get-Dependency) -Force -ErrorAction Stop
 Remove-Item -Path env:\BH* -ErrorAction SilentlyContinue
 Set-BuildEnvironment -BuildOutput '$ProjectPath/release' -ErrorAction SilentlyContinue
 $OS, $OSVersion = Get-HostInformation
-$env:CurrentOnlineVersion, $env:NextBuildVersion = Get-BuildVersion
+# $env:CurrentOnlineVersion, $env:NextBuildVersion = Get-BuildVersion
 # Add-ToModulePath -Path $env:BHBuildOutput
 
 # }
@@ -39,7 +39,7 @@ Task DebugInfo {
 
 Task Clean {
     Remove-Item $env:BHBuildOutput -Force -Recurse -ErrorAction SilentlyContinue
-    Remove-Item "Test-*.xml" -Force -ErrorAction SilentlyContinue
+    Remove-Item "Test*.xml" -Force -ErrorAction SilentlyContinue
 }
 
 Task Build Clean, {

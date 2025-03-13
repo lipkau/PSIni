@@ -2,8 +2,8 @@
 
 Describe "Style rules" -Tag "Unit" {
     BeforeAll {
-        $module = Join-Path $PSScriptRoot "..\PSIni"
-        $files = Get-ChildItem $module -Include *.ps1, *.psm1 -Recurse
+        $script:module = Join-Path $PSScriptRoot "..\PSIni"
+        $script:files = Get-ChildItem $module -Include *.ps1, *.psm1 -Recurse
     }
 
 
