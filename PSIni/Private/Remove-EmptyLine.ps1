@@ -17,6 +17,6 @@
     $lf = if ((-not $PSVersionTable.Platform) -or ($PSVersionTable.Platform -eq "Win32NT")) { "\r\n" }
     else { "\n" }
 
-    $content = (Get-Content -Path $Path -Raw) -replace "(${lf})*$", "" -replace "(${lf}){3,}", ""
+    $content = (Get-Content -Path $Path -ErrorAction SilentlyContinue -Raw) -replace "(${lf})*$", "" -replace "(${lf}){3,}", ""
     Set-Content -Value $content -Path $Path -Encoding $Encoding -Force:$Force
 }

@@ -139,19 +139,6 @@
     process {
         $fileContent = @()
 
-        # Check if the file exists and handle the append operation
-        if (Test-Path -Path $Path) {
-            if (-not $Append) {
-                Remove-Item -Path $Path -Force:$Force
-            }
-            else {
-                # Read existing content if appending
-                $fileContent += Get-Content -Path $Path -ErrorAction SilentlyContinue
-
-                # TODO: Do a cleanup with Remove-WhiteSpace script??
-            }
-        }
-
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Path"
         foreach ($section in $InputObject.Keys) {
             Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$section]"
@@ -177,9 +164,26 @@
             if ($Format -eq "pretty") { $fileContent += "" } # Separate Sections with whiteSpace
         }
 
-        Save-WithCleanup @fileParameters -FileContent $fileContent # Cleanup: Sets $Encoding, Corrects LineEnds
+        # Check if the file exists and handle the append operation
+        if (-not (Test-Path -Path $Path)) {
+            # Output Encoding is handled here
+            Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force
+            Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished creating file: $Path"
+        }
+        else {
+            if (-not $Append) {
+                Remove-Item -Path $Path -Force:$Force
+                # Output Encoding is handled here
+                Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished overwriting file: $Path"
+            }
+            else {
+                # Output Encoding is handled here
+                Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force -Append
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished appending to file: $Path"
+            }
+        }
 
-        Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished writing to file: $Path"
     }
 
     end {
