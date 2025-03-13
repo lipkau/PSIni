@@ -19,9 +19,5 @@ function Save-WithCleanup {
         $FileContent
     )
 
-    $lf = if ((-not $PSVersionTable.Platform) -or ($PSVersionTable.Platform -eq "Win32NT")) { "\r\n" }
-    else { "\n" }
-
-    $content = $FileContent -replace "(${lf})*$", "" -replace "(${lf}){3,}", ""
-    Set-Content -Value $content -Path $Path -Encoding $Encoding -Force:$Force
+    Set-Content -Value $FileContent -Path $Path -Encoding $Encoding -Force:$Force -NoNewline
 }

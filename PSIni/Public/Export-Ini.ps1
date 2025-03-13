@@ -147,6 +147,8 @@
             else {
                 # Read existing content if appending
                 $fileContent += Get-Content -Path $Path -ErrorAction SilentlyContinue
+
+                # TODO: Do a cleanup with Remove-WhiteSpace script??
             }
         }
 
