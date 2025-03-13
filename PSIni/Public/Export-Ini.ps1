@@ -29,7 +29,7 @@
         $file = Export-Ini $IniVar "C:\myinifile.ini" -PassThru
         -----------
         Description
-        Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini and saves the file into $file
+        Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini and saves the file into $file. Writes exported data to console, as a powershell object.
 
     .Example
         $Category1 = @{“Key1”=”Value1”;”Key2”=”Value2”}
@@ -128,44 +128,62 @@
         $delimiter = if ($Format -eq "pretty") { ' = ' } else { '=' }
 
         $fileParameters = @{
-            Append   = $true
             Encoding = $Encoding
-            FilePath = $Path
+            Path     = $Path
             Force    = $Force
         }
-        Write-DebugMessage "Using the following paramters when writing to file:"
+        Write-DebugMessage "Using the following parameters when writing to file:"
         Write-DebugMessage ($fileParameters | Out-String)
     }
 
     process {
-        if ((Test-Path -Path $Path) -and (-not ($Append))) {
-            Remove-Item -Path $Path -Force:$Force
-        }
+        $fileContent = @()
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Path"
         foreach ($section in $InputObject.Keys) {
             Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$section]"
 
-            if ($section -ne $script:NoSection) { Out-File -InputObject "[$section]" @fileParameters }
+            # Add section header to the content array
+            if ($section -ne $script:NoSection) {
+                $fileContent += "[$section]"
+            }
 
-            $outKeysParam = @{
+            $outKeyParam = @{
                 InputObject           = $InputObject[$section]
                 Delimiter             = $delimiter
                 IgnoreComments        = $IgnoreComments
                 CommentChar           = ";"
                 SkipTrailingEqualSign = $SkipTrailingEqualSign
             }
-            Out-Key @outKeysParam @fileParameters
+
+            #Collect output from Out-Key to fileContent
+            $fileContent += Out-Key @outKeyParam
 
             # TODO: what when the Input is only a simple hash?
 
-            if ($Format -eq "pretty") { Out-File -InputObject "" @fileParameters }
+            if ($Format -eq "pretty") { $fileContent += "" } # Separate Sections with whiteSpace
         }
 
-        $fileParameters.Remove("Append")
-        Remove-EmptyLine @fileParameters
+        # Check if the file exists and handle the append operation
+        if (-not (Test-Path -Path $Path)) {
+            # Output Encoding is handled here
+            Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force
+            Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished creating file: $Path"
+        }
+        else {
+            if (-not $Append) {
+                Remove-Item -Path $Path -Force:$Force
+                # Output Encoding is handled here
+                Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished overwriting file: $Path"
+            }
+            else {
+                # Output Encoding is handled here
+                Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force -Append
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished appending to file: $Path"
+            }
+        }
 
-        Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished writing to file: $Path"
     }
 
     end {
