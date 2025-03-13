@@ -1,28 +1,10 @@
-// Place your settings in this file to overwrite default and user settings.
 {
-    "files.encoding": "utf8",
-    "files.eol": "\n",
-    "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true,
-    "editor.tabSize": 4,
     "powershell.scriptAnalysis.settingsPath": "PSScriptAnalyzerSettings.psd1",
     "powershell.codeFormatting.preset": "Stroustrup",
     "powershell.codeFormatting.ignoreOneLineBlock": true,
+    "powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
     "powershell.scriptAnalysis.enable": true,
-    "[powershell]": {
-        "files.encoding": "utf8bom"
-    },
     "[markdown]": {
-        "editor.renderWhitespace": "all",
-        "editor.acceptSuggestionOnEnter": "off",
-        "editor.rulers": [
-            80
-        ],
-        "editor.trimAutoWhitespace": false,
-        "files.trimTrailingWhitespace": false
-    },
-    "[ini]": {
-        "editor.trimAutoWhitespace": false,
-        "files.trimTrailingWhitespace": false
+        "editor.rulers": [120]
     }
 }

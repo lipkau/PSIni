@@ -1,9 +1,9 @@
-# [PsIni](http://lipkau.github.io/PsIni/)
+# [PSIni](http://lipkau.github.io/PSIni/)
 
-[![GitHub release](https://img.shields.io/github/release/lipkau/PsIni.svg?style=for-the-badge)](https://github.com/lipkau/PsIni/releases/latest)
-[![Build status](https://img.shields.io/appveyor/ci/lipkau/PsIni/master.svg?style=for-the-badge)](https://ci.appveyor.com/project/lipkau/psini/branch/master)
-[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PsIni.svg?style=for-the-badge)](https://www.powershellgallery.com/packages/PsIni)
-![License](https://img.shields.io/github/license/lipkau/PsIni.svg?style=for-the-badge)
+[![GitHub release](https://img.shields.io/github/release/lipkau/PSIni.svg?style=for-the-badge)](https://github.com/lipkau/PSIni/releases/latest)
+[![Build status](https://img.shields.io/appveyor/ci/lipkau/PSIni/master.svg?style=for-the-badge)](https://ci.appveyor.com/project/lipkau/psini/branch/master)
+[![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PSIni.svg?style=for-the-badge)](https://www.powershellgallery.com/packages/PSIni)
+![License](https://img.shields.io/github/license/lipkau/PSIni.svg?style=for-the-badge)
 
 ## Table of Contents
 
@@ -23,11 +23,11 @@ This code was originally a blog post for [Hey Scripting Guy](http://blogs.techne
 
 ## Installation
 
-PsIni is published to the [Powershell Gallery](https://www.powershellgallery.com/packages/PsIni)
+PSIni is published to the [Powershell Gallery](https://www.powershellgallery.com/packages/PSIni)
 and can be installed as follows:
 
 ```powershell
-Install-Module PsIni
+Install-Module PSIni
 ```
 
 ## Examples
@@ -35,7 +35,7 @@ Install-Module PsIni
 Create a hashtable and save it to C:\settings.ini:
 
 ```powershell
-Import-Module PsIni
+Import-Module PSIni
 $Category1 = @{"Key1"="Value1";"Key2"="Value2"}
 $Category2 = @{"Key1"="Value1";"Key2"="Value2"}
 $NewINIContent = @{"Category1"=$Category1;"Category2"=$Category2}
