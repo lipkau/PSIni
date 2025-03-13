@@ -132,11 +132,13 @@
             Path     = $Path
             Force    = $Force
         }
-        Write-DebugMessage "Using the following paramters when writing to file:"
+        Write-DebugMessage "Using the following parameters when writing to file:"
         Write-DebugMessage ($fileParameters | Out-String)
     }
 
     process {
+        $fileContent = @()
+
         # Check if the file exists and handle the append operation
         if (Test-Path -Path $Path) {
             if (-not $Append) {
@@ -144,11 +146,9 @@
             }
             else {
                 # Read existing content if appending
-                $existingContent = Get-Content -Path $Path -ErrorAction SilentlyContinue
+                $fileContent += Get-Content -Path $Path -ErrorAction SilentlyContinue
             }
         }
-
-        $fileContent = @()
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Path"
         foreach ($section in $InputObject.Keys) {
@@ -172,18 +172,10 @@
 
             # TODO: what when the Input is only a simple hash?
 
-            if ($Format -eq "pretty") { $fileContent += "" }
+            if ($Format -eq "pretty") { $fileContent += "" } # Separate Sections with whiteSpace
         }
 
-        Remove-EmptyLine @fileParameters
-        #TODO: Make sure we are honoring "Append", "Encoding"
-
-        if ($Append -and $existingContent) {
-            $fileContent = $existingContent + $fileContent
-        }
-
-        $fileContent | Set-Content @fileParameters
-
+        Save-WithCleanup @fileParameters -FileContent $fileContent # Cleanup: Sets $Encoding, Corrects LineEnds
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished writing to file: $Path"
     }
