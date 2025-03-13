@@ -1,7 +1,29 @@
-[CmdletBinding()]
-param()
+<#
+    Expected test flow:
+        1. PR triggers CI pipeline
+        2. Pipeline builds the module
+        3. Successful build triggers test matrix (multiple Operating Systems)
+        NOTES:
+            All tests must run against the same build.
+    Expected release flow:
+        1. PR is merged to master
+        2. version tag is pushed to master
+        3. github release is created on the tag
+        4. github release triggers deployment pipeline
+        5. deployment pipeline publishes module to PSGallery
+        NOTES:
+            manifest contains the `major.minor` version.
+            Patch is automatically calculated.
+            Major or Minor updates require manual change to the manifest.
+#>
 
-# Enter-Build {
+[CmdletBinding()]
+param(
+    [String]
+    [ValidateSet('None', 'Normal' , 'Detailed', 'Diagnostic')]
+    $PesterVerbosity = 'Normal'
+)
+
 Import-Module "$PSScriptRoot/tools/BuildTools.psm1" -Force
 Import-Module (Get-Dependency) -Force -ErrorAction Stop
 
@@ -11,26 +33,24 @@ $OS, $OSVersion = Get-HostInformation
 # $env:CurrentOnlineVersion, $env:NextBuildVersion = Get-BuildVersion
 # Add-ToModulePath -Path $env:BHBuildOutput
 
-# }
 # TODO: validate the git tag is greater than the last release
 
-Task DebugInfo {
+Task ShowDebugInfo {
     Write-Build Gray
-    Write-Build Gray ('Running in:                 {0}' -f $env:BHBuildSystem)
+    Write-Build Gray ('BHBuildSystem:              {0}' -f $env:BHBuildSystem)
     Write-Build Gray '-------------------------------------------------------'
-    Write-Build Gray
-    Write-Build Gray ('Project name:               {0}' -f $env:BHProjectName)
-    Write-Build Gray ('Project root:               {0}' -f $env:BHProjectPath)
-    Write-Build Gray ('Build Path:                 {0}' -f $env:BHBuildOutput)
-    Write-Build Gray ('Current (online) Version:   {0}' -f $env:CurrentOnlineVersion)
+    Write-Build Gray ('BHProjectName               {0}' -f $env:BHProjectName)
+    Write-Build Gray ('BHModulePath:               {0}' -f $env:BHModulePath)
+    Write-Build Gray ('BHProjectPath:              {0}' -f $env:BHProjectPath)
+    Write-Build Gray ('BHPSModuleManifest:         {0}' -f $env:BHPSModuleManifest)
+    Write-Build Gray ('BHBuildOutput:              {0}' -f $env:BHBuildOutput)
+    Write-Build Gray ('CurrentOnlineVersion:       {0}' -f $env:CurrentOnlineVersion)
     Write-Build Gray '-------------------------------------------------------'
-    Write-Build Gray
-    Write-Build Gray ('Branch:                     {0}' -f $env:BHBranchName)
-    Write-Build Gray ('Commit:                     {0}' -f $env:BHCommitMessage)
-    Write-Build Gray ('Build #:                    {0}' -f $env:BHBuildNumber)
-    Write-Build Gray ('Next Version:               {0}' -f $env:NextBuildVersion)
+    Write-Build Gray ('BHBranchName:               {0}' -f $env:BHBranchName)
+    Write-Build Gray ('BHCommitMessage:            {0}' -f $env:BHCommitMessage)
+    Write-Build Gray ('BHBuildNumber               {0}' -f $env:BHBuildNumber)
+    Write-Build Gray ('NextBuildVersion            {0}' -f $env:NextBuildVersion)
     Write-Build Gray '-------------------------------------------------------'
-    Write-Build Gray
     Write-Build Gray ('PowerShell version:         {0}' -f $PSVersionTable.PSVersion.ToString())
     Write-Build Gray ('OS:                         {0}' -f $OS)
     Write-Build Gray ('OS Version:                 {0}' -f $OSVersion)
@@ -116,8 +136,18 @@ Task UpdateManifest {
 }
 
 Task Test Build, {
-    Invoke-Pester -Path "$env:BHBuildOutput/Tests" -OutputFile "$env:BHProjectPath/TestResults.xml" -OutputFormat NUnitXml
-    # Invoke-Pester -Script "$PSScriptRoot/tests/*" -OutputFile "$env:BHBuildOutput/TestResults.xml" -OutputFormat NUnitXml
+    # get default from static property
+    $configuration = [PesterConfiguration]::Default
+    $configuration.run.path = @("$env:BHBuildOutput/Tests")
+    $configuration.run.PassThru = $true
+    $configuration.TestResult.OutputPath = "$env:BHProjectPath/TestResults.xml"
+    $configuration.TestResult.OutputFormat = 'NUnitXml'
+    $configuration.Output.Verbosity = $PesterVerbosity
+    $configuration.TestResult.OutputPath = $Script:TestResultFile
+
+    if ((Invoke-Pester -Configuration $configuration).FailedCount -gt 0) {
+        throw "Tests failed"
+    }
 }
 
 Task Publish {
