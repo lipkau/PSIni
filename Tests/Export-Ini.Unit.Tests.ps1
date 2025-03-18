@@ -38,11 +38,11 @@ Describe "Export-Ini" -Tag "Unit" {
         }
 
         It "only accepts the values for -Encode which are supported by the powershell version" -Skip {
-            # I don't know how to test this
+            # TODO: I don't know how to test this
         }
 
         It "provides autocompletion for parameters" -Skip {
-            # I don't know how to test this
+            # TODO: I don't know how to test this
         }
     }
 
@@ -63,7 +63,7 @@ Describe "Export-Ini" -Tag "Unit" {
             $defaultObject["Category2"]["Comment1"] = "Key1 = Value1"
             $defaultObject["Category2"]["Comment2"] = "Key2 = Value2"
 
-            $script:defaultFileContent = "[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}${lf}[Category2]${lf};Key1 = Value1${lf};Key2 = Value2${lf}"
+            $script:defaultFileContent = "[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}${lf}[Category2]${lf};Key1 = Value1${lf};Key2 = Value2${lf}${lf}"
 
             $additionalObject = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
             $additionalObject["Additional"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
@@ -139,21 +139,22 @@ Describe "Export-Ini" -Tag "Unit" {
         }
 
         It "saves the ini file in 'minified' format" {
-            Export-Ini @commonParameter -InputObject $additionalObject -Format "minified"
+            # Minified output is special behaviour
+            Export-Ini @commonParameter -InputObject $defaultObject -Format "minified"
 
             $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "[Additional]${lf}Key1=Value1${lf}"
+            $expectedFileContent = "[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}[Category2]${lf};Key1 = Value1${lf};Key2 = Value2${lf}"
 
             $fileContent | Should -Be $expectedFileContent
         }
 
         It "saves the ini file in 'pretty' format" {
-            Export-Ini @commonParameter -InputObject $additionalObject -Format "pretty"
+            # Pretty output is default behaviour
+            Export-Ini @commonParameter -InputObject $defaultObject -Format "pretty"
 
             $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "[Additional]${lf}Key1 = Value1${lf}"
 
-            $fileContent | Should -Be $expectedFileContent
+            $fileContent | Should -Be $defaultFileContent
         }
 
         It "uses the file encoding 'UTF8' if non is specified" {
