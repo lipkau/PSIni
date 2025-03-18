@@ -164,21 +164,20 @@
             if ($Format -eq "pretty") { $fileContent += "" } # Separate Sections with whiteSpace
         }
 
-        # Check if the file exists and handle the append operation
+        # Finally, write output files (To avoid conflicts, this should be the only place where files are written)
         if (-not (Test-Path -Path $Path)) {
-            # Output Encoding is handled here
+            # If file does not exist, we don't need to think about appending
             Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force
             Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished creating file: $Path"
         }
         else {
             if (-not $Append) {
-                Remove-Item -Path $Path -Force:$Force
-                # Output Encoding is handled here
+                # File exists, but we don't want to append
                 Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished overwriting file: $Path"
             }
             else {
-                # Output Encoding is handled here
+                # File exists & we append
                 Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force -Append
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished appending to file: $Path"
             }
@@ -187,6 +186,7 @@
     }
 
     end {
+        # $PassThru grabs the written file & passes it's identifier into stdout
         if ($PassThru) { Get-Item -Path $Path }
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
