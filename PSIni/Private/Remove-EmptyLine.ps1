@@ -9,7 +9,7 @@
         [Parameter( Mandatory )]
         [ValidateNotNullOrEmpty()]
         [String]
-        $FilePath,
+        $Path,
 
         $Force
     )
@@ -17,6 +17,8 @@
     $lf = if ((-not $PSVersionTable.Platform) -or ($PSVersionTable.Platform -eq "Win32NT")) { "\r\n" }
     else { "\n" }
 
-    $content = (Get-Content -Path $FilePath -Raw) -replace "(${lf})*$", "" -replace "(${lf}){3,}", ""
-    Set-Content -Value $content -Path $FilePath -Encoding $Encoding -Force:$Force
+    # TODO: Verify if this code is actually necessary & purge from the codebase, if not.
+    # Makes sure that there are no more than singular empty lines in entire file & that the file ends without empty lines
+    $content = (Get-Content -Path $Path -Raw) -replace "(${lf})*$", "" -replace "(${lf}){3,}", ""
+    Set-Content -Value $content -Path $Path -Encoding $Encoding -Force:$Force
 }

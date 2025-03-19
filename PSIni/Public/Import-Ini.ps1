@@ -81,7 +81,8 @@
             Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $file"
 
             $ini = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $section = $null
+            $section = $null # Section Name
+            $name = $null # Key or Comment Name
 
             if (-not (Test-Path -Path $file)) {
                 Write-Error "Could not find file '$file'"
