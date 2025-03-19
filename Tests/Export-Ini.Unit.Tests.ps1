@@ -61,15 +61,15 @@ Describe "Export-Ini" -Tag "Unit" {
             $defaultObject["Category1"]["Comment1"] = "Key2 = Value2"
             $defaultObject["Category2"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
             $defaultObject["Category2"]["Comment1"] = "Key1 = Value1"
-            $defaultObject["Category2"]["Comment2"] = "Key2 = Value2"
+            $defaultObject["Category2"]["Comment2"] = "Key2=Value2"
 
-            $script:defaultFileContent = "[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}${lf}[Category2]${lf};Key1 = Value1${lf};Key2 = Value2${lf}${lf}"
+            $script:defaultFileContent = "[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}${lf}"
 
             $additionalObject = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
             $additionalObject["Additional"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
             $additionalObject["Additional"]["Key1"] = "Value1"
 
-            $script:additionalFileContent = "[Additional]${lf}Key1 = Value1${lf}"
+            $script:additionalFileContent = "[Additional]${lf}Key1 = Value1${lf}${lf}"
 
             $objectWithEmptyKeys = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
             $objectWithEmptyKeys["NoValues"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
@@ -124,7 +124,7 @@ Describe "Export-Ini" -Tag "Unit" {
             Export-Ini @commonParameter -InputObject $iniObject
 
             $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "[Section]${lf}ArrayKey = Line 1${lf}ArrayKey = Line 2${lf}ArrayKey = Line 3${lf}"
+            $expectedFileContent = "[Section]${lf}ArrayKey = Line 1${lf}ArrayKey = Line 2${lf}ArrayKey = Line 3${lf}${lf}"
 
             $fileContent | Should -Be $expectedFileContent
         }
@@ -133,7 +133,7 @@ Describe "Export-Ini" -Tag "Unit" {
             Export-Ini @commonParameter -InputObject $defaultObject -IgnoreComments
 
             $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "[Category1]${lf}Key1 = Value1${lf}${lf}[Category2]${lf}"
+            $expectedFileContent = "[Category1]${lf}Key1 = Value1${lf}${lf}[Category2]${lf}${lf}"
 
             $fileContent | Should -Be $expectedFileContent
         }
@@ -143,7 +143,7 @@ Describe "Export-Ini" -Tag "Unit" {
             Export-Ini @commonParameter -InputObject $defaultObject -Format "minified"
 
             $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}[Category2]${lf};Key1 = Value1${lf};Key2 = Value2${lf}"
+            $expectedFileContent = "[Category1]${lf}Key1=Value1${lf};Key2 = Value2${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}"
 
             $fileContent | Should -Be $expectedFileContent
         }
