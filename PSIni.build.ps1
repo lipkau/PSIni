@@ -1,7 +1,29 @@
-[CmdletBinding()]
-param()
+<#
+    Expected test flow:
+        1. PR triggers CI pipeline
+        2. Pipeline builds the module
+        3. Successful build triggers test matrix (multiple Operating Systems)
+        NOTES:
+            All tests must run against the same build.
+    Expected release flow:
+        1. PR is merged to master
+        2. version tag is pushed to master
+        3. github release is created on the tag
+        4. github release triggers deployment pipeline
+        5. deployment pipeline publishes module to PSGallery
+        NOTES:
+            manifest contains the `major.minor` version.
+            Patch is automatically calculated.
+            Major or Minor updates require manual change to the manifest.
+#>
 
-# Enter-Build {
+[CmdletBinding()]
+param(
+    [String]
+    [ValidateSet('None', 'Normal' , 'Detailed', 'Diagnostic')]
+    $PesterVerbosity = 'Normal'
+)
+
 Import-Module "$PSScriptRoot/tools/BuildTools.psm1" -Force
 Import-Module (Get-Dependency) -Force -ErrorAction Stop
 
@@ -11,7 +33,6 @@ $OS, $OSVersion = Get-HostInformation
 # $env:CurrentOnlineVersion, $env:NextBuildVersion = Get-BuildVersion
 # Add-ToModulePath -Path $env:BHBuildOutput
 
-# }
 # TODO: validate the git tag is greater than the last release
 
 Task ShowDebugInfo {
@@ -116,8 +137,18 @@ Task UpdateManifest {
 }
 
 Task Test Build, {
-    Invoke-Pester -Path "$env:BHBuildOutput/Tests" -OutputFile "$env:BHProjectPath/TestResults.xml" -OutputFormat NUnitXml
-    # Invoke-Pester -Script "$PSScriptRoot/tests/*" -OutputFile "$env:BHBuildOutput/TestResults.xml" -OutputFormat NUnitXml
+    # get default from static property
+    $configuration = [PesterConfiguration]::Default
+    $configuration.run.path = @("$env:BHBuildOutput/Tests")
+    $configuration.run.PassThru = $true
+    $configuration.TestResult.OutputPath = "$env:BHProjectPath/TestResults.xml"
+    $configuration.TestResult.OutputFormat = 'NUnitXml'
+    $configuration.Output.Verbosity = $PesterVerbosity
+    $configuration.TestResult.OutputPath = $Script:TestResultFile
+
+    if ((Invoke-Pester -Configuration $configuration).FailedCount -gt 0) {
+        throw "Tests failed"
+    }
 }
 
 Task Publish {

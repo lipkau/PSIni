@@ -14,10 +14,6 @@ jobs:
     name: Build Module
     runs-on: ubuntu-latest
     steps:
-      # - name: "hack: get more disk space"
-      #   run: |
-      #     sudo rm -rf /usr/share/dotnet
-      #     sudo rm -rf /opt/ghc
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
         id: cacher
