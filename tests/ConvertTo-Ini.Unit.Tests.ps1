@@ -44,7 +44,7 @@ Describe "ConvertTo-Ini" -Tag "Unit" {
         }
     }
 }
-"@ | ConvertFrom-Json -Depth 9
+"@ | ConvertFrom-Json
 
             $script:converted = ConvertTo-Ini $data -WarningAction Ignore
         }
