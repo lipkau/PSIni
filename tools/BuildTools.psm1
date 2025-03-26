@@ -50,50 +50,6 @@ function Test-ContainsAll {
     }
 }
 
-# function Invoke-Init {
-#     [Alias("Init")]
-#     [CmdletBinding()]
-#     param()
-#     begin {
-#         Set-BuildEnvironment -BuildOutput '$ProjectPath/Release' -ErrorAction SilentlyContinue
-#         Add-ToModulePath -Path $env:BHBuildOutput
-#     }
-# }
-
-# function Assert-True {
-#     [CmdletBinding( DefaultParameterSetName = 'ByBool' )]
-#     param(
-#         [Parameter( Position = 0, Mandatory, ParameterSetName = 'ByScriptBlock' )]
-#         [ScriptBlock]$ScriptBlock,
-#         [Parameter( Position = 0, Mandatory, ParameterSetName = 'ByBool' )]
-#         [Bool]$Bool,
-#         [Parameter( Position = 1, Mandatory )]
-#         [String]$Message
-#     )
-
-#     if ($ScriptBlock) {
-#         $Bool = & $ScriptBlock
-#     }
-
-#     if (-not $Bool) {
-#         throw $Message
-#     }
-# }
-
-# function LogCall {
-#     Assert-True { Test-Path TestDrive:\ } "This function only work inside pester"
-
-#     Set-Content -Value "$($MyInvocation.Invocationname) $($MyInvocation.UnBoundArguments -join " ")" -Path "TestDrive:\FunctionCalled.$($MyInvocation.Invocationname).txt" -Force
-# }
-
-# function Add-ToModulePath ([String]$Path) {
-#     $PSModulePath = $env:PSModulePath -split ([IO.Path]::PathSeparator)
-#     if ($Path -notin $PSModulePath) {
-#         $PSModulePath += $Path
-#         $env:PSModulePath = $PSModulePath -join ([IO.Path]::PathSeparator)
-#     }
-# }
-
 function Get-HostInformation {
     [System.Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingEmptyCatchBlock', '')]
     [OutputType([String], [String])]
