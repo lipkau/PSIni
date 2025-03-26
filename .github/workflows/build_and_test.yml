@@ -3,10 +3,10 @@ name: Build and Test
 on:
   pull_request:
     branches:
-      - main
+      - master
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
           key: ${{ runner.os }}-PSModules
       - run: ./tools/setup.ps1
         shell: pwsh
-      - run: Invoke-Build -Task DebugInfo
+      - run: Invoke-Build -Task ShowDebugInfo
         shell: pwsh
       - run: Invoke-Build -Task Build
         shell: pwsh
@@ -48,7 +48,7 @@ jobs:
           key: ${{ runner.os }}-PSModules
       - run: ./tools/setup.ps1
         shell: powershell
-      - run: Invoke-Build -Task DebugInfo
+      - run: Invoke-Build -Task ShowDebugInfo
         shell: powershell
       - run: Invoke-Build -Task Test
         shell: powershell
@@ -56,7 +56,6 @@ jobs:
         with:
           name: ${{ runner.os }}v5-Unit-Tests
           path: Test*.xml
-    if: ${{ always() }}
 
   test_on_windows_v7:
     name: Test Module on Windows (PS v7)
@@ -75,7 +74,7 @@ jobs:
           key: ${{ runner.os }}-PSModules
       - run: ./tools/setup.ps1
         shell: pwsh
-      - run: Invoke-Build -Task DebugInfo
+      - run: Invoke-Build -Task ShowDebugInfo
         shell: pwsh
       - run: Invoke-Build -Task Test
         shell: pwsh
@@ -83,7 +82,6 @@ jobs:
         with:
           name: ${{ runner.os }}v7-Unit-Tests
           path: Test*.xml
-    if: ${{ always() }}
 
   test_on_ubuntu:
     name: Test Module on Ubuntu
@@ -102,7 +100,7 @@ jobs:
           key: ${{ runner.os }}-PSModules
       - run: ./tools/setup.ps1
         shell: pwsh
-      - run: Invoke-Build -Task DebugInfo
+      - run: Invoke-Build -Task ShowDebugInfo
         shell: pwsh
       - run: Invoke-Build -Task Test
         shell: pwsh
@@ -110,7 +108,6 @@ jobs:
         with:
           name: ${{ runner.os }}-Unit-Tests
           path: Test*.xml
-    if: ${{ always() }}
 
   test_on_macos:
     name: Test Module on macOS
@@ -129,7 +126,7 @@ jobs:
           key: ${{ runner.os }}-PSModules
       - run: ./tools/setup.ps1
         shell: pwsh
-      - run: Invoke-Build -Task DebugInfo
+      - run: Invoke-Build -Task ShowDebugInfo
         shell: pwsh
       - run: Invoke-Build -Task Test
         shell: pwsh
@@ -137,4 +134,3 @@ jobs:
         with:
           name: ${{ runner.os }}-Unit-Tests
           path: Test*.xml
-    if: ${{ always() }}

@@ -1,12 +1,12 @@
 ﻿@{
-    RootModule             = 'PsIni.psm1'
-    ModuleVersion          = '3.1.0'
+    RootModule             = 'PSIni.psm1'
+    ModuleVersion          = '4.0.0'
     GUID                   = '98e1dc0f-2f03-4ca1-98bb-fd7b4b6ac652'
     Author                 = 'Oliver Lipkau <oliver@lipkau.net>'
     CompanyName            = 'Unknown'
     Copyright              = '(c) 2013 Oliver Lipkau. All rights reserved.'
-    Description            = 'Convert hashtable to INI file and back. @ http://lipkau.github.io/PsIni/'
-    PowerShellVersion      = '3.0'
+    Description            = 'Convert hashtable to INI file and back. @ http://lipkau.github.io/PSIni/'
+    PowerShellVersion      = '5.0'
     PowerShellHostName     = ''
     PowerShellHostVersion  = ''
     DotNetFrameworkVersion = ''
@@ -19,18 +19,16 @@
     FormatsToProcess       = @()
     NestedModules          = @()
     FunctionsToExport      = @(
-        'Add-IniComment',
-        'Get-IniContent',
-        'Out-IniFile',
-        'Remove-IniComment',
-        'Remove-IniEntry',
-        'Set-IniContent'
+        'ConvertFrom-Ini',
+        'ConvertTo-Ini',
+        'Export-Ini',
+        'Import-Ini'
     )
     CmdletsToExport        = @()
     VariablesToExport      = @()
     AliasesToExport        = @(
-        'gic',
-        'oif',
+        'ipi',
+        'epini',
         'aic',
         'ric',
         'rie',
@@ -40,9 +38,9 @@
     FileList               = @()
     PrivateData            = @{
         PSData = @{
-            Tags       = @('ini', 'PsIni')
-            LicenseUri = 'https://github.com/lipkau/PsIni/blob/master/LICENSE'
-            ProjectUri = 'http://lipkau.github.io/PsIni'
+            Tags       = @('ini', 'PSIni')
+            LicenseUri = 'https://github.com/lipkau/PSIni/blob/master/LICENSE'
+            ProjectUri = 'http://lipkau.github.io/PSIni'
             # IconUri = ''
             # ReleaseNotes = ''
             # ExternalModuleDependencies = ''

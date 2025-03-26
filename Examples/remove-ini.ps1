@@ -1,4 +1,9 @@
-﻿# reconstitute a Hashtable from INI file and read a value
+﻿$content = Import-Ini .\settings.ini
 
-$content = Get-IniContent .\settings.ini | Remove-IniEntry -Sections 'category2' -Keys 'key4'
-if (!$content["category2"]["key4"]) { Write-Host "content[category2][key4] no longer exists." }
+Write-Output "Before removing key4"
+$content["category2"].Keys
+
+Write-Output "After removing key4"
+$content["category2"].Remove("key4")
+$content["category2"].Keys
+
