@@ -1,3 +1,7 @@
+# As of now, `shell` does not support templates.
+# Once this issue is resolved, we can use the `shell` property to specify the shell for each step in the workflow.
+# https://github.com/actions/runner/issues/444
+
 name: Build and Test
 
 on:
@@ -31,10 +35,17 @@ jobs:
           name: Release
           path: ./release/
 
-  test_on_windows_v5:
-    name: Test Module on Windows (PS v5)
+  test_matrix:
     needs: build_module
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        command: ["pwsh"]
+        include:
+          - os: windows-latest
+            command: powershell
+    name: "Testing Module on: ${{ matrix.os }} with ${{ matrix.command }}"
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -45,92 +56,14 @@ jobs:
         id: cacher
         with:
           path: "~/.local/share/powershell/Modules"
-          key: ${{ runner.os }}-PSModules
+          key: ${{ matrix.os }}-PSModules
       - run: ./tools/setup.ps1
-        shell: powershell
+        shell: ${{ matrix.command }}
       - run: Invoke-Build -Task ShowDebugInfo
-        shell: powershell
+        shell: ${{ matrix.command }}
       - run: Invoke-Build -Task Test
-        shell: powershell
+        shell: ${{ matrix.command }}
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }}v5-Unit-Tests
-          path: Test*.xml
-
-  test_on_windows_v7:
-    name: Test Module on Windows (PS v7)
-    needs: build_module
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: Release
-          path: ./release/
-      - uses: actions/cache@v4
-        id: cacher
-        with:
-          path: "~/.local/share/powershell/Modules"
-          key: ${{ runner.os }}-PSModules
-      - run: ./tools/setup.ps1
-        shell: pwsh
-      - run: Invoke-Build -Task ShowDebugInfo
-        shell: pwsh
-      - run: Invoke-Build -Task Test
-        shell: pwsh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ runner.os }}v7-Unit-Tests
-          path: Test*.xml
-
-  test_on_ubuntu:
-    name: Test Module on Ubuntu
-    needs: build_module
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: Release
-          path: ./release/
-      - uses: actions/cache@v4
-        id: cacher
-        with:
-          path: "~/.local/share/powershell/Modules"
-          key: ${{ runner.os }}-PSModules
-      - run: ./tools/setup.ps1
-        shell: pwsh
-      - run: Invoke-Build -Task ShowDebugInfo
-        shell: pwsh
-      - run: Invoke-Build -Task Test
-        shell: pwsh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ runner.os }}-Unit-Tests
-          path: Test*.xml
-
-  test_on_macos:
-    name: Test Module on macOS
-    needs: build_module
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: Release
-          path: ./release/
-      - uses: actions/cache@v4
-        id: cacher
-        with:
-          path: "~/.local/share/powershell/Modules"
-          key: ${{ runner.os }}-PSModules
-      - run: ./tools/setup.ps1
-        shell: pwsh
-      - run: Invoke-Build -Task ShowDebugInfo
-        shell: pwsh
-      - run: Invoke-Build -Task Test
-        shell: pwsh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ runner.os }}-Unit-Tests
+          name: ${{ matrix.os }}-${{ matrix.command }}-Unit-Tests
           path: Test*.xml
