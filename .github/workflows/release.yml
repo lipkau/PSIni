@@ -1,0 +1,63 @@
+name: Create Release and Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    name: "Release"
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifact from commit that got tagged
+        uses: dawidd6/action-download-artifact@v9
+        with:
+          workflow: build_and_test.yml
+          workflow_conclusion: success
+          commit: ${{ github.sha }}
+          name: Release
+          path: ./release/
+          if_no_artifact_found: fail
+
+      - run: ./tools/setup.ps1
+        shell: pwsh
+
+      - run: Invoke-Build -Task ShowDebugInfo -VersionToPublish ${{ github.ref_name }}
+        shell: pwsh
+
+      - run: Invoke-Build -Task Publish -VersionToPublish ${{ github.ref_name }}
+        shell: pwsh
+
+      - name: Cherry pick CHANGELOG.md
+        id: changelog
+        uses: MatteoCampinoti94/changelog-to-release@v1.0.0
+        with:
+          version-name: ${{ github.ref_name }}
+          configuration: ./.github/changelog.configuration.json
+        if: ${{ hashFiles('CHANGELOG.md') != '' }}
+
+      - uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          body: ${{ steps.changelog.outputs.body }}
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - uses: actions/upload-release-asset@v1
+        id: upload-release-asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release/PSIni.zip
+          asset_name: PSIni.zip
+          asset_content_type: application/zip

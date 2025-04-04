@@ -1,27 +1,10 @@
-<#
-    Expected test flow:
-        1. PR triggers CI pipeline
-        2. Pipeline builds the module
-        3. Successful build triggers test matrix (multiple Operating Systems)
-        NOTES:
-            All tests must run against the same build.
-    Expected release flow:
-        1. PR is merged to master
-        2. version tag is pushed to master
-        3. github release is created on the tag
-        4. github release triggers deployment pipeline
-        5. deployment pipeline publishes module to PSGallery
-        NOTES:
-            manifest contains the `major.minor` version.
-            Patch is automatically calculated.
-            Major or Minor updates require manual change to the manifest.
-#>
-
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
-    [String]
     [ValidateSet('None', 'Normal' , 'Detailed', 'Diagnostic')]
-    $PesterVerbosity = 'Normal'
+    [String] $PesterVerbosity = 'Normal',
+
+    [Parameter()]
+    [String] $VersionToPublish
 )
 
 Import-Module "$PSScriptRoot/tools/BuildTools.psm1" -Force
@@ -30,26 +13,31 @@ Import-Module (Get-Dependency) -Force -ErrorAction Stop
 Remove-Item -Path env:\BH* -ErrorAction SilentlyContinue
 Set-BuildEnvironment -BuildOutput '$ProjectPath/release' -ErrorAction SilentlyContinue
 $OS, $OSVersion = Get-HostInformation
-# $env:CurrentOnlineVersion, $env:NextBuildVersion = Get-BuildVersion
 # Add-ToModulePath -Path $env:BHBuildOutput
 
-# TODO: validate the git tag is greater than the last release
+if ($VersionToPublish) {
+    $VersionToPublish = $VersionToPublish.TrimStart('v') -as [Version]
+}
+$currentVersion = (Get-Metadata -Path $env:BHPSModuleManifest) -as [Version]
+$builtManifestPath = "$env:BHBuildOutput/$env:BHProjectName/$env:BHProjectName.psd1"
 
 Task ShowDebugInfo {
     Write-Build Gray
     Write-Build Gray ('BHBuildSystem:              {0}' -f $env:BHBuildSystem)
     Write-Build Gray '-------------------------------------------------------'
     Write-Build Gray ('BHProjectName               {0}' -f $env:BHProjectName)
-    Write-Build Gray ('BHModulePath:               {0}' -f $env:BHModulePath)
     Write-Build Gray ('BHProjectPath:              {0}' -f $env:BHProjectPath)
+    Write-Build Gray ('BHModulePath:               {0}' -f $env:BHModulePath)
     Write-Build Gray ('BHPSModuleManifest:         {0}' -f $env:BHPSModuleManifest)
     Write-Build Gray ('BHBuildOutput:              {0}' -f $env:BHBuildOutput)
-    Write-Build Gray ('CurrentOnlineVersion:       {0}' -f $env:CurrentOnlineVersion)
+    Write-Build Gray ('builtManifestPath:          {0}' -f $builtManifestPath)
     Write-Build Gray '-------------------------------------------------------'
     Write-Build Gray ('BHBranchName:               {0}' -f $env:BHBranchName)
+    Write-Build Gray ('BHCommitHash:               {0}' -f $env:BHCommitHash)
     Write-Build Gray ('BHCommitMessage:            {0}' -f $env:BHCommitMessage)
     Write-Build Gray ('BHBuildNumber               {0}' -f $env:BHBuildNumber)
-    Write-Build Gray ('NextBuildVersion            {0}' -f $env:NextBuildVersion)
+    Write-Build Gray ('CurrentVersion              {0}' -f $currentVersion)
+    Write-Build Gray ('VersionToPublish            {0}' -f $VersionToPublish)
     Write-Build Gray '-------------------------------------------------------'
     Write-Build Gray ('PowerShell version:         {0}' -f $PSVersionTable.PSVersion.ToString())
     Write-Build Gray ('OS:                         {0}' -f $OS)
@@ -68,13 +56,13 @@ Task Build Clean, {
     }
     # TODO:
     # replace data in manifest
-}, CopyModuleFiles, CompileModule
+}, CopyModuleFiles, CompileModule, UpdateManifest
 
 # Synopsis: Generate ./release structure
 Task CopyModuleFiles {
     Copy-Item -Path "$env:BHModulePath/*" -Destination "$env:BHBuildOutput/$env:BHProjectName" -Recurse -Force
     Copy-Item -Path @(
-        # "$env:BHProjectPath/CHANGELOG.md"
+        "$env:BHProjectPath/CHANGELOG.md"
         "$env:BHProjectPath/LICENSE"
         "$env:BHProjectPath/README.md"
     ) -Destination "$env:BHBuildOutput/$env:BHProjectName" -Force
@@ -124,35 +112,56 @@ Task CompileModule {
 Task UpdateManifest {
     Remove-Module $env:BHProjectName -ErrorAction SilentlyContinue
     Import-Module $env:BHPSModuleManifest -Force
-    $ModuleAlias = @(Get-Alias | Where-Object { $_.ModuleName -eq "$env:BHProjectName" })
+    $moduleAlias = Get-Alias | Where-Object { $_.ModuleName -eq "$env:BHProjectName" }
+    $moduleFunctions = (Get-ChildItem "$env:BHModulePath/Public/*.ps1").BaseName
 
-    Metadata\Update-Metadata -Path "$env:BHBuildOutput/$env:BHProjectName/$env:BHProjectName.psd1" -PropertyName ModuleVersion -Value $env:NextBuildVersion
-    # BuildHelpers\Update-Metadata -Path "$env:BHBuildOutput/$env:BHProjectName/$env:BHProjectName.psd1" -PropertyName FileList -Value (Get-ChildItem "$env:BHBuildOutput/$env:BHProjectName" -Recurse).Name
-    BuildHelpers\Set-ModuleFunctions -Name "$env:BHBuildOutput/$env:BHProjectName/$env:BHProjectName.psd1" -FunctionsToExport ([string[]](Get-ChildItem "$env:BHBuildOutput/$env:BHProjectName/Public/*.ps1").BaseName)
-    Metadata\Update-Metadata -Path "$env:BHBuildOutput/$env:BHProjectName/$env:BHProjectName.psd1" -PropertyName AliasesToExport -Value ''
-    if ($ModuleAlias) {
-        Metadata\Update-Metadata -Path "$env:BHBuildOutput/$env:BHProjectName/$env:BHProjectName.psd1" -PropertyName AliasesToExport -Value @($ModuleAlias.Name)
+    Metadata\Update-Metadata -Path $builtManifestPath -PropertyName "FunctionsToExport" -Value @($moduleFunctions)
+    Metadata\Update-Metadata -Path $builtManifestPath -PropertyName "AliasesToExport" -Value ''
+    if ($moduleAlias) {
+        Metadata\Update-Metadata -Path $builtManifestPath -PropertyName "AliasesToExport" -Value @($moduleAlias.Name)
     }
 }
 
-Task Test Build, {
-    # get default from static property
-    $configuration = [PesterConfiguration]::Default
-    $configuration.run.path = @("$env:BHBuildOutput/Tests")
-    $configuration.run.PassThru = $true
-    $configuration.TestResult.OutputPath = "$env:BHProjectPath/TestResults.xml"
-    $configuration.TestResult.OutputFormat = 'NUnitXml'
-    $configuration.Output.Verbosity = $PesterVerbosity
-    $configuration.TestResult.OutputPath = $Script:TestResultFile
+Task SetVersion {
+    Assert-True { $VersionToPublish -as [Version] } "Invalid version format: $VersionToPublish"
+    Assert-True { $VersionToPublish -gt $currentVersion } "Version must be greater than the current version: $currentVersion"
 
-    if ((Invoke-Pester -Configuration $configuration).FailedCount -gt 0) {
+    Metadata\Update-Metadata -Path $builtManifestPath -PropertyName "ModuleVersion" -Value $VersionToPublish.ToString()
+}
+
+Task Test Build, {
+    $pesterConfig = [PesterConfiguration]::Default
+    $pesterConfig.Output.Verbosity = $PesterVerbosity
+    $pesterConfig.Run.path = @("$env:BHBuildOutput/Tests")
+    $pesterConfig.Run.PassThru = $true
+    $PesterConfig.TestResult.Enabled = $true
+    $pesterConfig.TestResult.OutputFormat = 'NUnitXml'
+    $pesterConfig.TestResult.OutputPath = "TestResults.xml"
+
+    if ((Invoke-Pester -Configuration $pesterConfig).FailedCount -gt 0) {
         throw "Tests failed"
     }
 }
 
-Task Publish {
-    # TODO:
-    # code signing?
-    # publish to PSGallery
-    # create github release
+Task Publish SetVersion, SignCode, Package, {
+    Assert-True (-not [String]::IsNullOrEmpty($PSGalleryAPIKey)) "No key for the PSGallery"
+    Assert-True { Get-Module $env:BHProjectName -ListAvailable } "Module $env:BHProjectName is not available"
+
+    Remove-Module $env:BHProjectName -ErrorAction Ignore
+
+    Publish-Module -Name $env:BHProjectName -NuGetApiKey $PSGalleryAPIKey
+}
+
+Task SignCode {
+    # TODO: waiting for certificates
+}
+
+Task Package {
+    $source = "$env:BHBuildOutput\$env:BHProjectName"
+    $destination = "$env:BHBuildOutput\$env:BHProjectName.zip"
+
+    Assert-True { Test-Path $source } "Missing files to package"
+
+    Remove-Item $destination -ErrorAction SilentlyContinue
+    $null = Compress-Archive -Path $source -DestinationPath $destination
 }
