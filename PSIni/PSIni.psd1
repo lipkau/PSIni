@@ -18,22 +18,10 @@
     TypesToProcess         = @()
     FormatsToProcess       = @()
     NestedModules          = @()
-    FunctionsToExport      = @(
-        'ConvertFrom-Ini',
-        'ConvertTo-Ini',
-        'Export-Ini',
-        'Import-Ini'
-    )
+    FunctionsToExport      = @('*')
     CmdletsToExport        = @()
     VariablesToExport      = @()
-    AliasesToExport        = @(
-        'ipi',
-        'epini',
-        'aic',
-        'ric',
-        'rie',
-        'sic'
-    )
+    AliasesToExport        = @('*')
     ModuleList             = @()
     FileList               = @()
     PrivateData            = @{

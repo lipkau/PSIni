@@ -1,33 +1,23 @@
 ﻿#requires -Modules @{ModuleName='PowerShellGet';ModuleVersion='1.6.0'}
 
-[CmdletBinding()]
-param()
+function Assert-True {
+    [CmdletBinding( DefaultParameterSetName = 'ByBool' )]
+    param(
+        [Parameter( Position = 0, Mandatory, ParameterSetName = 'ByScriptBlock' )]
+        [ScriptBlock]$ScriptBlock,
+        [Parameter( Position = 0, Mandatory, ParameterSetName = 'ByBool' )]
+        [Bool]$Bool,
+        [Parameter( Position = 1, Mandatory )]
+        [String]$Message
+    )
 
-function Get-BuildVersion {
-    [CmdletBinding()]
-    [OutputType([SemVer], [SemVer])]
-    param()
-
-    $manifestVersion = [SemVer](Get-Metadata -Path $env:BHPSModuleManifest)
-    try {
-        $currentOnlineVersion = [SemVer](Find-Module -Name $env:BHProjectName).Version
-        $nextOnlineVersion = Get-NextNugetPackageVersion -Name $env:BHProjectName
-
-        if ( ($manifestVersion.Major -gt $nextOnlineVersion.Major) -or
-                ($manifestVersion.Minor -gt $nextOnlineVersion.Minor)
-            # -or ($manifestVersion.Build -gt $nextOnlineVersion.Build)
-        ) {
-            $nextBuildVersion = [SemVer]::New($manifestVersion.Major, $manifestVersion.Minor, 0)
-        }
-        else {
-            $nextBuildVersion = $nextOnlineVersion
-        }
-    }
-    catch {
-        $nextBuildVersion = $manifestVersion
+    if ($ScriptBlock) {
+        $Bool = & $ScriptBlock
     }
 
-    return $currentOnlineVersion, $nextBuildVersion
+    if (-not $Bool) {
+        throw $Message
+    }
 }
 
 function Test-ContainsAll {

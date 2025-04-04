@@ -3,16 +3,17 @@
 Describe "General project validation" -Tag Unit {
     BeforeAll {
         . "$PSScriptRoot/Helpers/Resolve-ModuleSource.ps1"
+        . "$PSScriptRoot/Helpers/Resolve-ProjectRoot.ps1"
         $script:moduleToTest = Resolve-ModuleSource
 
         Remove-Module PSIni -ErrorAction SilentlyContinue
         Import-Module $moduleToTest -Force -ErrorAction Stop
 
         $script:module = Get-Module PSIni
-        $script:moduleRoot = "$env:BHProjectPath/PSIni"
+        $script:moduleRoot = Resolve-ProjectRoot
         $script:testFiles = Get-ChildItem $PSScriptRoot -Include "*.Tests.ps1" -Recurse
-        $script:publicFunctionFiles = Get-ChildItem "$moduleRoot/Public/*.ps1" | ForEach-Object { @{ BaseName = $_.BaseName } }
-        $script:privateFunctionFiles = Get-ChildItem "$moduleRoot/Private/*.ps1" | ForEach-Object { @{ BaseName = $_.BaseName } }
+        $script:publicFunctionFiles = $module.ExportedFunctions.Keys
+        $script:privateFunctionFiles = $module.Invoke({ Get-Command -Module PSIni | Where-Object { $_.Name -notin $publicFunctionFiles } }).Name
     }
 
     Describe "Public functions" {
@@ -50,7 +51,7 @@ Describe "General project validation" -Tag Unit {
             $publicFunctions = (Get-Module -Name PSIni).ExportedFunctions.Keys
 
             foreach ($function in $publicFunctions) {
-                (Get-ChildItem "$moduleRoot/Public").BaseName | Should -Contain $function
+                (Get-ChildItem "$moduleRoot/PSIni/Public").BaseName | Should -Contain $function
             }
         }
     }

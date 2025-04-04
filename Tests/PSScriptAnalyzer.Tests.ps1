@@ -3,9 +3,8 @@
 
 Describe "PSScriptAnalyzer Tests" -Tag "Unit" {
     BeforeDiscovery {
-        . "$PSScriptRoot/Helpers/Resolve-ModuleSource.ps1"
-        $script:moduleToTest = Resolve-ModuleSource
-        $script:moduleToTestRoot = Resolve-Path (Join-Path (Split-Path $moduleToTest) "..")
+        $script:moduleToTestRoot = "$PSScriptRoot/.."
+        ${/} = [System.IO.Path]::DirectorySeparatorChar
 
         $isaSplat = @{
             Path          = $moduleToTestRoot
@@ -16,9 +15,9 @@ Describe "PSScriptAnalyzer Tests" -Tag "Unit" {
             ErrorVariable = 'ErrorVariable'
             ErrorAction   = 'Stop'
         }
-        $script:scriptWarnings = Invoke-ScriptAnalyzer @isaSplat
+        $script:scriptWarnings = Invoke-ScriptAnalyzer @isaSplat | Where-Object { $_.ScriptPath -notlike "*${/}release${/}PSIni${/}PSIni.psd1" }
         # $script:foo = $scriptWarnings | Where-Object { $_.Severity -eq "Warning" }
-        $script:moduleFiles = Get-ChildItem $moduleToTestRoot -Include *.ps1, *.psm1 -Recurse
+        $script:moduleFiles = Get-ChildItem $moduleToTestRoot -Recurse
     }
 
     # Describe "Testing <_> Rules" { #-ForEach @("Information", "Warning", "Error") {

@@ -1,13 +1,11 @@
 ﻿function Resolve-ModuleSource {
-    $buildPath = Resolve-Path "$env:BHBuildOutput/*" -ErrorAction SilentlyContinue
     $actualPath = Resolve-Path $PSScriptRoot
 
-    $resolvedPath = if ($actualPath -like $buildPath) {
+    # we expect $env:BH* to be empty when `Invoke-Build` is not used
+    if ((Test-Path "$env:BHBuildOutput") -and ($actualPath -like "$(Resolve-Path $env:BHBuildOutput)/Tests/*")) {
         Join-Path -Path $env:BHBuildOutput -ChildPath "PSIni/PSIni.psd1"
     }
     else {
         Join-Path -Path $PSScriptRoot -ChildPath "../../PSIni/PSIni.psd1"
     }
-
-    Resolve-Path $resolvedPath
 }
