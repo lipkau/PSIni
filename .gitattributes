@@ -15,3 +15,5 @@
 *.clixml text eol=crlf
 *.xml text eol=crlf
 *.txt text eol=crlf
+
+Tests/large_sample.ini text eol=lf
