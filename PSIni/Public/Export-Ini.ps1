@@ -32,9 +32,9 @@
         Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini and saves the file into $file. Writes exported data to console, as a powershell object.
 
     .Example
-        $Category1 = @{“Key1”=”Value1”;”Key2”=”Value2”}
-        $Category2 = @{“Key1”=”Value1”;”Key2”=”Value2”}
-        $NewINIContent = @{“Category1”=$Category1;”Category2”=$Category2}
+        $Category1 = @{"Key1"="Value1";"Key2"="Value2"}
+        $Category2 = @{"Key1"="Value1";"Key2"="Value2"}
+        $NewINIContent = @{"Category1"=$Category1;"Category2"=$Category2}
         Export-Ini -InputObject $NewINIContent -FilePath "C:\MyNewFile.ini"
         -----------
         Description
@@ -96,7 +96,7 @@
         # Determines the format of how to write the file.
         #
         # The following values are supported:
-        #  - pretty: will write the file with an empty line between sections and whitespaces arround the `=` sign
+        #  - pretty: will write the file with an empty line between sections and whitespaces around the `=` sign
         #  - minified: will write the file in as few characters as possible
         [Parameter()]
         [ValidateSet("pretty", "minified")]
@@ -164,25 +164,7 @@
             if ($Format -eq "pretty") { $fileContent += "" } # Separate Sections with whiteSpace
         }
 
-        # Finally, write output files (To avoid conflicts, this should be the only place where files are written)
-        if (-not (Test-Path -Path $Path)) {
-            # If file does not exist, we don't need to think about appending
-            Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force
-            Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished creating file: $Path"
-        }
-        else {
-            if (-not $Append) {
-                # File exists, but we don't want to append
-                Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force
-                Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished overwriting file: $Path"
-            }
-            else {
-                # File exists & we append
-                Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force -Append
-                Write-Verbose "$($MyInvocation.MyCommand.Name):: Finished appending to file: $Path"
-            }
-        }
-
+        Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force -Append:$Append
     }
 
     end {
