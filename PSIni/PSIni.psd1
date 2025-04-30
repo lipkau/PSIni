@@ -4,7 +4,7 @@
     GUID                   = '98e1dc0f-2f03-4ca1-98bb-fd7b4b6ac652'
     Author                 = 'Oliver Lipkau <oliver@lipkau.net>'
     CompanyName            = 'Unknown'
-    Copyright              = '(c) 2013 Oliver Lipkau. All rights reserved.'
+    Copyright              = '(c) 2025 Oliver Lipkau. All rights reserved.'
     Description            = 'Convert hashtable to INI file and back. @ http://lipkau.github.io/PSIni/'
     PowerShellVersion      = '5.0'
     PowerShellHostName     = ''

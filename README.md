@@ -23,8 +23,8 @@ Work with INI files in PowerShell using hashtables.
 
 ### Origin
 
-This code was originally a blog post for [Hey Scripting Guy](http://blogs.technet.com/b/heyscriptingguy).
-> [Use PowerShell to Work with Any INI File](http://blogs.technet.com/b/heyscriptingguy/archive/2011/08/20/use-powershell-to-work-with-any-ini-file.aspx)
+This code was originally a blog post for [Hey Scripting Guy](https://devblogs.microsoft.com/scripting/).
+> [Use PowerShell to Work with Any INI File](https://devblogs.microsoft.com/scripting/use-powershell-to-work-with-any-ini-file/)
 
 Over time this project got a lot of enhancements and major face-lifts.
 
