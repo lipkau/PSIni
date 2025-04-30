@@ -47,4 +47,9 @@ Describe "General project validation" -Tag Unit {
         $manifest = Test-ModuleManifest -Path $moduleToTest -ErrorAction Stop -WarningAction SilentlyContinue
         $manifest.Version -as [Version] | Should -Not -BeNullOrEmpty
     }
+
+    It "module manifest only define major and minor verions" {
+        $manifest = Test-ModuleManifest -Path $moduleToTest -ErrorAction Stop -WarningAction SilentlyContinue
+        $manifest.Version | Should -Match '^\d+\.\d+$'
+    }
 }

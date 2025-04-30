@@ -129,7 +129,7 @@ Task SetVersion {
     Metadata\Update-Metadata -Path $builtManifestPath -PropertyName "ModuleVersion" -Value $VersionToPublish.ToString()
 }
 
-Task Test Build, {
+Task Test {
     $pesterConfig = [PesterConfiguration]::Default
     $pesterConfig.Output.Verbosity = $PesterVerbosity
     $pesterConfig.Run.path = @("$env:BHBuildOutput/Tests")
@@ -165,3 +165,5 @@ Task Package {
     Remove-Item $destination -ErrorAction SilentlyContinue
     $null = Compress-Archive -Path $source -DestinationPath $destination
 }
+
+Task . Clean, Build, Test

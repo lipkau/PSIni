@@ -1,6 +1,6 @@
 ﻿@{
     RootModule             = 'PSIni.psm1'
-    ModuleVersion          = '4.0.0'
+    ModuleVersion          = '4.0'
     GUID                   = '98e1dc0f-2f03-4ca1-98bb-fd7b4b6ac652'
     Author                 = 'Oliver Lipkau <oliver@lipkau.net>'
     CompanyName            = 'Unknown'
@@ -26,7 +26,7 @@
     FileList               = @()
     PrivateData            = @{
         PSData = @{
-            Tags       = @('ini', 'PSIni')
+            Tags       = @('ini', 'PSIni', 'PsIni')
             LicenseUri = 'https://github.com/lipkau/PSIni/blob/master/LICENSE'
             ProjectUri = 'http://lipkau.github.io/PSIni'
             # IconUri = ''
