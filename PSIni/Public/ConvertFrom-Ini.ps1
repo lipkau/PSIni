@@ -21,7 +21,7 @@
         Will output the content of all ini files in the current path as powershell objects
 
     .Link
-        ConvertFrom-ini
+        ConvertFrom-Ini
         Import-Ini
         Export-Ini
     #>
