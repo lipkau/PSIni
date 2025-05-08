@@ -78,32 +78,35 @@ Describe "Import-Ini" -Tag "Unit" {
             Import-Ini -Path $iniFile, $iniFile, $iniFile | Should -HaveCount 3
         }
 
-        It "ignores leading and trailing whitespaces from the key and the value" {
+        It "ignores leading and trailing whitespaces from the key and the value" -TestCases @(
+            @{ key = "Key1"; value = "Value1" }
+            @{ key = "Key2"; value = "Value2" }
+            @{ key = "Key3"; value = "Value3" }
+            @{ key = "Key4"; value = "Value4" }
+            @{ key = "Key5"; value = "Value5" }
+            @{ key = "Key6"; value = "Value6" }
+            @{ key = "Key7"; value = "Value7" }
+            @{ key = "Key8"; value = "Value8" }
+            @{ key = "Key9"; value = "Value9" }
+        ) {
             $dictOut = Import-Ini -Path $iniFile
 
-            $dictOut["Strings"]["Key1"] | Should -Be "Value1"
-            $dictOut["Strings"]["Key2"] | Should -Be "Value2"
-            $dictOut["Strings"]["Key3"] | Should -Be "Value3"
-            $dictOut["Strings"]["Key4"] | Should -Be "Value4"
-            $dictOut["Strings"]["Key5"] | Should -Be "Value5"
-            $dictOut["Strings"]["Key6"] | Should -Be "Value6"
-            $dictOut["Strings"]["Key7"] | Should -Be "Value7"
-            $dictOut["Strings"]["Key8"] | Should -Be "Value8"
-            $dictOut["Strings"]["Key9"] | Should -Be "Value9"
+            $dictOut["Strings"][$key] | Should -Be $value
         }
 
-        It "handles quotes in the values as expected" {
+        It "preserves quotes in the values" -TestCases @(
+            @{ key = "Key10"; value = "`"Value10`"" }
+            @{ key = "Key11"; value = "`"`"Value11`"`"" }
+            @{ key = "Key12"; value = "'Value12'" }
+            @{ key = "Key13"; value = "`"'Value13'`"" }
+            @{ key = "Key14"; value = "'`"Value14`"'" }
+            @{ key = "Key15"; value = "`"  Value15  `"" }
+            @{ key = "Key16"; value = "`"  '  Value16  '  `"" }
+            @{ key = "Key17"; value = "Value`"17`"" }
+        ) {
             $dictOut = Import-Ini -Path $iniFile
 
-            $dictOut["Strings"]["Key1"] | Should -Be "Value1"
-            $dictOut["Strings"]["Key10"] | Should -Be "Value10"
-            $dictOut["Strings"]["Key11"] | Should -Be "`"Value11`""
-            $dictOut["Strings"]["Key12"] | Should -Be "Value12"
-            $dictOut["Strings"]["Key13"] | Should -Be "'Value13'"
-            $dictOut["Strings"]["Key14"] | Should -Be "`"Value14`""
-            $dictOut["Strings"]["Key15"] | Should -Be "Value15"
-            $dictOut["Strings"]["Key16"] | Should -Be "'  Value16  '"
-            $dictOut["Strings"]["Key17"] | Should -Be "Value`"17`""
+            $dictOut["Strings"][$key] | Should -Be $value
         }
 
         It "reads lines starting with ';' as comments by default" {
