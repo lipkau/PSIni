@@ -56,6 +56,8 @@ Describe "Export-Ini" -Tag "Unit" {
             }
 
             $defaultObject = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+            $defaultObject["_"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+            $defaultObject["_"]["KeyWithoutSection"] = "This is a key without section header"
             $defaultObject["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
             $defaultObject["Category1"]["Key1"] = "Value1"
             $defaultObject["Category1"]["Comment1"] = "Key2 = Value2"
@@ -63,7 +65,7 @@ Describe "Export-Ini" -Tag "Unit" {
             $defaultObject["Category2"]["Comment1"] = "Key1 = Value1"
             $defaultObject["Category2"]["Comment2"] = "Key2=Value2"
 
-            $script:defaultFileContent = "[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}${lf}"
+            $script:defaultFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}${lf}"
 
             $additionalObject = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
             $additionalObject["Additional"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
@@ -133,7 +135,7 @@ Describe "Export-Ini" -Tag "Unit" {
             Export-Ini @commonParameter -InputObject $defaultObject -IgnoreComments
 
             $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "[Category1]${lf}Key1 = Value1${lf}${lf}[Category2]${lf}${lf}"
+            $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf}${lf}[Category2]${lf}${lf}"
 
             $fileContent | Should -Be $expectedFileContent
         }
@@ -143,7 +145,7 @@ Describe "Export-Ini" -Tag "Unit" {
             Export-Ini @commonParameter -InputObject $defaultObject -Format "minified"
 
             $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "[Category1]${lf}Key1=Value1${lf};Key2 = Value2${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}"
+            $expectedFileContent = "KeyWithoutSection=This is a key without section header${lf}[Category1]${lf}Key1=Value1${lf};Key2 = Value2${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}"
 
             $fileContent | Should -Be $expectedFileContent
         }
