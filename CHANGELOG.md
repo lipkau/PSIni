@@ -3,7 +3,13 @@
 
 ## [NEXT VERSION] - YYYY-MM-DD
 
-`v4` is a breaking change, as the Commands of the module were refactored and renamed.\
+## v4.0.0 - YYYY-MM-DD
+
+`v4` is a breaking change:
+
+* the commands of the module were refactored and renamed.
+* the behaviour of parsing quotation marks was changes, as per [ADR #95](https://github.com/lipkau/PSIni/discussions/95).
+
 Details on how to upgrade are documented in the [Migrating to PSIni v4](#TODO: )
 
 ### Added

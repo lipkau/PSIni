@@ -67,9 +67,9 @@
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function started"
 
         $listOfCommentChars = $CommentChar -join ''
-        $commentRegex = "^\s*[$listOfCommentChars](.*)$"
-        $sectionRegex = "^\s*\[(.+)\]\s*$"
-        $keyRegex = "^\s*([^$listOfCommentChars]+?)\s*=\s*(['`"]?)(.*)\2\s*$"
+        $commentRegex = "^[$listOfCommentChars](.*)$"
+        $sectionRegex = "^\s*\[(.+)\]"
+        $keyRegex = "^([^$listOfCommentChars]+?)=(.*)$"
 
         Write-DebugMessage ("commentRegex is $commentRegex")
         Write-DebugMessage ("sectionRegex is $sectionRegex")
@@ -80,14 +80,14 @@
         foreach ($file in $Path) {
             Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $file"
 
-            $ini = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $section = $null # Section Name
-            $name = $null # Key or Comment Name
-
             if (-not (Test-Path -Path $file)) {
                 Write-Error "Could not find file '$file'"
                 continue
             }
+
+            $ini = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+            $section = $null # Section Name
+            $name = $null # Key or Comment Name
 
             $commentCount = 0
             switch -regex -file $file {
@@ -124,7 +124,7 @@
                         $section = $script:NoSection
                         $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                     }
-                    $name, $value = $matches[1].Trim(), $matches[3].Trim()
+                    $name, $value = $matches[1].Trim(), $matches[2].Trim()
                     if (-not [string]::IsNullOrWhiteSpace($name)) {
                         Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
                         if (-not $ini[$section][$name]) {
