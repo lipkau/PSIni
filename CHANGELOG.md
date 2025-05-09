@@ -24,6 +24,7 @@ Details on how to upgrade are documented in the [Migrating to PSIni v4](#TODO: )
 * No longer reading empty lines as keys  @HighPriest #79
 * Improve performance by operating in-memory @HighPriest #80
 * Fix tests for ending empty line behaviour in pretty print @HighPriest #90
+* Writing of empty sections @lipkau #104
 
 ### Changed
 
