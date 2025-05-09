@@ -158,7 +158,6 @@ Describe "Export-Ini" -Tag "Unit" {
         }
 
         It "saves the ini file in 'minified' format" {
-            # Minified output is special behaviour
             Export-Ini @commonParameter -InputObject $defaultObject -Format "minified"
 
             $fileContent = Get-Content -Path $testPath -Raw
@@ -168,7 +167,6 @@ Describe "Export-Ini" -Tag "Unit" {
         }
 
         It "saves the ini file in 'pretty' format" {
-            # Pretty output is default behaviour
             Export-Ini @commonParameter -InputObject $defaultObject -Format "pretty"
 
             $fileContent = Get-Content -Path $testPath -Raw
@@ -207,6 +205,18 @@ Describe "Export-Ini" -Tag "Unit" {
 
             $fileContent = Get-Content -Path $testPath -Raw
             $expectedFileContent = "[NoValues]${lf}Key1${lf}Key2${lf}"
+
+            $fileContent | Should -Be $expectedFileContent
+        }
+
+        It "can write an empty section" {
+            $iniObject = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+            $iniObject["EmptySection"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+
+            Export-Ini @commonParameter -InputObject $iniObject
+
+            $fileContent = Get-Content -Path $testPath -Raw
+            $expectedFileContent = "[EmptySection]${lf}${lf}"
 
             $fileContent | Should -Be $expectedFileContent
         }

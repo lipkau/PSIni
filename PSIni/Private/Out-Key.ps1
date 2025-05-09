@@ -8,8 +8,7 @@
         [String]
         $Delimiter,
 
-        [Parameter( Mandatory, ValueFromPipeline )]
-        [ValidateNotNullOrEmpty()]
+        [Parameter( ValueFromPipeline )]
         [System.Collections.IDictionary]
         $InputObject,
 
