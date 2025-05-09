@@ -17,6 +17,7 @@ Details on how to upgrade are documented in the [Migrating to PSIni v4](#TODO: )
 * Add -IgnoreEmptySection parameter to `Import-Ini` @kevinholtkamp #69
 * Added `ConvertFrom-Ini` @lipkau
 * Added `ConvertTo-Ini` @lipkau
+* Added `-CommentChar` to `Export-Ini` @lipkau #103
 
 ### Fixed
 

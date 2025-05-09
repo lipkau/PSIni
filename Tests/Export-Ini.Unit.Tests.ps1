@@ -25,16 +25,24 @@ Describe "Export-Ini" -Tag "Unit" {
 
         It "has a parameter '<parameter>' of type '<type>'" -TestCases @(
             @{ parameter = "Append"; type = "Switch" }
+            @{ parameter = "CommentChar"; type = "String" }
             @{ parameter = "Encoding"; type = "String" }
-            @{ parameter = "Path"; type = "String" }
             @{ parameter = "Force"; type = "Switch" }
             @{ parameter = "Format"; type = "String" }
+            @{ parameter = "IgnoreComments"; type = "Switch" }
             @{ parameter = "InputObject"; type = "System.Collections.IDictionary" }
             @{ parameter = "Passthru"; type = "Switch" }
-            @{ parameter = "IgnoreComments"; type = "Switch" }
+            @{ parameter = "Path"; type = "String" }
         ) {
-            param ($parameter, $type)
             $command | Should -HaveParameter $parameter -Type $type
+        }
+
+        It "parameter '<parameter>' has a default value of '<defaultValue>'" -TestCases @(
+            @{ parameter = "CommentChar"; ; defaultValue = ";" }
+            @{ parameter = "Encoding"; ; defaultValue = "UTF8" }
+            @{ parameter = "Format"; ; defaultValue = "pretty" }
+        ) {
+            $command | Should -HaveParameter $parameter -DefaultValue $defaultValue
         }
 
         It "only accepts the values for -Encode which are supported by the powershell version" -Skip {
@@ -136,6 +144,15 @@ Describe "Export-Ini" -Tag "Unit" {
 
             $fileContent = Get-Content -Path $testPath -Raw
             $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf}${lf}[Category2]${lf}${lf}"
+
+            $fileContent | Should -Be $expectedFileContent
+        }
+
+        It "uses the provided comment character" {
+            Export-Ini @commonParameter -InputObject $defaultObject -CommentChar "#"
+
+            $fileContent = Get-Content -Path $testPath -Raw
+            $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf}#Key2 = Value2${lf}${lf}[Category2]${lf}#Key1 = Value1${lf}#Key2=Value2${lf}${lf}"
 
             $fileContent | Should -Be $expectedFileContent
         }
