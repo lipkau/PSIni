@@ -93,6 +93,11 @@
         [Switch]
         $Force,
 
+        # Specifies the character used to indicate a comment.
+        [Parameter()]
+        [String]
+        $CommentChar = ";",
+
         # Determines the format of how to write the file.
         #
         # The following values are supported:
@@ -152,7 +157,7 @@
                 InputObject           = $InputObject[$section]
                 Delimiter             = $delimiter
                 IgnoreComments        = $IgnoreComments
-                CommentChar           = ";"
+                CommentChar           = $CommentChar
                 SkipTrailingEqualSign = $SkipTrailingEqualSign
             }
 
