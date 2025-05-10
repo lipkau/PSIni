@@ -40,12 +40,27 @@
     [CmdletBinding()]
     [OutputType( [System.Collections.Specialized.OrderedDictionary] )]
     param(
-        # Specifies the path to the input file.
-        [Parameter( Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName )]
-        [ValidateNotNullOrEmpty()]
+        # Specifies the path to an item.
+        # This cmdlet gets the item at the specified location.
+        # Wildcard characters are permitted.
+        # This parameter is required, but the parameter name Path is optional.
+        #
+        # Use a dot (`.`) to specify the current location. Use the wildcard character (`*`) to specify all the items in the current location.
+        [Parameter( Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "Path" )]
         [Alias("PSPath", "FullName")]
         [String[]]
         $Path,
+
+        # Specifies a path to one or more locations.
+        # The value of LiteralPath is used exactly as it's typed.
+        # No characters are interpreted as wildcards.
+        # If the path includes escape characters, enclose it in single quotation marks.
+        # Single quotation marks tell PowerShell not to interpret any characters as escape sequences.
+        #
+        # For more information, see about_Quoting_Rules
+        [Parameter( Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "LiteralPath" )]
+        [String[]]
+        $LiteralPath,
 
         # Specify what characters should be describe a comment.
         # Lines starting with the characters provided will be rendered as comments.
@@ -77,13 +92,17 @@
     }
 
     process {
-        foreach ($file in $Path) {
+        $ResolvedPath = if ($Path) { Resolve-Path $Path }
+        else { $LiteralPath }
+
+        foreach ($file in $ResolvedPath) {
             Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $file"
 
-            if (-not (Test-Path -Path $file)) {
+            if (-not (Test-Path -LiteralPath $file)) {
                 Write-Error "Could not find file '$file'"
                 continue
             }
+            $file = [WildcardPattern]::Escape($file)
 
             $ini = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
             $section = $null # Section Name
