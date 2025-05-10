@@ -46,7 +46,7 @@
         # This parameter is required, but the parameter name Path is optional.
         #
         # Use a dot (`.`) to specify the current location. Use the wildcard character (`*`) to specify all the items in the current location.
-        [Parameter( Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "Path" )]
+        [Parameter( Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "Path", Position = 0 )]
         [Alias("PSPath", "FullName")]
         [String[]]
         $Path,

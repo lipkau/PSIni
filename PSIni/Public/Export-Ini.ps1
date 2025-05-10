@@ -71,7 +71,7 @@
         $InputObject,
 
         # Specifies the path to the output file.
-        [Parameter( Mandatory )]
+        [Parameter( Mandatory, Position = 0 )]
         [ValidateScript( { Invoke-ConditionalParameterValidationPath -InputObject $_ } )]
         [String]
         $Path,
