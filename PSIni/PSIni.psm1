@@ -13,6 +13,7 @@
 # Name of the Section, in case the ini file had none
 # Available in the scope of the module as `$script:NoSection`
 $script:NoSection = "_"
+$script:CommentPrefix = "__Comment"
 #endregion Configuration
 
 #region LoadFunctions

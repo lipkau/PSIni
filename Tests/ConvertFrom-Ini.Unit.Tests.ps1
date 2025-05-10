@@ -53,13 +53,13 @@ Describe "ConvertFrom-Ini" -Tag "Unit" {
         It "has the ini sections and keys without a section as root properties" {
             $convertedObject = ConvertFrom-Ini -Path $iniFile
 
-            ($convertedObject | Get-Member -MemberType *Property).Name | Should -Be @("Arrays", "Comment1", "EmptySection", "Key", "NoValues", "Strings")
+            ($convertedObject | Get-Member -MemberType *Property).Name | Should -Be @("Arrays", "EmptySection", "Key", "NoValues", "Strings", "__Comment1")
         }
 
         It "treats the value of a key as string" {
             $convertedObject = ConvertFrom-Ini -Path $iniFile
 
-            ($convertedObject.Strings | Get-Member -MemberType *Property).Name | Should -HaveCount 19
+            ($convertedObject.Strings | Get-Member -MemberType *Property).Name | Should -HaveCount 20
             $convertedObject.Strings.Key1 | Should -BeOfType [String]
         }
 
