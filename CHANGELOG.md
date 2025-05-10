@@ -27,6 +27,7 @@ Details on how to upgrade are documented in the [Migrating to PSIni v4](#TODO: )
 * Fix tests for ending empty line behaviour in pretty print @HighPriest #90
 * Writing of empty sections @lipkau #104
 * Fixed positional parameters @lipkau #108
+* Fixed `Comment` to be a valid key @lipkau #109
 
 ### Changed
 

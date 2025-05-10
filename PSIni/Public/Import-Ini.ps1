@@ -66,6 +66,7 @@
         # Lines starting with the characters provided will be rendered as comments.
         # Default: ";"
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [Char[]]
         $CommentChar = @(";"),
 
@@ -128,7 +129,7 @@
                         $value = $matches[1].Trim()
                         $commentCount++
                         Write-DebugMessage ("Incremented commentCount is now $commentCount.")
-                        $name = "Comment$commentCount"
+                        $name = "$script:CommentPrefix$commentCount"
                         Write-Debug "$($MyInvocation.MyCommand.Name):: Adding $name with value: $value"
                         $ini[$section][$name] = $value
                     }

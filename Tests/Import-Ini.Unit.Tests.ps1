@@ -45,24 +45,26 @@ Describe "Import-Ini" -Tag "Unit" {
             Import-Ini -Path $iniFile | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
         }
 
-        It "loads the sections as expected" {
-            $dictOut = Import-Ini -Path $iniFile
+        Describe "Sections" {
+            It "loads the sections as expected" {
+                $dictOut = Import-Ini -Path $iniFile
 
-            $dictOut.Keys | Should -Be "_", "Strings", "Arrays", "NoValues", "EmptySection"
-        }
+                $dictOut.Keys | Should -Be "_", "Strings", "Arrays", "NoValues", "EmptySection"
+            }
 
-        It "uses a module-wide variable for the keys that don't have a section" {
-            InModuleScope PSIni { $script:NoSection = "NoName" }
-            $dictOut = Import-Ini -Path $iniFile
+            It "uses a module-wide variable for the keys that don't have a section" {
+                InModuleScope PSIni { $script:NoSection = "NoName" }
+                $dictOut = Import-Ini -Path $iniFile
 
-            $dictOut.Keys | Should -Be "NoName", "Strings", "Arrays", "NoValues", "EmptySection"
-            $dictOut["NoName"]["Key"] | Should -Be "With No Section"
+                $dictOut.Keys | Should -Be "NoName", "Strings", "Arrays", "NoValues", "EmptySection"
+                $dictOut["NoName"]["Key"] | Should -Be "With No Section"
+            }
         }
 
         It "keeps non repeating keys as [string]" {
             $dictOut = Import-Ini -Path $iniFile
 
-            $dictOut["Strings"].Keys | Should -HaveCount 19
+            $dictOut["Strings"].Keys | Should -HaveCount 20
             foreach ($key in $dictOut["Strings"].Keys) {
                 $dictOut["Strings"][$key] | Should -BeOfType [String]
             }
@@ -76,10 +78,6 @@ Describe "Import-Ini" -Tag "Unit" {
             # unary comma to avoid the pipeline
             , $dictOut["Arrays"]["Array1"] | Should -BeOfType [System.Collections.ArrayList]
             $dictOut["Arrays"]["Array1"] -join "," | Should -Be "1,2,3,4,5,6,7,8,9"
-        }
-
-        It "can read a list of files" {
-            Import-Ini -Path $iniFile, $iniFile, $iniFile | Should -HaveCount 3
         }
 
         It "ignores leading and trailing whitespaces from the key and the value" -TestCases @(
@@ -113,29 +111,48 @@ Describe "Import-Ini" -Tag "Unit" {
             $dictOut["Strings"][$key] | Should -Be $value
         }
 
-        It "reads lines starting with ';' as comments by default" {
-            $dictOut = Import-Ini -Path $iniFile
+        Describe "Comments" {
+            It "does not allow commentChar to be empty" {
+                { Import-Ini -Path $iniFile -CommentChar "" } | Should -Throw
+            }
 
-            $dictOut["Strings"].Keys | Should -Contain "Comment1"
-            $dictOut["Strings"]["Comment1"] | Should -Be "Key18 = Should be a comment"
-            $dictOut["Strings"]["#Key19"] | Should -Be "This is only a comment if the commentChar is extended"
-        }
+            It "reads lines starting with ';' as comments by default" {
+                $dictOut = Import-Ini -Path $iniFile
 
-        It "allows for adding characters for comments" {
-            $dictOut = Import-Ini -Path $iniFile -CommentChar ";", "#"
+                $dictOut["Strings"].Keys | Should -Contain "__Comment1"
+                $dictOut["Strings"]["__Comment1"] | Should -Be "Key18 = Should be a comment"
+            }
 
-            $dictOut["Strings"]["Comment1"] | Should -Be "Key18 = Should be a comment"
-            $dictOut["Strings"]["Comment2"] | Should -Be "Key19 = This is only a comment if the commentChar is extended"
-        }
+            It "allows for adding characters for comments" {
+                $dictOut = Import-Ini -Path $iniFile -CommentChar ";", "#"
 
-        It "ignores comments when -IgnoreComments is provided" {
-            $withComments = Import-Ini -Path $iniFile -CommentChar ";", "#"
-            $withoutComments = Import-Ini -Path $iniFile -CommentChar ";", "#" -IgnoreComments
+                $dictOut["Strings"]["__Comment1"] | Should -Be "Key18 = Should be a comment"
+                $dictOut["Strings"]["__Comment2"] | Should -Be "Key19 = This is only a comment if the commentChar is extended"
+            }
 
-            $withComments["Strings"].Keys | Should -HaveCount 19
-            $withoutComments["Strings"].Keys | Should -HaveCount 17
-            $withComments["Strings"].Keys | Should -Contain "Comment1"
-            $withoutComments["Strings"].Keys | Should -Not -Contain "Comment1"
+            It "ignores comments when -IgnoreComments is provided" {
+                $withComments = Import-Ini -Path $iniFile -CommentChar ";", "#"
+                $withoutComments = Import-Ini -Path $iniFile -CommentChar ";", "#" -IgnoreComments
+
+                $withComments["Strings"].Keys | Should -HaveCount 20
+                $withoutComments["Strings"].Keys | Should -HaveCount 18
+                $withComments["Strings"].Keys | Should -Contain "__Comment1"
+                $withoutComments["Strings"].Keys | Should -Not -Contain "__Comment1"
+            }
+
+            It "can process a key named 'Comment'" {
+                $dictOut = Import-Ini -Path $iniFile
+
+                $dictOut["Strings"]["Comment"] | Should -Be "This is a key named Comment"
+            }
+
+            It "uses a module-wide variable for the comment identifier" {
+                InModuleScope PSIni { $script:CommentPrefix = "..Comment" }
+                $dictOut = Import-Ini -Path $iniFile
+
+                $dictOut["Strings"].Keys | Should -Contain "..Comment1"
+                $dictOut["Strings"]["..Comment1"] | Should -Be "Key18 = Should be a comment"
+            }
         }
 
         It "ignores empty sections when -IgnoreEmptySections is provided" {
@@ -164,31 +181,37 @@ Describe "Import-Ini" -Tag "Unit" {
             $dictOut["NoValues"]["Key`3"] | Should -BeNullOrEmpty
         }
 
-        It "can read multiple files found with a wildcard" {
-            $wildcardPath = Join-Path $PSScriptRoot "sample*.ini"
+        Describe "File I/O" {
+            It "can read a list of files" {
+                Import-Ini -Path $iniFile, $iniFile, $iniFile | Should -HaveCount 3
+            }
 
-            $dictOut = Import-Ini -Path $iniFile
-            $dictOut | Should -HaveCount 1
+            It "can read multiple files found with a wildcard" {
+                $wildcardPath = Join-Path $PSScriptRoot "sample*.ini"
 
-            $wildcardOut = Import-Ini -Path $wildcardPath
-            $wildcardOut | Should -HaveCount 2
-        }
+                $dictOut = Import-Ini -Path $iniFile
+                $dictOut | Should -HaveCount 1
 
-        It "can handle a file with special characters in the name" {
-            $specialPath = Join-Path $PSScriptRoot "sample[].ini"
+                $wildcardOut = Import-Ini -Path $wildcardPath
+                $wildcardOut | Should -HaveCount 2
+            }
 
-            $dictOut = Import-Ini -LiteralPath $specialPath
+            It "can handle a file with special characters in the name" {
+                $specialPath = Join-Path $PSScriptRoot "sample[].ini"
 
-            $dictOut["NoName"]["Key"] | Should -Be "Example"
-        }
+                $dictOut = Import-Ini -LiteralPath $specialPath
 
-        It "can read multiple files with special characters in the name" {
-            $file1 = Join-Path $PSScriptRoot "sample[].ini"
-            $file2 = Join-Path $PSScriptRoot "sample.ini"
+                $dictOut["NoName"]["Key"] | Should -Be "Example"
+            }
 
-            $dictOut = Import-Ini -LiteralPath $file1, $file2
+            It "can read multiple files with special characters in the name" {
+                $file1 = Join-Path $PSScriptRoot "sample[].ini"
+                $file2 = Join-Path $PSScriptRoot "sample.ini"
 
-            $dictOut | Should -HaveCount 2
+                $dictOut = Import-Ini -LiteralPath $file1, $file2
+
+                $dictOut | Should -HaveCount 2
+            }
         }
     }
 }
