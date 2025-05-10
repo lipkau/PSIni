@@ -26,6 +26,7 @@ Details on how to upgrade are documented in the [Migrating to PSIni v4](#TODO: )
 * Improve performance by operating in-memory @HighPriest #80
 * Fix tests for ending empty line behaviour in pretty print @HighPriest #90
 * Writing of empty sections @lipkau #104
+* Fixed positional parameters @lipkau #108
 
 ### Changed
 
