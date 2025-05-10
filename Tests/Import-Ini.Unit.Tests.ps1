@@ -20,21 +20,25 @@ Describe "Import-Ini" -Tag "Unit" {
 
         It "has a parameter '<parameter>' of type '<type>'" -TestCases @(
             @{ parameter = "Path"; type = "String[]" }
+            @{ parameter = "LiteralPath"; type = "String[]" }
             @{ parameter = "CommentChar"; type = "Char[]" }
             @{ parameter = "IgnoreComments"; type = "Switch" }
+            @{ parameter = "IgnoreEmptySections"; type = "Switch" }
         ) {
             param ($parameter, $type)
             $command | Should -HaveParameter $parameter -Type $type
+        }
+
+        It "parameter '<parameter>' has a default value of '<defaultValue>'" -TestCases @(
+            @{ parameter = "CommentChar"; ; defaultValue = '@(";")' }
+        ) {
+            $command | Should -HaveParameter $parameter -DefaultValue $defaultValue
         }
     }
 
     Describe "Behaviors" {
         BeforeAll {
             $script:iniFile = Join-Path $PSScriptRoot "sample.ini"
-        }
-        BeforeEach {
-            Remove-Module PSIni -ErrorAction SilentlyContinue
-            Import-Module (Join-Path $PSScriptRoot "../PSIni") -Force -ErrorAction Stop
         }
 
         It "creates a OrderedDictionary from an INI file" {
@@ -158,6 +162,33 @@ Describe "Import-Ini" -Tag "Unit" {
             $dictOut = Import-Ini -Path $iniFile
 
             $dictOut["NoValues"]["Key`3"] | Should -BeNullOrEmpty
+        }
+
+        It "can read multiple files found with a wildcard" {
+            $wildcardPath = Join-Path $PSScriptRoot "sample*.ini"
+
+            $dictOut = Import-Ini -Path $iniFile
+            $dictOut | Should -HaveCount 1
+
+            $wildcardOut = Import-Ini -Path $wildcardPath
+            $wildcardOut | Should -HaveCount 2
+        }
+
+        It "can handle a file with special characters in the name" {
+            $specialPath = Join-Path $PSScriptRoot "sample[].ini"
+
+            $dictOut = Import-Ini -LiteralPath $specialPath
+
+            $dictOut["NoName"]["Key"] | Should -Be "Example"
+        }
+
+        It "can read multiple files with special characters in the name" {
+            $file1 = Join-Path $PSScriptRoot "sample[].ini"
+            $file2 = Join-Path $PSScriptRoot "sample.ini"
+
+            $dictOut = Import-Ini -LiteralPath $file1, $file2
+
+            $dictOut | Should -HaveCount 2
         }
     }
 }

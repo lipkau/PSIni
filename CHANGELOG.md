@@ -18,6 +18,7 @@ Details on how to upgrade are documented in the [Migrating to PSIni v4](#TODO: )
 * Added `ConvertFrom-Ini` @lipkau
 * Added `ConvertTo-Ini` @lipkau
 * Added `-CommentChar` to `Export-Ini` @lipkau #103
+* Added `-LiteralPath` to `Import-Ini` @lipkau #105
 
 ### Fixed
 
