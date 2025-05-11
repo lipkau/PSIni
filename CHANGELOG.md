@@ -19,6 +19,11 @@ Details on how to upgrade are documented in the [Migrating to PSIni v4](#TODO: )
 * Added `ConvertTo-Ini` @lipkau
 * Added `-CommentChar` to `Export-Ini` @lipkau #103
 * Added `-LiteralPath` to `Import-Ini` @lipkau #105
+* Added `-Encoding` to `Import-Ini` @lipkau #111
+* Added `-InputString` to `Import-Ini` @lipkau #111
+  * In order to implement this, a slight performance buff was implemented:\
+    files are now read with [System.IO.File]::ReadAllLines() instead for switch -file\
+    Read more: <https://devdojo.com/hcritter/powershell-performance-test-file-reading>
 
 ### Fixed
 

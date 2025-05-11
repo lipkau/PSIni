@@ -47,6 +47,7 @@
         #
         # Use a dot (`.`) to specify the current location. Use the wildcard character (`*`) to specify all the items in the current location.
         [Parameter( Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "Path", Position = 0 )]
+        [ValidateNotNullOrEmpty()]
         [Alias("PSPath", "FullName")]
         [String[]]
         $Path,
@@ -59,8 +60,23 @@
         #
         # For more information, see about_Quoting_Rules
         [Parameter( Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "LiteralPath" )]
+        [ValidateNotNullOrEmpty()]
         [String[]]
         $LiteralPath,
+
+        # The string representation of the INI file.
+        [Parameter( Mandatory, ParameterSetName = "String" )]
+        [ValidateNotNullOrEmpty()]
+        [String]
+        $InputString,
+
+        # Specifies the file encoding.
+        # The default is UTF8.
+        [Parameter( ParameterSetName = "Path" )]
+        [Parameter( ParameterSetName = "LiteralPath" )]
+        [ValidateNotNullOrEmpty()]
+        [System.Text.Encoding]
+        $Encoding = [System.Text.Encoding]::UTF8,
 
         # Specify what characters should be describe a comment.
         # Lines starting with the characters provided will be rendered as comments.
@@ -93,90 +109,97 @@
     }
 
     process {
-        $ResolvedPath = if ($Path) { Resolve-Path $Path }
-        else { $LiteralPath }
+        if ($Path) { $Sources = (Resolve-Path $Path) }
+        elseif ($LiteralPath) { $Sources = $LiteralPath }
+        elseif ($InputString) { $Sources = $InputString }
 
-        foreach ($file in $ResolvedPath) {
-            Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $file"
+        foreach ($source in $Sources) {
+            if ($LiteralPath -or $Path) {
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $source"
 
-            if (-not (Test-Path -LiteralPath $file)) {
-                Write-Error "Could not find file '$file'"
-                continue
-            }
-            $file = [WildcardPattern]::Escape($file)
-
-            $ini = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $section = $null # Section Name
-            $name = $null # Key or Comment Name
-
-            $commentCount = 0
-            switch -regex -file $file {
-                $sectionRegex {
-                    # Section
-                    $section = $matches[1]
-                    Write-Debug "$($MyInvocation.MyCommand.Name):: Adding section : $section"
-                    $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-                    $commentCount = 0
+                # $source = [WildcardPattern]::Escape($source)
+                try { $fileContent = [System.IO.File]::ReadAllLines($source, $Encoding) }
+                catch {
+                    Write-Error "Could not find file '$source'"
                     continue
                 }
-                $commentRegex {
-                    # Comment
-                    if (-not $IgnoreComments) {
+            }
+            else {
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing a string"
+                $fileContent = $source.split("`n")
+            }
+
+            $ini = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+            $section, $name = $null
+            $commentCount = 0
+
+            foreach ($line in $fileContent) {
+                switch -Regex ($line) {
+                    $sectionRegex {
+                        $section = $matches[1]
+                        Write-Debug "$($MyInvocation.MyCommand.Name):: Adding section : $section"
+                        $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+                        $commentCount = 0
+                        continue
+                    }
+                    $commentRegex {
+                        if (-not $IgnoreComments) {
+                            if (-not $section) {
+                                $section = $script:NoSection
+                                $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+                            }
+                            $value = $matches[1].Trim()
+                            $commentCount++
+                            Write-DebugMessage ("Incremented commentCount is now $commentCount.")
+                            $name = "$script:CommentPrefix$commentCount"
+                            Write-Debug "$($MyInvocation.MyCommand.Name):: Adding $name with value: $value"
+                            $ini[$section][$name] = $value
+                        }
+                        else {
+                            Write-DebugMessage ("Ignoring comment $($matches[1]).")
+                        }
+                        continue
+                    }
+                    $keyRegex {
                         if (-not $section) {
                             $section = $script:NoSection
                             $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
                         }
-                        $value = $matches[1].Trim()
-                        $commentCount++
-                        Write-DebugMessage ("Incremented commentCount is now $commentCount.")
-                        $name = "$script:CommentPrefix$commentCount"
-                        Write-Debug "$($MyInvocation.MyCommand.Name):: Adding $name with value: $value"
-                        $ini[$section][$name] = $value
-                    }
-                    else {
-                        Write-DebugMessage ("Ignoring comment $($matches[1]).")
-                    }
-                    continue
-                }
-                $keyRegex {
-                    # Key
-                    if (-not $section) {
-                        $section = $script:NoSection
-                        $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-                    }
-                    $name, $value = $matches[1].Trim(), $matches[2].Trim()
-                    if (-not [string]::IsNullOrWhiteSpace($name)) {
-                        Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
-                        if (-not $ini[$section][$name]) {
-                            $ini[$section][$name] = $value
-                        }
-                        else {
-                            if ($ini[$section][$name] -is [string]) {
-                                $oldValue = $ini[$section][$name]
-                                $ini[$section][$name] = [System.Collections.ArrayList]::new()
-                                $null = $ini[$section][$name].Add($oldValue)
+                        $name, $value = $matches[1].Trim(), $matches[2].Trim()
+                        if (-not [string]::IsNullOrWhiteSpace($name)) {
+                            Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
+                            if (-not $ini[$section][$name]) {
+                                $ini[$section][$name] = $value
                             }
-                            $null = $ini[$section][$name].Add($value)
+                            else {
+                                if ($ini[$section][$name] -is [string]) {
+                                    $oldValue = $ini[$section][$name]
+                                    $ini[$section][$name] = [System.Collections.ArrayList]::new()
+                                    $null = $ini[$section][$name].Add($oldValue)
+                                }
+                                $null = $ini[$section][$name].Add($value)
+                            }
                         }
+                        continue
                     }
-                    continue
-                }
-                Default {
-                    # No match
-                    # As seen in https://github.com/lipkau/PSIni/issues/65, some software writes keys without
-                    # the `=` sign.
-                    if (-not $section) {
-                        $section = $script:NoSection
-                        $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+                    Default {
+                        # No match
+                        # As seen in https://github.com/lipkau/PSIni/issues/65, some software write keys without
+                        # the `=` sign.
+                        if (-not $section) {
+                            $section = $script:NoSection
+                            $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+                        }
+                        $name = $_.Trim()
+                        if (-not [string]::IsNullOrWhiteSpace($name)) {
+                            Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name without a value"
+                            $ini[$section][$name] = $null
+                        }
+                        continue
                     }
-                    $name = $_.Trim()
-                    if (-not [string]::IsNullOrWhiteSpace($name)) {
-                        Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name without a value"
-                        $ini[$section][$name] = $null
-                    }
-                    continue
                 }
             }
+
             if ($IgnoreEmptySections) {
                 $ToRemove = [System.Collections.ArrayList]@()
                 foreach ($Section in $ini.Keys) {
@@ -189,6 +212,7 @@
                     $null = $ini.Remove($Section)
                 }
             }
+
             $ini
         }
     }

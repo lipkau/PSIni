@@ -19,11 +19,13 @@ Describe "Import-Ini" -Tag "Unit" {
         }
 
         It "has a parameter '<parameter>' of type '<type>'" -TestCases @(
-            @{ parameter = "Path"; type = "String[]" }
-            @{ parameter = "LiteralPath"; type = "String[]" }
             @{ parameter = "CommentChar"; type = "Char[]" }
+            @{ parameter = "Encoding"; type = "System.Text.Encoding" }
             @{ parameter = "IgnoreComments"; type = "Switch" }
             @{ parameter = "IgnoreEmptySections"; type = "Switch" }
+            @{ parameter = "InputString"; type = "String" }
+            @{ parameter = "LiteralPath"; type = "String[]" }
+            @{ parameter = "Path"; type = "String[]" }
         ) {
             param ($parameter, $type)
             $command | Should -HaveParameter $parameter -Type $type
@@ -31,6 +33,7 @@ Describe "Import-Ini" -Tag "Unit" {
 
         It "parameter '<parameter>' has a default value of '<defaultValue>'" -TestCases @(
             @{ parameter = "CommentChar"; ; defaultValue = '@(";")' }
+            @{ parameter = "Encoding"; defaultValue = "[System.Text.Encoding]::UTF8" }
         ) {
             $command | Should -HaveParameter $parameter -DefaultValue $defaultValue
         }
@@ -211,6 +214,18 @@ Describe "Import-Ini" -Tag "Unit" {
                 $dictOut = Import-Ini -LiteralPath $file1, $file2
 
                 $dictOut | Should -HaveCount 2
+            }
+        }
+
+        Describe "Input from string" {
+            It "Can process a string representation of a INI file" {
+                $ini = "[section]`nkey=value"
+
+                $dictOut = Import-Ini -InputString $ini
+
+                $dictOut.Keys | Should -Contain "section"
+                $dictOut["section"].Keys | Should -Contain "key"
+                $dictOut["section"]["key"] | Should -Be "value"
             }
         }
     }
