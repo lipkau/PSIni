@@ -1,2 +1,3 @@
 ﻿$content = Import-Ini .\settings.ini
-$content["category2"]["key4"]
+
+$content.Keys.Foreach({ "{0}: {1}" -f $_, ($content[$_] | Out-String) })
