@@ -32,7 +32,7 @@
         }
 
         foreach ($key in $InputObject.Keys) {
-            if ($key -like "Comment*") {
+            if ($key -like "$script:CommentPrefix*") {
                 if ($IgnoreComments) {
                     Write-Verbose "$($MyInvocation.MyCommand.Name):: Skipping comment: $key"
                 }
