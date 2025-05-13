@@ -142,13 +142,14 @@
     }
 
     process {
+        Write-Verbose "$($MyInvocation.MyCommand.Name):: Creating file content in memory"
         $fileContent = @()
 
-        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Path"
         foreach ($section in $InputObject.Keys) {
             Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$section]"
 
             # Add section header to the content array
+            # Note: this relies on an OrderedDictionary for the keys without a section to be at the top of the file
             if ($section -ne $script:NoSection) {
                 $fileContent += "[$section]"
             }
@@ -160,20 +161,19 @@
                 CommentChar           = $CommentChar
                 SkipTrailingEqualSign = $SkipTrailingEqualSign
             }
-
-            #Collect output from Out-Key to fileContent
             $fileContent += Out-Key @outKeyParam
 
             # TODO: what when the Input is only a simple hash?
 
-            if ($Format -eq "pretty") { $fileContent += "" } # Separate Sections with whiteSpace
+            # Separate Sections with whiteSpace
+            if ($Format -eq "pretty") { $fileContent += "" }
         }
 
+        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Path"
         Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force -Append:$Append
     }
 
     end {
-        # $PassThru grabs the written file & passes it's identifier into stdout
         if ($PassThru) { Get-Item -Path $Path }
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
