@@ -2,14 +2,14 @@
 
 Describe "Export-Ini" -Tag "Unit" {
     BeforeAll {
+        . "$PSScriptRoot/Helpers/Get-FileEncoding.ps1"
         . "$PSScriptRoot/Helpers/Resolve-ModuleSource.ps1"
         $script:moduleToTest = Resolve-ModuleSource
 
         Remove-Module PSIni -ErrorAction SilentlyContinue
         Import-Module $moduleToTest -Force -ErrorAction Stop
 
-        . (Join-Path $PSScriptRoot "./Helpers/Get-FileEncoding.ps1")
-
+        # Adjust for the correct line ending based on the system running the tests
         $script:lf = if (($PSVersionTable.ContainsKey("Platform")) -and ($PSVersionTable.Platform -ne "Win32NT")) { "`n" }
         else { "`r`n" }
     }
@@ -20,7 +20,11 @@ Describe "Export-Ini" -Tag "Unit" {
         }
 
         It "exports an alias 'epini'" {
-            Get-Alias -Definition Export-Ini | Where-Object { $_.name -eq "epini" } | Measure-Object | Select-Object -ExpandProperty Count | Should -HaveCount 1
+            Get-Alias -Definition Export-Ini |
+                Where-Object { $_.name -eq "epini" } |
+                Measure-Object |
+                Select-Object -ExpandProperty Count |
+                Should -HaveCount 1
         }
 
         It "has a parameter '<parameter>' of type '<type>'" -TestCases @(
@@ -56,169 +60,183 @@ Describe "Export-Ini" -Tag "Unit" {
 
     Describe "Behaviors" {
         BeforeEach {
-            $testPath = "TestDrive:\output$(Get-Random).ini"
+            $script:testPath = "TestDrive:\output$(Get-Random).ini"
 
             $script:commonParameter = @{
                 Path        = $testPath
                 ErrorAction = "Stop"
             }
 
-            $defaultObject = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $defaultObject["_"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $defaultObject["_"]["KeyWithoutSection"] = "This is a key without section header"
-            $defaultObject["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $defaultObject["Category1"]["Key1"] = "Value1"
-            $defaultObject["Category1"]["Comment1"] = "Key2 = Value2"
-            $defaultObject["Category2"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $defaultObject["Category2"]["Comment1"] = "Key1 = Value1"
-            $defaultObject["Category2"]["Comment2"] = "Key2=Value2"
+            $script:defaultObject = [ordered]@{
+                "_"         = [ordered]@{
+                    "KeyWithoutSection" = "This is a key without section header"
+                }
+                "Category1" = [ordered]@{
+                    "Key1"       = "Value1"
+                    "__Comment1" = "Key2 = Value2"
+                }
+                "Category2" = [ordered]@{
+                    "__Comment1" = "Key1 = Value1"
+                    "__Comment2" = "Key2=Value2"
+                }
+            }
 
             $script:defaultFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}${lf}"
 
-            $additionalObject = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $additionalObject["Additional"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $additionalObject["Additional"]["Key1"] = "Value1"
+            $script:additionalObject = [ordered]@{
+                "Additional" = [ordered]@{ "Key1" = "Value1" }
+            }
 
             $script:additionalFileContent = "[Additional]${lf}Key1 = Value1${lf}${lf}"
 
-            $objectWithEmptyKeys = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $objectWithEmptyKeys["NoValues"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $objectWithEmptyKeys["NoValues"]["Key1"] = $null
-            $objectWithEmptyKeys["NoValues"]["Key2"] = ""
-        }
-
-        It "saves an object as ini file" {
-            Export-Ini @commonParameter -InputObject $defaultObject
-            $fileContent = Get-Content -Path $testPath -Raw
-
-            $fileContent | Should -Be $defaultFileContent
-        }
-
-        It "accepts the InputObject via pipeline" {
-            $defaultObject | Export-Ini @commonParameter
-            Test-Path -Path $testPath | Should -Be $true
-        }
-
-        It "can append to an existing ini file" {
-            Export-Ini @commonParameter -InputObject $defaultObject
-            Export-Ini @commonParameter -InputObject $additionalObject -Append
-
-            $fileContent = Get-Content -Path $testPath -Raw
-            $fileContent | Should -Be ($defaultFileContent + $additionalFileContent)
-        }
-
-        It "it overwrite any existing file when using -Force" {
-            Export-Ini @commonParameter -InputObject $defaultObject
-            Get-Content -Path $testPath -Raw | Should -Not -Be $additionalFileContent
-
-            Export-Ini @commonParameter -InputObject $additionalObject -Force
-            Get-Content -Path $testPath -Raw | Should -Be $additionalFileContent
-        }
-
-        It "return the file object when using -Passthru" {
-            $noReturn = Export-Ini @commonParameter -InputObject $defaultObject
-            $passthru = Export-Ini @commonParameter -InputObject $defaultObject -Passthru
-
-            $noReturn | Should -BeNullOrEmpty
-            $passthru | Should -BeOfType [System.IO.FileSystemInfo]
-        }
-
-        It "writes an array as multiple keys with the same name" {
-            $iniObject = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $iniObject["Section"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $iniObject["Section"]["ArrayKey"] = [System.Collections.ArrayList]::new()
-            $null = $iniObject["Section"]["ArrayKey"].Add("Line 1")
-            $null = $iniObject["Section"]["ArrayKey"].Add("Line 2")
-            $null = $iniObject["Section"]["ArrayKey"].Add("Line 3")
-
-            Export-Ini @commonParameter -InputObject $iniObject
-
-            $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "[Section]${lf}ArrayKey = Line 1${lf}ArrayKey = Line 2${lf}ArrayKey = Line 3${lf}${lf}"
-
-            $fileContent | Should -Be $expectedFileContent
-        }
-
-        It "write the ini file without comment when -IgnoreComments is defined" {
-            Export-Ini @commonParameter -InputObject $defaultObject -IgnoreComments
-
-            $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf}${lf}[Category2]${lf}${lf}"
-
-            $fileContent | Should -Be $expectedFileContent
-        }
-
-        It "uses the provided comment character" {
-            Export-Ini @commonParameter -InputObject $defaultObject -CommentChar "#"
-
-            $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf}#Key2 = Value2${lf}${lf}[Category2]${lf}#Key1 = Value1${lf}#Key2=Value2${lf}${lf}"
-
-            $fileContent | Should -Be $expectedFileContent
-        }
-
-        It "saves the ini file in 'minified' format" {
-            Export-Ini @commonParameter -InputObject $defaultObject -Format "minified"
-
-            $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "KeyWithoutSection=This is a key without section header${lf}[Category1]${lf}Key1=Value1${lf};Key2 = Value2${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}"
-
-            $fileContent | Should -Be $expectedFileContent
-        }
-
-        It "saves the ini file in 'pretty' format" {
-            Export-Ini @commonParameter -InputObject $defaultObject -Format "pretty"
-
-            $fileContent = Get-Content -Path $testPath -Raw
-
-            $fileContent | Should -Be $defaultFileContent
-        }
-
-        It "uses the file encoding 'UTF8' if non is specified" {
-            Export-Ini @commonParameter -InputObject $defaultObject
-
-            if ($PSVersionTable.PSVersion.Major -ge 6) {
-                (Get-FileEncoding -Path $testPath).Encoding | Should -Be "UTF8"
-            }
-            else {
-                (Get-FileEncoding -Path $testPath).Encoding | Should -Be "UTF8-BOM"
+            $script:objectWithEmptyKeys = [ordered]@{
+                "NoValues" = [ordered]@{ "Key1" = $null; "Key2" = ""
+                }
             }
         }
 
-        It "uses the file encoding provided when writing the ini file" {
-            Export-Ini @commonParameter -InputObject $defaultObject -Encoding "utf32"
+        Describe "Input" {
+            It "saves an object as ini file" {
+                Export-Ini @commonParameter -InputObject $defaultObject
+                $fileContent = Get-Content -Path $testPath -Raw
 
-            (Get-FileEncoding -Path $testPath).Encoding | Should -Be "UTF32-LE"
+                $fileContent | Should -Be $defaultFileContent
+            }
+
+            It "accepts the InputObject via pipeline" {
+                $defaultObject | Export-Ini @commonParameter
+                Test-Path -Path $testPath | Should -Be $true
+            }
         }
 
-        It "writes out keys without a value" {
-            Export-Ini @commonParameter -InputObject $objectWithEmptyKeys -Format minified
+        Describe "File I/O" {
+            It "can append to an existing ini file" {
+                Export-Ini @commonParameter -InputObject $defaultObject
+                Export-Ini @commonParameter -InputObject $additionalObject -Append
 
-            $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "[NoValues]${lf}Key1=${lf}Key2=${lf}"
+                $fileContent = Get-Content -Path $testPath -Raw
+                $fileContent | Should -Be ($defaultFileContent + $additionalFileContent)
+            }
 
-            $fileContent | Should -Be $expectedFileContent
+            It "it overwrite any existing file when using -Force" {
+                Export-Ini @commonParameter -InputObject $defaultObject
+                Get-Content -Path $testPath -Raw | Should -Not -Be $additionalFileContent
+
+                Export-Ini @commonParameter -InputObject $additionalObject -Force
+                Get-Content -Path $testPath -Raw | Should -Be $additionalFileContent
+            }
         }
 
-        It "writes out keys without trailing equal sign when no value is assigned" {
-            Export-Ini @commonParameter -InputObject $objectWithEmptyKeys -Format minified -SkipTrailingEqualSign
+        Describe "Special Parameter" {
+            It "return the file object when using '-Passthru'" {
+                $noReturn = Export-Ini @commonParameter -InputObject $defaultObject
+                $passthru = Export-Ini @commonParameter -InputObject $defaultObject -Passthru
 
-            $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "[NoValues]${lf}Key1${lf}Key2${lf}"
+                $noReturn | Should -BeNullOrEmpty
+                $passthru | Should -BeOfType [System.IO.FileSystemInfo]
+            }
 
-            $fileContent | Should -Be $expectedFileContent
+            It "write the ini file without comment when '-IgnoreComments' is defined" {
+                $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf}${lf}[Category2]${lf}${lf}"
+
+                Export-Ini @commonParameter -InputObject $defaultObject -IgnoreComments
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be $expectedFileContent
+            }
+
+            It "uses the provided '-CommentChar' character" {
+                $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf}#Key2 = Value2${lf}${lf}[Category2]${lf}#Key1 = Value1${lf}#Key2=Value2${lf}${lf}"
+
+                Export-Ini @commonParameter -InputObject $defaultObject -CommentChar "#"
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be $expectedFileContent
+            }
+
+            It "saves the ini file minified with '-Format minified'" {
+                $expectedFileContent = "KeyWithoutSection=This is a key without section header${lf}[Category1]${lf}Key1=Value1${lf};Key2 = Value2${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}"
+
+                Export-Ini @commonParameter -InputObject $defaultObject -Format "minified"
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be $expectedFileContent
+            }
+
+            It "saves the ini file formatted with '-Format pretty'" {
+                Export-Ini @commonParameter -InputObject $defaultObject -Format "pretty"
+
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be $defaultFileContent
+            }
+
+            It "uses 'UTF8' encoding if non is specified" {
+                Export-Ini @commonParameter -InputObject $defaultObject
+
+                if ($PSVersionTable.PSVersion.Major -ge 6) {
+                    (Get-FileEncoding -Path $testPath).Encoding | Should -Be "UTF8"
+                }
+                else {
+                    (Get-FileEncoding -Path $testPath).Encoding | Should -Be "UTF8-BOM"
+                }
+            }
+
+            It "uses the file encoding provided with '-Encoding'" {
+                Export-Ini @commonParameter -InputObject $defaultObject -Encoding "utf32"
+
+                (Get-FileEncoding -Path $testPath).Encoding | Should -Be "UTF32-LE"
+            }
         }
 
-        It "can write an empty section" {
-            $iniObject = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-            $iniObject["EmptySection"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
+        Describe "Arrays" {
+            It "writes an array as multiple keys with the same name" {
+                $iniObject = [ordered]@{
+                    "Section" = [ordered]@{ "ArrayKey" = [System.Collections.ArrayList]::new() }
+                }
+                $null = $iniObject["Section"]["ArrayKey"].Add("Line 1")
+                $null = $iniObject["Section"]["ArrayKey"].Add("Line 2")
+                $null = $iniObject["Section"]["ArrayKey"].Add("Line 3")
 
-            Export-Ini @commonParameter -InputObject $iniObject
+                $expectedFileContent = "[Section]${lf}ArrayKey = Line 1${lf}ArrayKey = Line 2${lf}ArrayKey = Line 3${lf}${lf}"
 
-            $fileContent = Get-Content -Path $testPath -Raw
-            $expectedFileContent = "[EmptySection]${lf}${lf}"
+                Export-Ini @commonParameter -InputObject $iniObject
+                $fileContent = Get-Content -Path $testPath -Raw
 
-            $fileContent | Should -Be $expectedFileContent
+                $fileContent | Should -Be $expectedFileContent
+            }
+        }
+
+        Describe "Keys and values" {
+            It "writes out keys without a value" {
+                $expectedFileContent = "[NoValues]${lf}Key1=${lf}Key2=${lf}"
+
+                Export-Ini @commonParameter -InputObject $objectWithEmptyKeys -Format minified
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be $expectedFileContent
+            }
+
+            It "writes out keys without trailing equal sign when no value is assigned" {
+                $expectedFileContent = "[NoValues]${lf}Key1${lf}Key2${lf}"
+
+                Export-Ini @commonParameter -InputObject $objectWithEmptyKeys -Format minified -SkipTrailingEqualSign
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be $expectedFileContent
+            }
+        }
+
+        Describe "Sections" {
+            It "can write an empty section" {
+                $iniObject = [ordered]@{ "EmptySection" = [ordered]@{} }
+                $expectedFileContent = "[EmptySection]${lf}${lf}"
+
+                Export-Ini @commonParameter -InputObject $iniObject
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be $expectedFileContent
+            }
         }
     }
 }

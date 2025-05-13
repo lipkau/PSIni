@@ -19,13 +19,11 @@ Describe "General project validation" -Tag Unit {
     Describe "Public functions" {
 
         It "has a test file for <BaseName>" -TestCases $publicFunctionFiles {
-            param($BaseName)
             $expectedTestFile = "$BaseName.Unit.Tests.ps1"
             $testFiles.Name | Should -Contain $expectedTestFile
         }
 
         It "exports <BaseName>" -TestCases $publicFunctionFiles {
-            param($BaseName)
             $expectedFunctionName = $BaseName
             $module.ExportedCommands.keys | Should -Contain $expectedFunctionName
         }
@@ -40,7 +38,6 @@ Describe "General project validation" -Tag Unit {
             } #>
 
         It "does not export <BaseName>" -TestCases $privateFunctionFiles {
-            param($BaseName)
             $expectedFunctionName = $BaseName
             $module.ExportedCommands.keys | Should -Not -Contain $expectedFunctionName
         }
