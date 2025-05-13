@@ -43,13 +43,12 @@
             }
             elseif (-not $InputObject[$key]) {
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key without value"
-                $keyToWrite = if ($SkipTrailingEqualSign) { "$key" } else { "$key$delimiter" }
-                $outputLines += $keyToWrite
+                $outputLines += if ($SkipTrailingEqualSign) { "$key" } else { "${key}${Delimiter}" }
             }
             else {
                 foreach ($entry in $InputObject[$key]) {
                     Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key"
-                    $outputLines += "$key$delimiter$entry"
+                    $outputLines += "${key}${Delimiter}${entry}"
                 }
             }
         }
