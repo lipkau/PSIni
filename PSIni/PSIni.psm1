@@ -1,15 +1,4 @@
-﻿<#
-    .Synopsis
-        This Module contains functions to manage INI files
-
-    .Notes
-        Author       : Oliver Lipkau <https://github.com/lipkau>
-        Contributors : https://github.com/lipkau/PSIni/graphs/contributors
-        Homepage     : http://lipkau.github.io/PSIni/
-
-#>
-
-#region Configuration
+﻿#region Configuration
 $script:NoSection = "_"
 $script:CommentPrefix = "__Comment"
 #endregion Configuration

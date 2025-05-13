@@ -1,4 +1,4 @@
-# [PSIni](http://lipkau.github.io/PSIni/)
+# PSIni
 
 [![GitHub release](https://img.shields.io/github/release/lipkau/PSIni.svg?style=for-the-badge)](https://github.com/lipkau/PSIni/releases/latest)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/lipkau/PSIni/build_and_test.yml?branch=master&style=for-the-badge)
