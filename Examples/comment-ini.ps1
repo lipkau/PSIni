@@ -1,5 +1,10 @@
 ﻿$content = Import-Ini .\settings.ini
-$content["category2"]["Comment1"] = "a new string"
-$content["category2"]["Comment2"] = "key4 = $($content["category2"]["key4"])"
+
+# add a new comment
+$content["category2"]["__Comment1"] = "a new string"
+
+# replace a key with a comment
+$content["category2"]["__Comment2"] = "key4 = $($content["category2"]["key4"])"
+$content["category2"].Remove("key4")
 
 $content["category2"]

@@ -24,9 +24,6 @@ $iniFileContent = [ordered] @{
         #  * While you can assign values of different types in-memory, they are
         #    CONVERTED TO STRINGS with .ToString() and READ AS STRINGS later
         #    by Import-Ini.
-        #  * In v3+, PSIni now supports values in *.ini files that have
-        #    embedded quoting - e.g., `AB = "23"` as a raw line - which is
-        #    (sensibly) *stripped* on reading the values.
         AB = '23'
         BC = '34'
     }
@@ -40,9 +37,7 @@ $iniFileContent = [ordered] @{
 # Use Export-Ini to create file 'file.ini' in the current dir.
 # * Default encoding is UTF-8 (with BOM in Windows PowerShell, without BOM
 #   in PowerShell Core)
-# * Use -Encoding to override, but note that
-#   Import-Ini has no matching -Encoding parameter, so the encoding you use
-#   must be detectable by PowerShell in the absence of explicit information.
+# * Use -Encoding to override.
 # * CAVEAT: -Force is only needed if an existing file must be overwritten.
 #           I'm using it here so you can run the sample code repeatedly without
 #           failure, but in general you should only use it if you want to
