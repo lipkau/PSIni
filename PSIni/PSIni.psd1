@@ -5,7 +5,7 @@
     Author                 = 'Oliver Lipkau <oliver@lipkau.net>'
     CompanyName            = 'Unknown'
     Copyright              = '(c) 2025 Oliver Lipkau. All rights reserved.'
-    Description            = 'Convert hashtable to INI file and back. @ http://lipkau.github.io/PSIni/'
+    Description            = 'Convert hashtable to INI file and back'
     PowerShellVersion      = '5.0'
     PowerShellHostName     = ''
     PowerShellHostVersion  = ''
@@ -28,7 +28,7 @@
         PSData = @{
             Tags       = @('ini', 'PSIni', 'PsIni')
             LicenseUri = 'https://github.com/lipkau/PSIni/blob/master/LICENSE'
-            ProjectUri = 'http://lipkau.github.io/PSIni'
+            ProjectUri = 'https://github.com/lipkau/PSIni'
             # IconUri = ''
             # ReleaseNotes = ''
             # ExternalModuleDependencies = ''
