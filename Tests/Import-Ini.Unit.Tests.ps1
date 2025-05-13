@@ -15,7 +15,11 @@ Describe "Import-Ini" -Tag "Unit" {
         }
 
         It "exports an alias 'ipini'" {
-            Get-Alias -Definition Export-Ini | Where-Object { $_.name -eq "ipini" } | Measure-Object | Select-Object -ExpandProperty Count | Should -HaveCount 1
+            Get-Alias -Definition Export-Ini |
+                Where-Object { $_.name -eq "ipini" } |
+                Measure-Object |
+                Select-Object -ExpandProperty Count |
+                Should -HaveCount 1
         }
 
         It "has a parameter '<parameter>' of type '<type>'" -TestCases @(
@@ -42,76 +46,71 @@ Describe "Import-Ini" -Tag "Unit" {
     Describe "Behaviors" {
         BeforeAll {
             $script:iniFile = Join-Path $PSScriptRoot "sample.ini"
-        }
-
-        It "creates a OrderedDictionary from an INI file" {
-            Import-Ini -Path $iniFile | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
+            $script:dictOut = Import-Ini -Path $iniFile
         }
 
         Describe "Sections" {
             It "loads the sections as expected" {
-                $dictOut = Import-Ini -Path $iniFile
-
                 $dictOut.Keys | Should -Be "_", "Strings", "Arrays", "NoValues", "EmptySection"
             }
 
             It "uses a module-wide variable for the keys that don't have a section" {
                 InModuleScope PSIni { $script:NoSection = "NoName" }
-                $dictOut = Import-Ini -Path $iniFile
+                $dictNoNameSection = Import-Ini -Path $iniFile
 
-                $dictOut.Keys | Should -Be "NoName", "Strings", "Arrays", "NoValues", "EmptySection"
-                $dictOut["NoName"]["Key"] | Should -Be "With No Section"
+                $dictNoNameSection.Keys | Should -Be "NoName", "Strings", "Arrays", "NoValues", "EmptySection"
+                $dictNoNameSection["NoName"]["Key"] | Should -Be "With No Section"
             }
         }
 
-        It "keeps non repeating keys as [string]" {
-            $dictOut = Import-Ini -Path $iniFile
+        Describe "Data types" {
+            It "creates a OrderedDictionary from an INI file" {
+                $dictOut | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
+            }
 
-            $dictOut["Strings"].Keys | Should -HaveCount 20
-            foreach ($key in $dictOut["Strings"].Keys) {
-                $dictOut["Strings"][$key] | Should -BeOfType [String]
+            It "keeps non repeating keys as [string]" {
+                $dictOut["Strings"].Keys | Should -HaveCount 20
+                foreach ($key in $dictOut["Strings"].Keys) {
+                    $dictOut["Strings"][$key] | Should -BeOfType [String]
+                }
+            }
+
+            It "duplicate keys in the same section are groups as an array" {
+                $dictOut["Arrays"].Keys | Should -HaveCount 2
+                $dictOut["Arrays"]["String1"] | Should -BeOfType [String]
+                # unary comma to avoid the pipeline
+                , $dictOut["Arrays"]["Array1"] | Should -BeOfType [System.Collections.ArrayList]
+                $dictOut["Arrays"]["Array1"] -join "," | Should -Be "1,2,3,4,5,6,7,8,9"
             }
         }
 
-        It "duplicate keys in the same section are groups as an array" {
-            $dictOut = Import-Ini -Path $iniFile
+        Describe "Trim and Quotes" {
+            It "ignores leading and trailing whitespaces from the key and the value" -TestCases @(
+                @{ key = "Key1"; value = "Value1" }
+                @{ key = "Key2"; value = "Value2" }
+                @{ key = "Key3"; value = "Value3" }
+                @{ key = "Key4"; value = "Value4" }
+                @{ key = "Key5"; value = "Value5" }
+                @{ key = "Key6"; value = "Value6" }
+                @{ key = "Key7"; value = "Value7" }
+                @{ key = "Key8"; value = "Value8" }
+                @{ key = "Key9"; value = "Value9" }
+            ) {
+                $dictOut["Strings"][$key] | Should -Be $value
+            }
 
-            $dictOut["Arrays"].Keys | Should -HaveCount 2
-            $dictOut["Arrays"]["String1"] | Should -BeOfType [String]
-            # unary comma to avoid the pipeline
-            , $dictOut["Arrays"]["Array1"] | Should -BeOfType [System.Collections.ArrayList]
-            $dictOut["Arrays"]["Array1"] -join "," | Should -Be "1,2,3,4,5,6,7,8,9"
-        }
-
-        It "ignores leading and trailing whitespaces from the key and the value" -TestCases @(
-            @{ key = "Key1"; value = "Value1" }
-            @{ key = "Key2"; value = "Value2" }
-            @{ key = "Key3"; value = "Value3" }
-            @{ key = "Key4"; value = "Value4" }
-            @{ key = "Key5"; value = "Value5" }
-            @{ key = "Key6"; value = "Value6" }
-            @{ key = "Key7"; value = "Value7" }
-            @{ key = "Key8"; value = "Value8" }
-            @{ key = "Key9"; value = "Value9" }
-        ) {
-            $dictOut = Import-Ini -Path $iniFile
-
-            $dictOut["Strings"][$key] | Should -Be $value
-        }
-
-        It "preserves quotes in the values" -TestCases @(
-            @{ key = "Key10"; value = "`"Value10`"" }
-            @{ key = "Key11"; value = "`"`"Value11`"`"" }
-            @{ key = "Key12"; value = "'Value12'" }
-            @{ key = "Key13"; value = "`"'Value13'`"" }
-            @{ key = "Key14"; value = "'`"Value14`"'" }
-            @{ key = "Key15"; value = "`"  Value15  `"" }
-            @{ key = "Key16"; value = "`"  '  Value16  '  `"" }
-            @{ key = "Key17"; value = "Value`"17`"" }
-        ) {
-            $dictOut = Import-Ini -Path $iniFile
-
-            $dictOut["Strings"][$key] | Should -Be $value
+            It "preserves quotes in the values" -TestCases @(
+                @{ key = "Key10"; value = "`"Value10`"" }
+                @{ key = "Key11"; value = "`"`"Value11`"`"" }
+                @{ key = "Key12"; value = "'Value12'" }
+                @{ key = "Key13"; value = "`"'Value13'`"" }
+                @{ key = "Key14"; value = "'`"Value14`"'" }
+                @{ key = "Key15"; value = "`"  Value15  `"" }
+                @{ key = "Key16"; value = "`"  '  Value16  '  `"" }
+                @{ key = "Key17"; value = "Value`"17`"" }
+            ) {
+                $dictOut["Strings"][$key] | Should -Be $value
+            }
         }
 
         Describe "Comments" {
@@ -120,17 +119,15 @@ Describe "Import-Ini" -Tag "Unit" {
             }
 
             It "reads lines starting with ';' as comments by default" {
-                $dictOut = Import-Ini -Path $iniFile
-
                 $dictOut["Strings"].Keys | Should -Contain "__Comment1"
                 $dictOut["Strings"]["__Comment1"] | Should -Be "Key18 = Should be a comment"
             }
 
             It "allows for adding characters for comments" {
-                $dictOut = Import-Ini -Path $iniFile -CommentChar ";", "#"
+                $dictWithMoreComments = Import-Ini -Path $iniFile -CommentChar ";", "#"
 
-                $dictOut["Strings"]["__Comment1"] | Should -Be "Key18 = Should be a comment"
-                $dictOut["Strings"]["__Comment2"] | Should -Be "Key19 = This is only a comment if the commentChar is extended"
+                $dictWithMoreComments["Strings"]["__Comment1"] | Should -Be "Key18 = Should be a comment"
+                $dictWithMoreComments["Strings"]["__Comment2"] | Should -Be "Key19 = This is only a comment if the commentChar is extended"
             }
 
             It "ignores comments when -IgnoreComments is provided" {
@@ -144,44 +141,40 @@ Describe "Import-Ini" -Tag "Unit" {
             }
 
             It "can process a key named 'Comment'" {
-                $dictOut = Import-Ini -Path $iniFile
-
                 $dictOut["Strings"]["Comment"] | Should -Be "This is a key named Comment"
             }
 
             It "uses a module-wide variable for the comment identifier" {
                 InModuleScope PSIni { $script:CommentPrefix = "..Comment" }
-                $dictOut = Import-Ini -Path $iniFile
+                $dictWithCustomComment = Import-Ini -Path $iniFile
 
-                $dictOut["Strings"].Keys | Should -Contain "..Comment1"
-                $dictOut["Strings"]["..Comment1"] | Should -Be "Key18 = Should be a comment"
+                $dictWithCustomComment["Strings"].Keys | Should -Contain "..Comment1"
+                $dictWithCustomComment["Strings"]["..Comment1"] | Should -Be "Key18 = Should be a comment"
             }
         }
 
-        It "ignores empty sections when -IgnoreEmptySections is provided" {
-            $withEmptySections = Import-Ini -Path $iniFile
-            $withoutEmptySections = Import-Ini -Path $iniFile -IgnoreEmptySections
+        Describe "Special Parameter" {
+            It "ignores empty sections when -IgnoreEmptySections is provided" {
+                $withEmptySections = Import-Ini -Path $iniFile
+                $withoutEmptySections = Import-Ini -Path $iniFile -IgnoreEmptySections
 
-            $withEmptySections.Keys | Should -Contain "EmptySection"
-            $withoutEmptySections.Keys | Should -Not -Contain "EmptySection"
+                $withEmptySections.Keys | Should -Contain "EmptySection"
+                $withoutEmptySections.Keys | Should -Not -Contain "EmptySection"
+            }
         }
 
-        It "stores keys without a value" {
-            $dictOut = Import-Ini -Path $iniFile
+        Describe "Keys without a value" {
+            It "stores keys without a value" {
+                $dictOut["NoValues"]["Key1"] | Should -BeNullOrEmpty
+            }
 
-            $dictOut["NoValues"]["Key1"] | Should -BeNullOrEmpty
-        }
+            It "stores keys without a value even when they don't have an `=` sign" {
+                $dictOut["NoValues"]["Key2"] | Should -BeNullOrEmpty
+            }
 
-        It "stores keys without a value even when they don't have an `=` sign" {
-            $dictOut = Import-Ini -Path $iniFile
-
-            $dictOut["NoValues"]["Key2"] | Should -BeNullOrEmpty
-        }
-
-        It "stores keys without a value and trims surrounding whitespace" {
-            $dictOut = Import-Ini -Path $iniFile
-
-            $dictOut["NoValues"]["Key`3"] | Should -BeNullOrEmpty
+            It "stores keys without a value and trims surrounding whitespace" {
+                $dictOut["NoValues"]["Key`3"] | Should -BeNullOrEmpty
+            }
         }
 
         Describe "File I/O" {
@@ -190,30 +183,25 @@ Describe "Import-Ini" -Tag "Unit" {
             }
 
             It "can read multiple files found with a wildcard" {
-                $wildcardPath = Join-Path $PSScriptRoot "sample*.ini"
-
-                $dictOut = Import-Ini -Path $iniFile
                 $dictOut | Should -HaveCount 1
 
-                $wildcardOut = Import-Ini -Path $wildcardPath
+                $wildcardOut = Import-Ini -Path (Join-Path $PSScriptRoot "sample*.ini")
                 $wildcardOut | Should -HaveCount 2
             }
 
             It "can handle a file with special characters in the name" {
-                $specialPath = Join-Path $PSScriptRoot "sample[].ini"
+                $dictSpecialFileName = Import-Ini -LiteralPath (Join-Path $PSScriptRoot "sample[].ini")
 
-                $dictOut = Import-Ini -LiteralPath $specialPath
-
-                $dictOut["NoName"]["Key"] | Should -Be "Example"
+                $dictSpecialFileName["NoName"]["Key"] | Should -Be "Example"
             }
 
             It "can read multiple files with special characters in the name" {
                 $file1 = Join-Path $PSScriptRoot "sample[].ini"
                 $file2 = Join-Path $PSScriptRoot "sample.ini"
 
-                $dictOut = Import-Ini -LiteralPath $file1, $file2
+                $dictMultipleFiles = Import-Ini -LiteralPath $file1, $file2
 
-                $dictOut | Should -HaveCount 2
+                $dictMultipleFiles | Should -HaveCount 2
             }
         }
 
@@ -221,11 +209,11 @@ Describe "Import-Ini" -Tag "Unit" {
             It "Can process a string representation of a INI file" {
                 $ini = "[section]`nkey=value"
 
-                $dictOut = Import-Ini -InputString $ini
+                $dictFromString = Import-Ini -InputString $ini
 
-                $dictOut.Keys | Should -Contain "section"
-                $dictOut["section"].Keys | Should -Contain "key"
-                $dictOut["section"]["key"] | Should -Be "value"
+                $dictFromString.Keys | Should -Contain "section"
+                $dictFromString["section"].Keys | Should -Contain "key"
+                $dictFromString["section"]["key"] | Should -Be "value"
             }
         }
     }

@@ -117,7 +117,6 @@
             if ($LiteralPath -or $Path) {
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $source"
 
-                # $source = [WildcardPattern]::Escape($source)
                 try { $fileContent = [System.IO.File]::ReadAllLines($source, $Encoding) }
                 catch {
                     Write-Error "Could not find file '$source'"
@@ -183,9 +182,7 @@
                         continue
                     }
                     Default {
-                        # No match
-                        # As seen in https://github.com/lipkau/PSIni/issues/65, some software write keys without
-                        # the `=` sign.
+                        # As seen in https://github.com/lipkau/PSIni/issues/65, some software write keys without the `=` sign.
                         if (-not $section) {
                             $section = $script:NoSection
                             $ini[$section] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)

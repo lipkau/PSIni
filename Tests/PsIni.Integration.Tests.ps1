@@ -10,13 +10,16 @@ Describe "PSIni integration tests" -Tag "Integration" {
 
         $script:tempFolder = [System.IO.Path]::GetTempPath()
 
-        $dictIn = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-        $dictIn["Category1"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-        $dictIn["Category1"]["Key1"] = "Value1"
-        $dictIn["Category1"]["Key2"] = "Value2"
-        $dictIn["Category2"] = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
-        $dictIn["Category2"]["Key3"] = "Value3"
-        $dictIn["Category2"]["Key4"] = "Value4"
+        $script:dictIn = [ordered]@{
+            "Category1" = [ordered]@{
+                "Key1" = "Value1"
+                "Key2" = "Value2"
+            }
+            "Category2" = [ordered]@{
+                "Key3" = "Value3"
+                "Key4" = "Value4"
+            }
+        }
     }
     BeforeEach {
         Export-Ini -InputObject $dictIn -Path "$tempFolder/output.ini" -Force -ErrorAction Stop

@@ -6,7 +6,6 @@ Describe "Style rules" -Tag "Unit" {
         $script:files = Get-ChildItem $module -Include *.ps1, *.psm1 -Recurse
     }
 
-
     It 'PSIni source files contain no trailing whitespace' {
         $badLines = @(
             foreach ($file in $files) {
