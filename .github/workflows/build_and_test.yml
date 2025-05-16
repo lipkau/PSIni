@@ -1,0 +1,136 @@
+name: Build and Test
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build_module:
+    name: Build Module
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        id: cacher
+        with:
+          path: "~/.local/share/powershell/Modules"
+          key: ${{ runner.os }}-PSModules
+      - run: ./tools/setup.ps1
+        shell: pwsh
+      - run: Invoke-Build -Task ShowDebugInfo
+        shell: pwsh
+      - run: Invoke-Build -Task Build
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Release
+          path: ./release/
+
+  test_on_windows_v5:
+    name: Test Module on Windows (PS v5)
+    needs: build_module
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Release
+          path: ./release/
+      - uses: actions/cache@v4
+        id: cacher
+        with:
+          path: "~/.local/share/powershell/Modules"
+          key: ${{ runner.os }}-PSModules
+      - run: ./tools/setup.ps1
+        shell: powershell
+      - run: Invoke-Build -Task ShowDebugInfo
+        shell: powershell
+      - run: Invoke-Build -Task Test
+        shell: powershell
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}v5-Unit-Tests
+          path: Test*.xml
+
+  test_on_windows_v7:
+    name: Test Module on Windows (PS v7)
+    needs: build_module
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Release
+          path: ./release/
+      - uses: actions/cache@v4
+        id: cacher
+        with:
+          path: "~/.local/share/powershell/Modules"
+          key: ${{ runner.os }}-PSModules
+      - run: ./tools/setup.ps1
+        shell: pwsh
+      - run: Invoke-Build -Task ShowDebugInfo
+        shell: pwsh
+      - run: Invoke-Build -Task Test
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}v7-Unit-Tests
+          path: Test*.xml
+
+  test_on_ubuntu:
+    name: Test Module on Ubuntu
+    needs: build_module
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Release
+          path: ./release/
+      - uses: actions/cache@v4
+        id: cacher
+        with:
+          path: "~/.local/share/powershell/Modules"
+          key: ${{ runner.os }}-PSModules
+      - run: ./tools/setup.ps1
+        shell: pwsh
+      - run: Invoke-Build -Task ShowDebugInfo
+        shell: pwsh
+      - run: Invoke-Build -Task Test
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}-Unit-Tests
+          path: Test*.xml
+
+  test_on_macos:
+    name: Test Module on macOS
+    needs: build_module
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: Release
+          path: ./release/
+      - uses: actions/cache@v4
+        id: cacher
+        with:
+          path: "~/.local/share/powershell/Modules"
+          key: ${{ runner.os }}-PSModules
+      - run: ./tools/setup.ps1
+        shell: pwsh
+      - run: Invoke-Build -Task ShowDebugInfo
+        shell: pwsh
+      - run: Invoke-Build -Task Test
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}-Unit-Tests
+          path: Test*.xml

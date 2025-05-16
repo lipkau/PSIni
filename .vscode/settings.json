@@ -16,7 +16,7 @@
     "[markdown]": {
         "editor.wordwrap": "on",
         "editor.renderWhitespace": "all",
-        "editor.acceptSuggestionOnEnter": false,
+        "editor.acceptSuggestionOnEnter": "off",
         "editor.rulers": [80],
         "editor.trimAutoWhitespace": false
     },

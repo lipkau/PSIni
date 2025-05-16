@@ -1,234 +1,161 @@
 [CmdletBinding()]
-param()
+param(
+    [ValidateSet('None', 'Normal' , 'Detailed', 'Diagnostic')]
+    [String] $PesterVerbosity = 'Normal',
 
-$DebugPreference = "SilentlyContinue"
-$WarningPreference = "Continue"
-if ($PSBoundParameters.ContainsKey('Verbose')) {
-    $VerbosePreference = "Continue"
+    [Parameter()]
+    [String] $VersionToPublish,
+
+    [Parameter()]
+    [String] $PSGalleryAPIKey
+)
+
+Import-Module "$PSScriptRoot/tools/BuildTools.psm1" -Force
+Import-Module (Get-Dependency) -Force -ErrorAction Stop
+
+Remove-Item -Path env:\BH* -ErrorAction SilentlyContinue
+Set-BuildEnvironment -BuildOutput '$ProjectPath/release' -ErrorAction SilentlyContinue
+
+$OS, $OSVersion = Get-HostInformation
+# Add-ToModulePath -Path $env:BHBuildOutput
+
+if ($VersionToPublish) {
+    $VersionToPublish = $VersionToPublish.TrimStart('v') -as [Version]
 }
+$currentVersion = (Get-Metadata -Path $env:BHPSModuleManifest) -as [Version]
+$builtManifestPath = "$env:BHBuildOutput/$env:BHProjectName/$env:BHProjectName.psd1"
 
-if (!($env:releasePath)) {
-    $releasePath = "$BuildRoot\Release"
-}
-else {
-    $releasePath = $env:releasePath
-}
-$env:PSModulePath = "$($env:PSModulePath);$releasePath"
-
-Import-Module BuildHelpers
-
-# Ensure Invoke-Build works in the most strict mode.
-Set-StrictMode -Version Latest
-
-# region debug information
-task ShowDebug {
+Task ShowDebugInfo {
     Write-Build Gray
-    Write-Build Gray ('Project name:               {0}' -f $env:APPVEYOR_PROJECT_NAME)
-    Write-Build Gray ('Project root:               {0}' -f $env:APPVEYOR_BUILD_FOLDER)
-    Write-Build Gray ('Repo name:                  {0}' -f $env:APPVEYOR_REPO_NAME)
-    Write-Build Gray ('Branch:                     {0}' -f $env:APPVEYOR_REPO_BRANCH)
-    Write-Build Gray ('Commit:                     {0}' -f $env:APPVEYOR_REPO_COMMIT)
-    Write-Build Gray ('  - Author:                 {0}' -f $env:APPVEYOR_REPO_COMMIT_AUTHOR)
-    Write-Build Gray ('  - Time:                   {0}' -f $env:APPVEYOR_REPO_COMMIT_TIMESTAMP)
-    Write-Build Gray ('  - Message:                {0}' -f $env:APPVEYOR_REPO_COMMIT_MESSAGE)
-    Write-Build Gray ('  - Extended message:       {0}' -f $env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED)
-    Write-Build Gray ('Pull request number:        {0}' -f $env:APPVEYOR_PULL_REQUEST_NUMBER)
-    Write-Build Gray ('Pull request title:         {0}' -f $env:APPVEYOR_PULL_REQUEST_TITLE)
-    Write-Build Gray ('AppVeyor build ID:          {0}' -f $env:APPVEYOR_BUILD_ID)
-    Write-Build Gray ('AppVeyor build number:      {0}' -f $env:APPVEYOR_BUILD_NUMBER)
-    Write-Build Gray ('AppVeyor build version:     {0}' -f $env:APPVEYOR_BUILD_VERSION)
-    Write-Build Gray ('AppVeyor job ID:            {0}' -f $env:APPVEYOR_JOB_ID)
-    Write-Build Gray ('Build triggered from tag?   {0}' -f $env:APPVEYOR_REPO_TAG)
-    Write-Build Gray ('  - Tag name:               {0}' -f $env:APPVEYOR_REPO_TAG_NAME)
+    Write-Build Gray ('BHBuildSystem:              {0}' -f $env:BHBuildSystem)
+    Write-Build Gray '-------------------------------------------------------'
+    Write-Build Gray ('BHProjectName               {0}' -f $env:BHProjectName)
+    Write-Build Gray ('BHProjectPath:              {0}' -f $env:BHProjectPath)
+    Write-Build Gray ('BHModulePath:               {0}' -f $env:BHModulePath)
+    Write-Build Gray ('BHPSModuleManifest:         {0}' -f $env:BHPSModuleManifest)
+    Write-Build Gray ('BHBuildOutput:              {0}' -f $env:BHBuildOutput)
+    Write-Build Gray ('builtManifestPath:          {0}' -f $builtManifestPath)
+    Write-Build Gray '-------------------------------------------------------'
+    Write-Build Gray ('BHBranchName:               {0}' -f $env:BHBranchName)
+    Write-Build Gray ('BHCommitHash:               {0}' -f $env:BHCommitHash)
+    Write-Build Gray ('BHCommitMessage:            {0}' -f $env:BHCommitMessage)
+    Write-Build Gray ('BHBuildNumber               {0}' -f $env:BHBuildNumber)
+    Write-Build Gray ('CurrentVersion              {0}' -f $currentVersion)
+    Write-Build Gray ('VersionToPublish            {0}' -f $VersionToPublish)
+    Write-Build Gray '-------------------------------------------------------'
     Write-Build Gray ('PowerShell version:         {0}' -f $PSVersionTable.PSVersion.ToString())
+    Write-Build Gray ('OS:                         {0}' -f $OS)
+    Write-Build Gray ('OS Version:                 {0}' -f $OSVersion)
     Write-Build Gray
 }
 
-# Synopsis: Install pandoc to .\Tools\
-# task InstallPandoc -If (-not (Test-Path Tools\pandoc.exe)) {
-#     # Setup
-#     if (-not (Test-Path "$BuildRoot\Tools")) {
-#         $null = New-Item -Path "$BuildRoot\Tools" -ItemType Directory
-#     }
+Task Clean {
+    Remove-Item $env:BHBuildOutput -Force -Recurse -ErrorAction SilentlyContinue
+    Remove-Item "Test*.xml" -Force -ErrorAction SilentlyContinue
+}
 
-#     # Get latest bits
-#     $latestRelease = "https://github.com/jgm/pandoc/releases/download/1.19.2.1/pandoc-1.19.2.1-windows.msi"
-#     Invoke-WebRequest -Uri $latestRelease -OutFile "$($env:temp)\pandoc.msi"
-
-#     # Extract bits
-#     $null = New-Item -Path $env:temp\pandoc -ItemType Directory -Force
-#     Start-Process -Wait -FilePath msiexec.exe -ArgumentList " /qn /a `"$($env:temp)\pandoc.msi`" targetdir=`"$($env:temp)\pandoc\`""
-
-#     # Move to Tools folder
-#     Copy-Item -Path "$($env:temp)\pandoc\Pandoc\pandoc.exe" -Destination "$BuildRoot\Tools\"
-#     Copy-Item -Path "$($env:temp)\pandoc\Pandoc\pandoc-citeproc.exe" -Destination "$BuildRoot\Tools\"
-
-#     # Clean
-#     Remove-Item -Path "$($env:temp)\pandoc" -Recurse -Force
-# }
-# endregion
-
-# region test
-task Test RapidTest
-
-# Synopsis: Using the "Fast" Test Suit
-task RapidTest PesterTests
-# Synopsis: Using the complete Test Suit, which includes all supported Powershell versions
-task FullTest TestVersions
-
-# Synopsis: Warn about not empty git status if .git exists.
-task GitStatus -If (Test-Path .git) {
-    $status = exec { git status -s }
-    if ($status) {
-        Write-Warning "Git status: $($status -join ', ')"
+Task Build Clean, {
+    if (-not (Test-Path "$env:BHBuildOutput/$env:BHProjectName")) {
+        $null = New-Item -Path "$env:BHBuildOutput", "$env:BHBuildOutput/$env:BHProjectName" -ItemType Directory
     }
+    # TODO:
+    # replace data in manifest
+}, CopyModuleFiles #, CompileModule, UpdateManifest
+
+# Synopsis: Generate ./release structure
+Task CopyModuleFiles {
+    Copy-Item -Path "$env:BHModulePath/*" -Destination "$env:BHBuildOutput/$env:BHProjectName" -Recurse -Force
+    Copy-Item -Path @(
+        "$env:BHProjectPath/CHANGELOG.md"
+        "$env:BHProjectPath/LICENSE"
+        "$env:BHProjectPath/README.md"
+    ) -Destination "$env:BHBuildOutput/$env:BHProjectName" -Force
+
+    $null = New-Item -Path "$env:BHBuildOutput/Tests" -ItemType Directory -ErrorAction SilentlyContinue
+    Copy-Item -Path "$env:BHProjectPath/Tests" -Destination $env:BHBuildOutput -Recurse -Force
+    # Copy-Item -Path "$env:BHProjectPath/PSScriptAnalyzerSettings.psd1" -Destination $env:BHBuildOutput -Force
 }
 
-task TestVersions TestPS3, TestPS4, TestPS4, TestPS5
-task TestPS3 {
-    exec {powershell.exe -Version 3 -NoProfile Invoke-Build PesterTests}
-}
-task TestPS4 {
-    exec {powershell.exe -Version 4 -NoProfile Invoke-Build PesterTests}
-}
-task TestPS5 {
-    exec {powershell.exe -Version 5 -NoProfile Invoke-Build PesterTests}
-}
+# Synopsis: Compile all functions into the .psm1 file
+Task CompileModule {
+    $regionsToKeep = @('Dependencies', 'Configuration')
 
-# Synopsis: Invoke Pester Tests
-task PesterTests {
-    try {
-        $result = Invoke-Pester -PassThru -OutputFile "$BuildRoot\TestResult.xml" -OutputFormat "NUnitXml"
-        if ($env:APPVEYOR_PROJECT_NAME) {
-            Add-TestResultToAppveyor -TestFile "$BuildRoot\TestResult.xml"
-            Remove-Item "$BuildRoot\TestResult.xml" -Force
+    $targetFile = "$env:BHBuildOutput/$env:BHProjectName/$env:BHProjectName.psm1"
+    $content = Get-Content -Encoding UTF8 -LiteralPath $targetFile
+    $capture = $false
+    $compiled = ""
+
+    foreach ($line in $content) {
+        if ($line -match "^#region ($($regionsToKeep -join "|"))$") {
+            $capture = $true
         }
-        assert ($result.FailedCount -eq 0) "$($result.FailedCount) Pester test(s) failed."
-    }
-    catch {
-        throw
-    }
-}
-# endregion
+        if (($capture -eq $true) -and ($line -match "^#endregion")) {
+            $capture = $false
+        }
 
-# region build
-# Synopsis: Build shippable release
-# task Build GenerateRelease, GenerateDocs, UpdateManifest
-task Build GenerateRelease, UpdateManifest
-
-# Synopsis: Generate .\Release structure
-task GenerateRelease {
-    # Setup
-    if (-not (Test-Path "$releasePath\PSIni")) {
-        $null = New-Item -Path "$releasePath\PSIni" -ItemType Directory
+        if ($capture) {
+            $compiled += "$line`r`n"
+        }
     }
 
-    # Copy module
-    Copy-Item -Path "$BuildRoot\PSIni\*" -Destination "$releasePath\PSIni" -Recurse -Force
-    # Copy additional files
-    $additionalFiles = @(
-        # "$BuildRoot\CHANGELOG.md"
-        "$BuildRoot\LICENSE"
-        "$BuildRoot\README.md"
-    )
-    Copy-Item -Path $additionalFiles -Destination "$releasePath\PSIni" -Force
+    $PublicFunctions = @( Get-ChildItem -Path "$env:BHBuildOutput/$env:BHProjectName/Public/*.ps1" -ErrorAction SilentlyContinue )
+    $PrivateFunctions = @( Get-ChildItem -Path "$env:BHBuildOutput/$env:BHProjectName/Private/*.ps1" -ErrorAction SilentlyContinue )
+
+    foreach ($function in @($PublicFunctions + $PrivateFunctions)) {
+        $compiled += (Get-Content -Path $function.FullName -Raw)
+        $compiled += "`r`n"
+    }
+
+    Set-Content -LiteralPath $targetFile -Value $compiled -Encoding UTF8 -Force
+    Remove-Utf8Bom -Path $targetFile
+
+    "Private", "Public" | ForEach-Object { Remove-Item -Path "$env:BHBuildOutput/$env:BHProjectName/$_" -Recurse -Force }
 }
 
 # Synopsis: Update the manifest of the module
-task UpdateManifest GetVersion, {
-    Update-Metadata -Path "$releasePath\PSIni\PSIni.psd1" -PropertyName ModuleVersion -Value $script:Version
-    # Update-Metadata -Path "$releasePath\PSIni\PSIni.psd1" -PropertyName FileList -Value (Get-ChildItem $releasePath\PSIni\PSIni -Recurse).Name
-    Set-ModuleFunctions -Name "$releasePath\PSIni\PSIni.psd1"
-}
+Task UpdateManifest {
+    Remove-Module $env:BHProjectName -ErrorAction SilentlyContinue
+    Import-Module $env:BHPSModuleManifest -Force
+    $moduleAlias = Get-Alias | Where-Object { $_.ModuleName -eq "$env:BHProjectName" }
+    $moduleFunctions = (Get-ChildItem "$env:BHModulePath/Public/*.ps1").BaseName
 
-task GetVersion {
-    $manifestContent = Get-Content -Path "$releasePath\PSIni\PSIni.psd1" -Raw
-    if ($manifestContent -notmatch '(?<=ModuleVersion\s+=\s+'')(?<ModuleVersion>.*)(?='')') {
-        throw "Module version was not found in manifest file,"
+    Metadata\Update-Metadata -Path $builtManifestPath -PropertyName "FunctionsToExport" -Value @($moduleFunctions)
+    Metadata\Update-Metadata -Path $builtManifestPath -PropertyName "AliasesToExport" -Value ''
+    if ($moduleAlias) {
+        Metadata\Update-Metadata -Path $builtManifestPath -PropertyName "AliasesToExport" -Value @($moduleAlias.Name)
     }
-
-    $currentVersion = [Version] $Matches.ModuleVersion
-    if ($env:APPVEYOR_BUILD_NUMBER) {
-        $newRevision = $env:APPVEYOR_BUILD_NUMBER
-    }
-    else {
-        $newRevision = 0
-    }
-    $script:Version = New-Object -TypeName System.Version -ArgumentList $currentVersion.Major,
-    $currentVersion.Minor,
-    $newRevision
 }
 
-# Synopsis: Generate documentation
-# task GenerateDocs GenerateMarkdown, ConvertMarkdown
+Task SetVersion {
+    Assert-True { $VersionToPublish -as [Version] } "Invalid version format: $VersionToPublish"
+    Assert-True { $VersionToPublish -gt $currentVersion } "Version must be greater than the current version: $currentVersion"
 
-# # Synopsis: Generate markdown documentation with platyPS
-# task GenerateMarkdown {
-#     Import-Module platyPS -Force
-#     Import-Module "$releasePath\PSIni.psd1" -Force
-#     $null = New-MarkdownHelp -Module PSIni -OutputFolder "$releasePath\PSIni\docs" -Force
-#     Remove-Module PSIni, platyPS
-# }
-
-# # Synopsis: Convert markdown files to HTML.
-# # <http://johnmacfarlane.net/pandoc/>
-# $ConvertMarkdown = @{
-#     Inputs  = { Get-ChildItem "$releasePath\PSIni\*.md" -Recurse }
-#     Outputs = {process {
-#             [System.IO.Path]::ChangeExtension($_, 'htm')
-#         }
-#     }
-# }
-# Synopsis: Converts *.md and *.markdown files to *.htm
-# task ConvertMarkdown -Partial @ConvertMarkdown InstallPandoc, {process {
-#         Write-Build Green "Converting File: $_"
-#         exec { Tools\pandoc.exe $_ --standalone --from=markdown_github "--output=$2" }
-#     }
-# }
-# endregion
-
-# region publish
-task Deploy -If ($env:APPVEYOR_REPO_BRANCH -eq 'master' -and (-not($env:APPVEYOR_PULL_REQUEST_NUMBER))) RemoveMarkdown, {
-    Remove-Module PSIni -ErrorAction SilentlyContinue
-}, PublishToGallery
-
-task PublishToGallery {
-    assert ($env:PSGalleryAPIKey) "No key for the PSGallery"
-
-    Import-Module $releasePath\PSIni\PSIni.psd1 -ErrorAction Stop
-    Publish-Module -Name PSIni -NuGetApiKey $env:PSGalleryAPIKey
+    Metadata\Update-Metadata -Path $builtManifestPath -PropertyName "ModuleVersion" -Value $VersionToPublish.ToString()
 }
 
-# Synopsis: Push with a version tag.
-task PushRelease GitStatus, GetVersion, {
-    # Done in appveyor.yml with deploy provider.
-    # This is needed, as I don't know how to athenticate (2-factor) in here.
-    exec { git checkout master }
-    $changes = exec { git status --short }
-    assert (!$changes) "Please, commit changes."
-
-    exec { git push }
-    exec { git tag -a "v$Version" -m "v$Version" }
-    exec { git push origin "v$Version" }
-}
-# endregion
-
-#region Cleaning tasks
-task Clean RemoveGeneratedFiles
-# Synopsis: Remove generated and temp files.
-task RemoveGeneratedFiles {
-    $itemsToRemove = @(
-        'Release'
-        '*.htm'
-        'TestResult.xml'
-    )
-    Remove-Item $itemsToRemove -Force -Recurse -ErrorAction 0
+Task Test {
+    $result = Invoke-Pester -PassThru -OutputFile "$BuildRoot\TestResult.xml" -OutputFormat "NUnitXml"
+    assert ($result.FailedCount -eq 0) "$($result.FailedCount) Pester test(s) failed."
 }
 
-# Synopsis: Remove Markdown files from Release
-task RemoveMarkdown -If { Get-ChildItem "$releasePath\PSIni\*.md" -Recurse } {
-    Remove-Item -Path "$releasePath\PSIni" -Include "*.md" -Recurse
-}
-# endregion
+Task Publish SetVersion, SignCode, Package, {
+    Assert-True (-not [String]::IsNullOrEmpty($PSGalleryAPIKey)) "No key for the PSGallery"
 
-task . ShowDebug, Test, Build, Deploy #, Clean
+    Publish-Module -Path "$env:BHBuildOutput/$env:BHProjectName" -NuGetApiKey $PSGalleryAPIKey
+}
+
+Task SignCode {
+    # TODO: waiting for certificates
+}
+
+Task Package {
+    $source = "$env:BHBuildOutput\$env:BHProjectName"
+    $destination = "$env:BHBuildOutput\$env:BHProjectName.zip"
+
+    Assert-True { Test-Path $source } "Missing files to package"
+
+    Remove-Item $destination -ErrorAction SilentlyContinue
+    $null = Compress-Archive -Path $source -DestinationPath $destination
+}
+
+Task . Clean, Build, Test

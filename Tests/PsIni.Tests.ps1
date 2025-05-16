@@ -6,9 +6,13 @@ $Module = "$root\PSIni"
 $Functions = "$root\PSIni\Functions"
 Set-Location $ScriptDir
 
-$manifestPath = "$Module\PsIni.psd1"
+$manifestPath = "$Module\PSIni.psd1"
 
-Describe -Tags 'VersionChecks' "PsIni manifest" {
+# Adjust for the correct line ending based on the system running the tests
+$lf = if (($PSVersionTable.ContainsKey("Platform")) -and ($PSVersionTable.Platform -ne "Win32NT")) { "`n" }
+else { "`r`n" }
+
+Describe -Tags 'VersionChecks' "PSIni manifest" {
     $script:manifest = $null
     It "has a valid manifest" {
         {
@@ -17,7 +21,7 @@ Describe -Tags 'VersionChecks' "PsIni manifest" {
     }
 
     It "has a valid name in the manifest" {
-        $script:manifest.Name | Should Be PsIni
+        $script:manifest.Name | Should Be PSIni
     }
 
     It "has a valid guid in the manifest" {
@@ -29,10 +33,11 @@ Describe -Tags 'VersionChecks' "PsIni manifest" {
     }
 }
 
-Describe "PsIni functionality" {
+Describe "PSIni functionality" {
 
     # arrange
-    $iniFile = "$TestDrive\Settings.ini"
+    $tempFolder = [System.IO.Path]::GetTempPath()
+    $iniFile = "$tempFolder\Settings.ini"
 
     # values to be persisted
     $dictIn = New-Object System.Collections.Specialized.OrderedDictionary([System.StringComparer]::OrdinalIgnoreCase)
@@ -50,7 +55,7 @@ Describe "PsIni functionality" {
 
         #assert
         It "loads the module" {
-            (Get-Module).name -contains "PsIni" | Should Be $true
+            (Get-Module).name -contains "PSIni" | Should Be $true
         }
 
     }
@@ -58,7 +63,7 @@ Describe "PsIni functionality" {
     Context "Writing INI" {
 
         # act
-        $dictIn | Out-IniFile -FilePath $iniFile
+        $dictIn | Out-IniFile -FilePath $iniFile -Force
 
         # assert
         It "creates a file" {
@@ -69,7 +74,7 @@ Describe "PsIni functionality" {
         # assert
         It "content matches expected value" {
 
-            $content = "[Category1]`r`nKey1=value1`r`nKey2=Value2`r`n[Category2]`r`nKey3=Value3.1`r`nKey3=Value3.2`r`nKey3=Value3.3`r`nKey4=Value4`r`n"
+            $content = "[Category1]${lf}Key1=value1${lf}Key2=Value2${lf}[Category2]${lf}Key3=Value3.1${lf}Key3=Value3.2${lf}Key3=Value3.3${lf}Key4=Value4${lf}"
 
             Get-Content $iniFile -Raw | Should Be $content
 
@@ -80,7 +85,7 @@ Describe "PsIni functionality" {
     Context "Writing pretty INI" {
 
         # act
-        $dictIn | Out-IniFile -FilePath $iniFile -Pretty
+        $dictIn | Out-IniFile -FilePath $iniFile -Pretty -Force
 
         # assert
         It "creates a file" {
@@ -91,7 +96,7 @@ Describe "PsIni functionality" {
         # assert
         It "content matches expected value" {
 
-            $content = "[Category1]`r`nKey1=value1`r`nKey2=Value2`r`n`r`n[Category2]`r`nKey3=Value3.1`r`nKey3=Value3.2`r`nKey3=Value3.3`r`nKey4=Value4`r`n"
+            $content = "[Category1]${lf}Key1=value1${lf}Key2=Value2${lf}`r`n[Category2]${lf}Key3=Value3.1${lf}Key3=Value3.2${lf}Key3=Value3.3${lf}Key4=Value4${lf}"
 
             Get-Content $iniFile -Raw | Should Be $content
 
@@ -102,14 +107,14 @@ Describe "PsIni functionality" {
     Context "Reading INI" {
 
         #arrange
-        Out-IniFile -InputObject $dictIn -FilePath $iniFile
+        Out-IniFile -InputObject $dictIn -FilePath $iniFile -Force
 
         # act
         $global:dictOut = Get-IniContent -FilePath $iniFile
 
         # assert
         It "creates a OrderedDictionary from an INI file" {
-            ($dictOut.GetType()) | Should Be System.Collections.Specialized.OrderedDictionary
+            ($dictOut.GetType()) | Should -BeIn @('ordered', 'System.Collections.Specialized.OrderedDictionary')
         }
 
         # assert
@@ -303,7 +308,7 @@ Describe 'Style rules' {
         Get-ChildItem $psiniRoot\Functions -Include *.ps1, *.psm1 -Recurse
     )
 
-    It 'PsIni source files contain no trailing whitespace' {
+    It 'PSIni source files contain no trailing whitespace' {
         $badLines = @(
             foreach ($file in $files) {
                 $lines = [System.IO.File]::ReadAllLines($file.FullName)
@@ -318,11 +323,11 @@ Describe 'Style rules' {
         )
 
         if ($badLines.Count -gt 0) {
-            throw "The following $($badLines.Count) lines contain trailing whitespace: `r`n`r`n$($badLines -join "`r`n")"
+            throw "The following $($badLines.Count) lines contain trailing whitespace: ${lf}${lf}$($badLines -join "${lf}")"
         }
     }
 
-    It 'PsIni Source Files all end with a newline' {
+    It 'PSIni Source Files all end with a newline' {
         $badFiles = @(
             foreach ($file in $files) {
                 $string = [System.IO.File]::ReadAllText($file.FullName)
@@ -333,7 +338,7 @@ Describe 'Style rules' {
         )
 
         if ($badFiles.Count -gt 0) {
-            throw "The following files do not end with a newline: `r`n`r`n$($badFiles -join "`r`n")"
+            throw "The following files do not end with a newline: ${lf}${lf}$($badFiles -join "${lf}")"
         }
     }
 }
