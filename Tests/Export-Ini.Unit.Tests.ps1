@@ -31,12 +31,13 @@ Describe "Export-Ini" -Tag "Unit" {
             @{ parameter = "Append"; type = "Switch" }
             @{ parameter = "CommentChar"; type = "String" }
             @{ parameter = "Encoding"; type = "String" }
+            @{ parameter = "FilePath"; type = "String" }
             @{ parameter = "Force"; type = "Switch" }
             @{ parameter = "Format"; type = "String" }
             @{ parameter = "IgnoreComments"; type = "Switch" }
             @{ parameter = "InputObject"; type = "System.Collections.IDictionary" }
-            @{ parameter = "Passthru"; type = "Switch" }
-            @{ parameter = "Path"; type = "String" }
+            @{ parameter = "LiteralPath"; type = "String" }
+            @{ parameter = "NoClobber"; type = "Switch" }
         ) {
             $command | Should -HaveParameter $parameter -Type $type
         }
@@ -118,24 +119,30 @@ Describe "Export-Ini" -Tag "Unit" {
                 $fileContent | Should -Be ($defaultFileContent + $additionalFileContent)
             }
 
-            It "it overwrite any existing file when using -Force" {
+            It "it overwrite any existing by default" {
                 Export-Ini @commonParameter -InputObject $defaultObject
                 Get-Content -Path $testPath -Raw | Should -Not -Be $additionalFileContent
 
-                Export-Ini @commonParameter -InputObject $additionalObject -Force
+                Export-Ini @commonParameter -InputObject $additionalObject
                 Get-Content -Path $testPath -Raw | Should -Be $additionalFileContent
+            }
+
+            It "does not overwrite an existing file when '-NoClobber' is defined" {
+                Export-Ini @commonParameter -InputObject $defaultObject
+                { Export-Ini @commonParameter -InputObject $additionalObject -NoClobber } | Should -Throw
+            }
+
+            It "can write a file name with special characters" {
+                $specialFileName = $testPath -replace "output", "special[file]name"
+
+                Export-Ini -InputObject $defaultObject -LiteralPath $specialFileName -ErrorAction "Stop"
+                $fileContent = Get-Content -LiteralPath $specialFileName -Raw
+
+                $fileContent | Should -Be $defaultFileContent
             }
         }
 
         Describe "Special Parameter" {
-            It "return the file object when using '-Passthru'" {
-                $noReturn = Export-Ini @commonParameter -InputObject $defaultObject
-                $passthru = Export-Ini @commonParameter -InputObject $defaultObject -Passthru
-
-                $noReturn | Should -BeNullOrEmpty
-                $passthru | Should -BeOfType [System.IO.FileSystemInfo]
-            }
-
             It "write the ini file without comment when '-IgnoreComments' is defined" {
                 $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf}${lf}[Category2]${lf}${lf}"
 
@@ -186,6 +193,10 @@ Describe "Export-Ini" -Tag "Unit" {
                 Export-Ini @commonParameter -InputObject $defaultObject -Encoding "utf32"
 
                 (Get-FileEncoding -Path $testPath).Encoding | Should -Be "UTF32-LE"
+            }
+
+            It "uses default behaviour for '-Force'" -Skip {
+                # -Force is passed to Out-File
             }
         }
 

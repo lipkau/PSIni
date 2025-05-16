@@ -34,8 +34,7 @@ Details on how to upgrade are documented in the [Migrating to PSIni v4](#TODO: )
 
 ### Changed
 
-* ***BREAKING**: `Get-IniContent` is replaced with `Import-Ini` @lipkau
-* ***BREAKING**: `Out-IniFile` is replaced with `Export-Ini` @lipkau
+* **BREAKING**: Changed `Export-Ini` parameters to match the behaviour of other `Export-*` functions @lipkau #118
 
 ### Removed
 

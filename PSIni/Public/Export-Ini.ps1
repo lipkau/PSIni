@@ -10,9 +10,6 @@
         System.String
         System.Collections.IDictionary
 
-    .Outputs
-        System.IO.FileSystemInfo
-
     .Example
         Export-Ini $IniVar "C:\myinifile.ini"
         -----------
@@ -26,7 +23,7 @@
         Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini and overwrites the file if it is already present
 
     .Example
-        $file = Export-Ini $IniVar "C:\myinifile.ini" -PassThru
+        $file = Export-Ini $IniVar -FilePath "C:\myinifile.ini" -PassThru
         -----------
         Description
         Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini and saves the file into $file. Writes exported data to console, as a powershell object.
@@ -61,8 +58,8 @@
         ConvertTo-Ini
     #>
 
-    [CmdletBinding()]
-    [OutputType( [System.IO.FileSystemInfo] )]
+    [CmdletBinding( SupportsShouldProcess )]
+    [OutputType( [Void] )]
     param(
         # Specifies the Hashtable to be written to the file.
         # Enter a variable that contains the objects or type a command or expression that gets the objects.
@@ -71,10 +68,22 @@
         $InputObject,
 
         # Specifies the path to the output file.
-        [Parameter( Mandatory, Position = 0 )]
+        [Parameter( Mandatory, Position = 0, ParameterSetName = "Path") ]
         [ValidateScript( { Invoke-ConditionalParameterValidationPath -InputObject $_ } )]
+        [Alias( "Path" )]
         [String]
-        $Path,
+        $FilePath,
+
+        # Specifies the path to the output file.
+        # The LiteralPath parameter is used exactly as it's typed.
+        # Wildcard characters aren't accepted.
+        # If the path includes escape characters, enclose it in single quotation marks.
+        # Single quotation marks tell PowerShell not to interpret any characters as escape sequences.
+        # For more information, see about_Quoting_Rules.
+        [Parameter( Mandatory, ValueFromPipelineByPropertyName, ParameterSetName = "LiteralPath" )]
+        [Alias( "PSPath", "LP" )]
+        [String]
+        $LiteralPath,
 
         # Adds the output to the end of an existing file, instead of replacing the file contents.
         [Switch]
@@ -82,6 +91,8 @@
 
         # Specifies the file encoding.
         # The default is UTF8.
+        # The supported values are system dependent and can be listed with:
+        # `(Get-Help -Name Out-File).parameters.parameter | ? name -eq Encoding`
         [Parameter()]
         [ValidateScript( { Invoke-ConditionalParameterValidationEncoding -InputObject $_ } )]
         [String]
@@ -92,6 +103,14 @@
         [Parameter()]
         [Switch]
         $Force,
+
+        # NoClobber prevents an existing file from being overwritten and displays a message
+        # that the file already exists.
+        # By default, if a file exists in the specified path, it will be overwritten without warning.
+        [Parameter()]
+        [Alias( "NoOverwrite" )]
+        [Switch]
+        $NoClobber,
 
         # Specifies the character used to indicate a comment.
         [Parameter()]
@@ -107,12 +126,6 @@
         [ValidateSet("pretty", "minified")]
         [String]
         $Format = "pretty",
-
-        # Passes an object representing the location to the pipeline.
-        # By default, this cmdlet does not generate any output.
-        [Parameter()]
-        [Switch]
-        $Passthru,
 
         # Will not write comments to the output file
         [Parameter()]
@@ -170,12 +183,25 @@
         }
 
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Path"
-        Out-File -FilePath $Path -InputObject $fileContent -Encoding $Encoding -Force:$Force -Append:$Append
+        $ofsplat = @{
+            InputObject = $fileContent
+            NoClobber   = $NoClobber
+            Append      = $Append
+            Encoding    = $Encoding
+        }
+        if ($LiteralPath) {
+            if ($PSCmdlet.ShouldProcess((Split-Path $LiteralPath -Leaf), "Write")) {
+                Out-File @ofsplat -LiteralPath $LiteralPath
+            }
+        }
+        else {
+            if ($PSCmdlet.ShouldProcess((Split-Path $FilePath -Leaf), "Write")) {
+                Out-File @ofsplat -FilePath $FilePath
+            }
+        }
     }
 
     end {
-        if ($PassThru) { Get-Item -Path $Path }
-
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Function ended"
     }
 }
