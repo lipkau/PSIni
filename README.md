@@ -37,6 +37,8 @@ and can be installed as follows:
 Install-Module PSIni <# -Scope User #>
 ```
 
+> **Note:** If you're upgrading from PSIni v3 to v4, please refer to the [migration guide](docs/Migrating-to-v4.md) for details on breaking changes and new features.
+
 ---
 
 When using the source (this repository), you can easily get the necessary setup by running
@@ -59,7 +61,7 @@ $Category2 = @{"Key1"="Value1";"Key2"="Value2"}
 $NewINIContent = @{"Category1"=$Category1;"Category2"=$Category2}
 
 Import-Module PSIni
-Out-IniFile -InputObject $NewINIContent -FilePath ".\settings.ini"
+Export-Ini -InputObject $NewINIContent -Path ".\settings.ini"
 ```
 
 Results:
@@ -79,7 +81,7 @@ Results:
 Returns the key "Key2" of the section "Category2" from the `./settings.ini` file:
 
 ```powershell
-$FileContent = Get-IniContent "C:\settings.ini"
+$FileContent = Import-Ini -Path "C:\settings.ini"
 $FileContent["Category2"]["Key2"]
 ```
 

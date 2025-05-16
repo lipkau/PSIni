@@ -10,17 +10,17 @@
 * the commands of the module were refactored and renamed.
 * the behaviour of parsing quotation marks was changes, as per [ADR #95](https://github.com/lipkau/PSIni/discussions/95).
 
-Details on how to upgrade are documented in the [Migrating to PSIni v4](#TODO: )
+Details on how to upgrade are documented in the [Migrating to PSIni v4](docs/Migrating-to-v4.md)
 
 ### Added
 
-* Add -IgnoreEmptySection parameter to `Import-Ini` @kevinholtkamp #69
+* Add `-IgnoreEmptySection` parameter to `Import-Ini` @kevinholtkamp #69
 * Added `-CommentChar` to `Export-Ini` @lipkau #103
 * Added `-LiteralPath` to `Import-Ini` @lipkau #105
 * Added `-Encoding` to `Import-Ini` @lipkau #111
 * Added `-InputString` to `Import-Ini` @lipkau #111
   * In order to implement this, a slight performance buff was implemented:\
-    files are now read with [System.IO.File]::ReadAllLines() instead for switch -file\
+    files are now read with `[System.IO.File]::ReadAllLines()` instead for `switch -file`\
     Read more: <https://devdojo.com/hcritter/powershell-performance-test-file-reading>
 
 ### Fixed
@@ -34,11 +34,14 @@ Details on how to upgrade are documented in the [Migrating to PSIni v4](#TODO: )
 
 ### Changed
 
+* **BREAKING**: `Get-IniContent` is replaced with `Import-Ini` @lipkau
+* **BREAKING**: `Out-IniFile` is replaced with `Export-Ini` @lipkau
+* **BREAKING**: Changed behaviour of how quotation marks are parsed @lipkau #100
 * **BREAKING**: Changed `Export-Ini` parameters to match the behaviour of other `Export-*` functions @lipkau #118
 
 ### Removed
 
-* Removed support for Powershell v2, v3 and v4 @lipkau
+* **BREAKING**: Removed support for Powershell v2, v3 and v4 @lipkau
 
 ## v3 - 2019-03-23
 
