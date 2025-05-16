@@ -22,7 +22,7 @@ Describe "PSIni integration tests" -Tag "Integration" {
         }
     }
     BeforeEach {
-        Export-Ini -InputObject $dictIn -Path "$tempFolder/output.ini" -Force -ErrorAction Stop
+        Export-Ini -InputObject $dictIn -Path "$tempFolder/output.ini" -ErrorAction Stop
         $script:dictOut = Import-Ini -Path "$tempFolder/output.ini" -ErrorAction Stop
     }
     AfterAll {
