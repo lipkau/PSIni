@@ -4,7 +4,10 @@ param(
     [String] $PesterVerbosity = 'Normal',
 
     [Parameter()]
-    [String] $VersionToPublish
+    [String] $VersionToPublish,
+
+    [Parameter()]
+    [String] $PSGalleryAPIKey
 )
 
 Import-Module "$PSScriptRoot/tools/BuildTools.psm1" -Force
@@ -145,11 +148,8 @@ Task Test {
 
 Task Publish SetVersion, SignCode, Package, {
     Assert-True (-not [String]::IsNullOrEmpty($PSGalleryAPIKey)) "No key for the PSGallery"
-    Assert-True { Get-Module $env:BHProjectName -ListAvailable } "Module $env:BHProjectName is not available"
 
-    Remove-Module $env:BHProjectName -ErrorAction Ignore
-
-    Publish-Module -Name $env:BHProjectName -NuGetApiKey $PSGalleryAPIKey
+    Publish-Module -Path "$env:BHBuildOutput/$env:BHProjectName" -NuGetApiKey $PSGalleryAPIKey
 }
 
 Task SignCode {
