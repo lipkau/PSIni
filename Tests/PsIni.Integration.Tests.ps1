@@ -8,8 +8,6 @@ Describe "PSIni integration tests" -Tag "Integration" {
         Remove-Module PSIni -ErrorAction SilentlyContinue
         Import-Module $moduleToTest -Force -ErrorAction Stop
 
-        $script:tempFolder = [System.IO.Path]::GetTempPath()
-
         $script:dictIn = [ordered]@{
             "Category1" = [ordered]@{
                 "Key1" = "Value1"
@@ -22,11 +20,8 @@ Describe "PSIni integration tests" -Tag "Integration" {
         }
     }
     BeforeEach {
-        Export-Ini -InputObject $dictIn -Path "$tempFolder/output.ini" -ErrorAction Stop
-        $script:dictOut = Import-Ini -Path "$tempFolder/output.ini" -ErrorAction Stop
-    }
-    AfterAll {
-        Remove-Item "$tempFolder/output.ini"
+        Export-Ini -InputObject $dictIn -Path "TestDrive:/output.ini" -ErrorAction Stop
+        $script:dictOut = Import-Ini -Path "TestDrive:/output.ini" -ErrorAction Stop
     }
 
     It "content matches original hashtable" {

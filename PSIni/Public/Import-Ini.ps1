@@ -117,6 +117,7 @@
             if ($LiteralPath -or $Path) {
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $source"
 
+                $source = (Get-Item -LiteralPath $source).FullName
                 try { $fileContent = [System.IO.File]::ReadAllLines($source, $Encoding) }
                 catch {
                     Write-Error "Could not find file '$source'"
