@@ -30,12 +30,12 @@ jobs:
       - run: Invoke-Build -Task ShowDebugInfo -VersionToPublish ${{ github.ref_name }}
         shell: pwsh
 
-      - run: Invoke-Build -Task Publish -VersionToPublish ${{ github.ref_name }}
+      - run: Invoke-Build -Task Publish -VersionToPublish ${{ github.ref_name }} -PSGalleryAPIKey ${{ secrets.PSGalleryAPIKey }}
         shell: pwsh
 
       - name: Cherry pick CHANGELOG.md
         id: changelog
-        uses: MatteoCampinoti94/changelog-to-release@v1
+        uses: MatteoCampinoti94/changelog-to-release@v1.0.0
         with:
           version-name: ${{ github.ref_name }}
           configuration: ./.github/changelog.configuration.json
