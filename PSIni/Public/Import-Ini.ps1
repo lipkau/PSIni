@@ -200,7 +200,7 @@
 
             if ($IgnoreEmptySections) {
                 $ToRemove = [System.Collections.ArrayList]@()
-                foreach ($Section in $ini.Keys) {
+                foreach ($Section in $ini.GetEnumerator().Name) {
                     if (($ini[$Section]).Count -eq 0) {
                         $null = $ToRemove.Add($Section)
                     }

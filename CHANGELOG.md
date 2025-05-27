@@ -3,7 +3,13 @@
 
 ## [NEXT VERSION] - YYYY-MM-DD
 
-## v4.0.0 - YYYY-MM-DD
+## v4.0.1 - 2025-05-27
+
+### Fixed
+
+* Fixed the enumeration of keys @lipkau #125
+
+## v4.0.0 - 2025-05-17
 
 `v4` is a breaking change:
 

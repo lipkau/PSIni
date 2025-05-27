@@ -51,14 +51,14 @@ Describe "Import-Ini" -Tag "Unit" {
 
         Describe "Sections" {
             It "loads the sections as expected" {
-                $dictOut.Keys | Should -Be "_", "Strings", "Arrays", "NoValues", "EmptySection"
+                $dictOut.GetEnumerator().Name | Should -Be "_", "Strings", "Arrays", "NoValues", "EmptySection"
             }
 
             It "uses a module-wide variable for the keys that don't have a section" {
                 InModuleScope PSIni { $script:NoSection = "NoName" }
                 $dictNoNameSection = Import-Ini -Path $iniFile
 
-                $dictNoNameSection.Keys | Should -Be "NoName", "Strings", "Arrays", "NoValues", "EmptySection"
+                $dictNoNameSection.GetEnumerator().Name | Should -Be "NoName", "Strings", "Arrays", "NoValues", "EmptySection"
                 $dictNoNameSection["NoName"]["Key"] | Should -Be "With No Section"
             }
         }
@@ -69,14 +69,14 @@ Describe "Import-Ini" -Tag "Unit" {
             }
 
             It "keeps non repeating keys as [string]" {
-                $dictOut["Strings"].Keys | Should -HaveCount 20
-                foreach ($key in $dictOut["Strings"].Keys) {
+                $dictOut["Strings"].GetEnumerator().Name | Should -HaveCount 21
+                foreach ($key in $dictOut["Strings"].GetEnumerator().Name) {
                     $dictOut["Strings"][$key] | Should -BeOfType [String]
                 }
             }
 
             It "duplicate keys in the same section are groups as an array" {
-                $dictOut["Arrays"].Keys | Should -HaveCount 2
+                $dictOut["Arrays"].GetEnumerator().Name | Should -HaveCount 2
                 $dictOut["Arrays"]["String1"] | Should -BeOfType [String]
                 # unary comma to avoid the pipeline
                 , $dictOut["Arrays"]["Array1"] | Should -BeOfType [System.Collections.ArrayList]
@@ -119,7 +119,7 @@ Describe "Import-Ini" -Tag "Unit" {
             }
 
             It "reads lines starting with ';' as comments by default" {
-                $dictOut["Strings"].Keys | Should -Contain "__Comment1"
+                $dictOut["Strings"].GetEnumerator().Name | Should -Contain "__Comment1"
                 $dictOut["Strings"]["__Comment1"] | Should -Be "Key18 = Should be a comment"
             }
 
@@ -134,10 +134,10 @@ Describe "Import-Ini" -Tag "Unit" {
                 $withComments = Import-Ini -Path $iniFile -CommentChar ";", "#"
                 $withoutComments = Import-Ini -Path $iniFile -CommentChar ";", "#" -IgnoreComments
 
-                $withComments["Strings"].Keys | Should -HaveCount 20
-                $withoutComments["Strings"].Keys | Should -HaveCount 18
-                $withComments["Strings"].Keys | Should -Contain "__Comment1"
-                $withoutComments["Strings"].Keys | Should -Not -Contain "__Comment1"
+                $withComments["Strings"].GetEnumerator().Name | Should -HaveCount 21
+                $withoutComments["Strings"].GetEnumerator().Name | Should -HaveCount 19
+                $withComments["Strings"].GetEnumerator().Name | Should -Contain "__Comment1"
+                $withoutComments["Strings"].GetEnumerator().Name | Should -Not -Contain "__Comment1"
             }
 
             It "can process a key named 'Comment'" {
@@ -148,7 +148,7 @@ Describe "Import-Ini" -Tag "Unit" {
                 InModuleScope PSIni { $script:CommentPrefix = "..Comment" }
                 $dictWithCustomComment = Import-Ini -Path $iniFile
 
-                $dictWithCustomComment["Strings"].Keys | Should -Contain "..Comment1"
+                $dictWithCustomComment["Strings"].GetEnumerator().Name | Should -Contain "..Comment1"
                 $dictWithCustomComment["Strings"]["..Comment1"] | Should -Be "Key18 = Should be a comment"
             }
         }
@@ -158,8 +158,8 @@ Describe "Import-Ini" -Tag "Unit" {
                 $withEmptySections = Import-Ini -Path $iniFile
                 $withoutEmptySections = Import-Ini -Path $iniFile -IgnoreEmptySections
 
-                $withEmptySections.Keys | Should -Contain "EmptySection"
-                $withoutEmptySections.Keys | Should -Not -Contain "EmptySection"
+                $withEmptySections.GetEnumerator().Name | Should -Contain "EmptySection"
+                $withoutEmptySections.GetEnumerator().Name | Should -Not -Contain "EmptySection"
             }
         }
 
@@ -211,8 +211,8 @@ Describe "Import-Ini" -Tag "Unit" {
 
                 $dictFromString = Import-Ini -InputString $ini
 
-                $dictFromString.Keys | Should -Contain "section"
-                $dictFromString["section"].Keys | Should -Contain "key"
+                $dictFromString.GetEnumerator().Name | Should -Contain "section"
+                $dictFromString["section"].GetEnumerator().Name | Should -Contain "key"
                 $dictFromString["section"]["key"] | Should -Be "value"
             }
         }

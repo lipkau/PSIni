@@ -158,7 +158,7 @@
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Creating file content in memory"
         $fileContent = @()
 
-        foreach ($section in $InputObject.Keys) {
+        foreach ($section in $InputObject.GetEnumerator().Name) {
             Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$section]"
 
             # Add section header to the content array
