@@ -26,12 +26,12 @@
     }
 
     process {
-        if (-not ($InputObject.Keys)) {
+        if (-not ($InputObject.GetEnumerator().Name)) {
             Write-Verbose "$($MyInvocation.MyCommand.Name):: No data found in '$InputObject'."
             return
         }
 
-        foreach ($key in $InputObject.Keys) {
+        foreach ($key in $InputObject.GetEnumerator().Name) {
             if ($key -like "$script:CommentPrefix*") {
                 if ($IgnoreComments) {
                     Write-Verbose "$($MyInvocation.MyCommand.Name):: Skipping comment: $key"

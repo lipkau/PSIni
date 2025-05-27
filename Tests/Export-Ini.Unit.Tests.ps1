@@ -73,6 +73,7 @@ Describe "Export-Ini" -Tag "Unit" {
                     "KeyWithoutSection" = "This is a key without section header"
                 }
                 "Category1" = [ordered]@{
+                    "Keys"       = 'This is a special case because it breaks code like "$InputObject.Keys"'
                     "Key1"       = "Value1"
                     "__Comment1" = "Key2 = Value2"
                 }
@@ -82,7 +83,7 @@ Describe "Export-Ini" -Tag "Unit" {
                 }
             }
 
-            $script:defaultFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf};Key2 = Value2${lf}${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}${lf}"
+            $script:defaultFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Keys = This is a special case because it breaks code like `"`$InputObject.Keys`"${lf}Key1 = Value1${lf};Key2 = Value2${lf}${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}${lf}"
 
             $script:additionalObject = [ordered]@{
                 "Additional" = [ordered]@{ "Key1" = "Value1" }
@@ -144,7 +145,7 @@ Describe "Export-Ini" -Tag "Unit" {
 
         Describe "Special Parameter" {
             It "write the ini file without comment when '-IgnoreComments' is defined" {
-                $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf}${lf}[Category2]${lf}${lf}"
+                $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Keys = This is a special case because it breaks code like `"`$InputObject.Keys`"${lf}Key1 = Value1${lf}${lf}[Category2]${lf}${lf}"
 
                 Export-Ini @commonParameter -InputObject $defaultObject -IgnoreComments
                 $fileContent = Get-Content -Path $testPath -Raw
@@ -153,7 +154,7 @@ Describe "Export-Ini" -Tag "Unit" {
             }
 
             It "uses the provided '-CommentChar' character" {
-                $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Key1 = Value1${lf}#Key2 = Value2${lf}${lf}[Category2]${lf}#Key1 = Value1${lf}#Key2=Value2${lf}${lf}"
+                $expectedFileContent = "KeyWithoutSection = This is a key without section header${lf}${lf}[Category1]${lf}Keys = This is a special case because it breaks code like `"`$InputObject.Keys`"${lf}Key1 = Value1${lf}#Key2 = Value2${lf}${lf}[Category2]${lf}#Key1 = Value1${lf}#Key2=Value2${lf}${lf}"
 
                 Export-Ini @commonParameter -InputObject $defaultObject -CommentChar "#"
                 $fileContent = Get-Content -Path $testPath -Raw
@@ -162,7 +163,7 @@ Describe "Export-Ini" -Tag "Unit" {
             }
 
             It "saves the ini file minified with '-Format minified'" {
-                $expectedFileContent = "KeyWithoutSection=This is a key without section header${lf}[Category1]${lf}Key1=Value1${lf};Key2 = Value2${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}"
+                $expectedFileContent = "KeyWithoutSection=This is a key without section header${lf}[Category1]${lf}Keys=This is a special case because it breaks code like `"`$InputObject.Keys`"${lf}Key1=Value1${lf};Key2 = Value2${lf}[Category2]${lf};Key1 = Value1${lf};Key2=Value2${lf}"
 
                 Export-Ini @commonParameter -InputObject $defaultObject -Format "minified"
                 $fileContent = Get-Content -Path $testPath -Raw
