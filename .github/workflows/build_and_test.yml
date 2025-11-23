@@ -26,7 +26,7 @@ jobs:
         shell: pwsh
       - run: Invoke-Build -Task Build
         shell: pwsh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: Release
           path: ./release/
@@ -52,7 +52,7 @@ jobs:
         shell: powershell
       - run: Invoke-Build -Task Test
         shell: powershell
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ runner.os }}v5-Unit-Tests
           path: Test*.xml
@@ -78,7 +78,7 @@ jobs:
         shell: pwsh
       - run: Invoke-Build -Task Test
         shell: pwsh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ runner.os }}v7-Unit-Tests
           path: Test*.xml
@@ -104,7 +104,7 @@ jobs:
         shell: pwsh
       - run: Invoke-Build -Task Test
         shell: pwsh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ runner.os }}-Unit-Tests
           path: Test*.xml
@@ -130,7 +130,7 @@ jobs:
         shell: pwsh
       - run: Invoke-Build -Task Test
         shell: pwsh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ runner.os }}-Unit-Tests
           path: Test*.xml
