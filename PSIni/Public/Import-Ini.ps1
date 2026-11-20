@@ -106,6 +106,42 @@
         Write-DebugMessage ("commentRegex is $commentRegex")
         Write-DebugMessage ("sectionRegex is $sectionRegex")
         Write-DebugMessage ("keyRegex is $keyRegex")
+
+        function Add-IniValue {
+            <#
+            .Synopsis
+                Stores a key in a section
+
+            .Description
+                Stores a key in a section.
+                A key that appears more than once becomes an ArrayList with one entry per occurrence, in file order.
+                This also applies to empty values and to keys without an `=` sign, which add a $null entry.
+            #>
+            param(
+                [Parameter( Mandatory )]
+                [System.Collections.IDictionary]
+                $Section,
+
+                [Parameter( Mandatory )]
+                [String]
+                $Name,
+
+                # Untyped on purpose: [String] would turn $null into an empty string.
+                [Parameter()]
+                $Value
+            )
+
+            if (-not $Section.Contains($Name)) {
+                $Section[$Name] = $Value
+                return
+            }
+            if ($Section[$Name] -isnot [System.Collections.ArrayList]) {
+                $oldValue = $Section[$Name]
+                $Section[$Name] = [System.Collections.ArrayList]::new()
+                $null = $Section[$Name].Add($oldValue)
+            }
+            $null = $Section[$Name].Add($Value)
+        }
     }
 
     process {
@@ -168,17 +204,7 @@
                         $name, $value = $matches[1].Trim(), $matches[2].Trim()
                         if (-not [string]::IsNullOrWhiteSpace($name)) {
                             Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
-                            if (-not $ini[$section][$name]) {
-                                $ini[$section][$name] = $value
-                            }
-                            else {
-                                if ($ini[$section][$name] -is [string]) {
-                                    $oldValue = $ini[$section][$name]
-                                    $ini[$section][$name] = [System.Collections.ArrayList]::new()
-                                    $null = $ini[$section][$name].Add($oldValue)
-                                }
-                                $null = $ini[$section][$name].Add($value)
-                            }
+                            Add-IniValue -Section $ini[$section] -Name $name -Value $value
                         }
                         continue
                     }
@@ -191,7 +217,7 @@
                         $name = $_.Trim()
                         if (-not [string]::IsNullOrWhiteSpace($name)) {
                             Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name without a value"
-                            $ini[$section][$name] = $null
+                            Add-IniValue -Section $ini[$section] -Name $name -Value $null
                         }
                         continue
                     }
