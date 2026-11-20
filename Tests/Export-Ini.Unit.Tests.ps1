@@ -309,12 +309,58 @@ Describe "Export-Ini" -Tag "Unit" {
             }
 
             It "writes out keys without trailing equal sign when no value is assigned" {
-                $expectedFileContent = "[NoValues]${lf}Key1${lf}Key2${lf}"
+                $expectedFileContent = "[NoValues]${lf}Key1${lf}Key2=${lf}"
 
                 Export-Ini @commonParameter -InputObject $objectWithEmptyKeys -Format minified -SkipTrailingEqualSign
                 $fileContent = Get-Content -Path $testPath -Raw
 
                 $fileContent | Should -Be $expectedFileContent
+            }
+
+            It "writes the value '<value>' as '<expected>'" -TestCases @(
+                @{ value = 0; expected = "Key=0" }
+                @{ value = $false; expected = "Key=False" }
+                @{ value = ""; expected = "Key=" }
+                @{ value = $null; expected = "Key=" }
+            ) {
+                $iniObject = [ordered]@{ "Section" = [ordered]@{ "Key" = $value } }
+
+                Export-Ini @commonParameter -InputObject $iniObject -Format minified
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be "[Section]${lf}${expected}${lf}"
+            }
+
+            It "writes the value '<value>' as '<expected>' when '-SkipTrailingEqualSign' is defined" -TestCases @(
+                @{ value = 0; expected = "Key=0" }
+                @{ value = $false; expected = "Key=False" }
+                @{ value = ""; expected = "Key=" }
+                @{ value = $null; expected = "Key" }
+            ) {
+                $iniObject = [ordered]@{ "Section" = [ordered]@{ "Key" = $value } }
+
+                Export-Ini @commonParameter -InputObject $iniObject -Format minified -SkipTrailingEqualSign
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be "[Section]${lf}${expected}${lf}"
+            }
+
+            It "writes every entry of an array that contains an empty string" {
+                $iniObject = [ordered]@{ "Section" = [ordered]@{ "Key" = @("Value", "", 0) } }
+
+                Export-Ini @commonParameter -InputObject $iniObject -Format minified -SkipTrailingEqualSign
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be "[Section]${lf}Key=Value${lf}Key=${lf}Key=0${lf}"
+            }
+
+            It "writes a key with an empty array as a key without a value" {
+                $iniObject = [ordered]@{ "Section" = [ordered]@{ "Key" = @() } }
+
+                Export-Ini @commonParameter -InputObject $iniObject -Format minified -SkipTrailingEqualSign
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be "[Section]${lf}Key${lf}"
             }
         }
 

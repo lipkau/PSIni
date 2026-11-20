@@ -133,6 +133,8 @@
         $IgnoreComments,
 
         # Does not add trailing = sign to keys without value.
+        # A key has no value when its value is $null. An empty string is a value,
+        # so it is still written with the = sign.
         # This behavior is needed for specific OS files, such as:
         # https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/winpeshlini-reference-launching-an-app-when-winpe-starts
         [Parameter()]
