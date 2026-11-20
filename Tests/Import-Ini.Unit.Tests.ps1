@@ -203,6 +203,33 @@ Describe "Import-Ini" -Tag "Unit" {
 
                 $dictMultipleFiles | Should -HaveCount 2
             }
+
+            Context "Hidden files" {
+                BeforeAll {
+                    $script:hiddenFile = Join-Path $TestDrive ".hidden.ini"
+                    Set-Content -LiteralPath $hiddenFile -Value "[section]`nkey=value"
+                    if ($IsWindows -or $PSVersionTable.PSEdition -eq "Desktop") {
+                        # On Linux and macOS a leading dot makes the file hidden; on Windows it needs the attribute.
+                        (Get-Item -LiteralPath $hiddenFile).Attributes += [System.IO.FileAttributes]::Hidden
+                    }
+                }
+
+                It "the test file is hidden" {
+                    (Get-Item -LiteralPath $hiddenFile -Force).Attributes | Should -Match "Hidden"
+                }
+
+                It "can read a hidden file with -Path" {
+                    $dictHidden = Import-Ini -Path $hiddenFile -ErrorAction Stop
+
+                    $dictHidden["section"]["key"] | Should -Be "value"
+                }
+
+                It "can read a hidden file with -LiteralPath" {
+                    $dictHidden = Import-Ini -LiteralPath $hiddenFile -ErrorAction Stop
+
+                    $dictHidden["section"]["key"] | Should -Be "value"
+                }
+            }
         }
 
         Describe "Input from string" {

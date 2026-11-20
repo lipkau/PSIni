@@ -46,6 +46,8 @@
         # This parameter is required, but the parameter name Path is optional.
         #
         # Use a dot (`.`) to specify the current location. Use the wildcard character (`*`) to specify all the items in the current location.
+        # Wildcards don't match hidden files (on Linux and macOS, files whose name starts with a dot).
+        # To read a hidden file, specify its full name.
         [Parameter( Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName, ParameterSetName = "Path", Position = 0 )]
         [ValidateNotNullOrEmpty()]
         [Alias("PSPath", "FullName")]
@@ -117,7 +119,7 @@
             if ($LiteralPath -or $Path) {
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Processing file: $source"
 
-                $source = (Get-Item -LiteralPath $source).FullName
+                $source = (Get-Item -LiteralPath $source -Force).FullName
                 try { $fileContent = [System.IO.File]::ReadAllLines($source, $Encoding) }
                 catch {
                     Write-Error "Could not find file '$source'"
