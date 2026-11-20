@@ -196,8 +196,22 @@ Describe "Export-Ini" -Tag "Unit" {
                 (Get-FileEncoding -Path $testPath).Encoding | Should -Be "UTF32-LE"
             }
 
-            It "uses default behaviour for '-Force'" -Skip {
-                # -Force is passed to Out-File
+            It "overwrites a read-only file only when '-Force' is defined" {
+                Export-Ini @commonParameter -InputObject $defaultObject
+                $file = Get-Item -Path $testPath
+                $file.IsReadOnly = $true
+
+                try {
+                    { Export-Ini @commonParameter -InputObject $additionalObject } | Should -Throw
+                    Get-Content -Path $testPath -Raw | Should -Be $defaultFileContent
+
+                    Export-Ini @commonParameter -InputObject $additionalObject -Force
+                    Get-Content -Path $testPath -Raw | Should -Be $additionalFileContent
+                }
+                finally {
+                    $file.Refresh()
+                    $file.IsReadOnly = $false
+                }
             }
         }
 

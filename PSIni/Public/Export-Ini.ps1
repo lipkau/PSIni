@@ -145,9 +145,11 @@
 
         $delimiter = if ($Format -eq "pretty") { ' = ' } else { '=' }
 
+        $targetPath = if ($LiteralPath) { $LiteralPath } else { $FilePath }
+
         $fileParameters = @{
             Encoding = $Encoding
-            Path     = $Path
+            Path     = $targetPath
             Force    = $Force
         }
         Write-DebugMessage "Using the following parameters when writing to file:"
@@ -182,12 +184,13 @@
             if ($Format -eq "pretty") { $fileContent += "" }
         }
 
-        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $Path"
+        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $targetPath"
         $ofsplat = @{
             InputObject = $fileContent
             NoClobber   = $NoClobber
             Append      = $Append
             Encoding    = $Encoding
+            Force       = $Force
         }
         if ($LiteralPath) {
             if ($PSCmdlet.ShouldProcess((Split-Path $LiteralPath -Leaf), "Write")) {
