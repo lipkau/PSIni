@@ -41,7 +41,9 @@
                     $outputLines += "$CommentChar$($InputObject[$key])"
                 }
             }
-            elseif (-not $InputObject[$key]) {
+            # Only $null (or an empty collection) means "key without a value".
+            # Falsy values such as 0, $false and '' are written as values.
+            elseif ($null -eq $InputObject[$key] -or ($InputObject[$key] -is [System.Collections.ICollection] -and $InputObject[$key].Count -eq 0)) {
                 Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key: $key without value"
                 $outputLines += if ($SkipTrailingEqualSign) { "$key" } else { "${key}${Delimiter}" }
             }
