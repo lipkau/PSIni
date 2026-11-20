@@ -82,6 +82,51 @@ Describe "Import-Ini" -Tag "Unit" {
                 , $dictOut["Arrays"]["Array1"] | Should -BeOfType [System.Collections.ArrayList]
                 $dictOut["Arrays"]["Array1"] -join "," | Should -Be "1,2,3,4,5,6,7,8,9"
             }
+
+            It "groups duplicate keys as an array when the first value is empty" {
+                $result = Import-Ini -InputString "[s]`nk=`nk=b"
+
+                , $result["s"]["k"] | Should -BeOfType [System.Collections.ArrayList]
+                $result["s"]["k"] | Should -HaveCount 2
+                $result["s"]["k"][0] | Should -Be ""
+                $result["s"]["k"][1] | Should -Be "b"
+            }
+
+            It "keeps every occurrence when all values of a duplicate key are empty" {
+                $result = Import-Ini -InputString "[s]`nk=`nk=`nk="
+
+                , $result["s"]["k"] | Should -BeOfType [System.Collections.ArrayList]
+                $result["s"]["k"] | Should -HaveCount 3
+            }
+
+            It "adds a `$null entry when a duplicate key has no '=' sign" -TestCases @(
+                @{ inputString = "[s]`nk=a`nk"; expected = @("a", $null) }
+                @{ inputString = "[s]`nk`nk=a"; expected = @($null, "a") }
+                @{ inputString = "[s]`nk`nk"; expected = @($null, $null) }
+            ) {
+                $result = Import-Ini -InputString $inputString
+
+                , $result["s"]["k"] | Should -BeOfType [System.Collections.ArrayList]
+                $result["s"]["k"] | Should -HaveCount $expected.Count
+                for ($i = 0; $i -lt $expected.Count; $i++) {
+                    $result["s"]["k"][$i] | Should -Be $expected[$i]
+                }
+            }
+
+            It "treats duplicate keys case-insensitively" {
+                $result = Import-Ini -InputString "[s]`nKey=`nkey=b"
+
+                $result["s"].Keys | Should -HaveCount 1
+                $result["s"]["KEY"] -join "," | Should -Be ",b"
+            }
+
+            It "does not merge keys with the same name from different sections" {
+                $result = Import-Ini -InputString "[a]`nk=`n[b]`nk=b"
+
+                $result["a"]["k"] | Should -BeOfType [String]
+                $result["a"]["k"] | Should -Be ""
+                $result["b"]["k"] | Should -Be "b"
+            }
         }
 
         Describe "Trim and Quotes" {

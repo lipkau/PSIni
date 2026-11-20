@@ -108,6 +108,24 @@
         Write-DebugMessage ("commentRegex is $commentRegex")
         Write-DebugMessage ("sectionRegex is $sectionRegex")
         Write-DebugMessage ("keyRegex is $keyRegex")
+
+        # Stores a key in a section. A key that appears more than once becomes an
+        # ArrayList with one entry per occurrence, in file order. This also applies
+        # to empty values and to keys without an `=` sign, which add a $null entry.
+        $addKey = {
+            param($sectionDict, $keyName, $keyValue)
+
+            if (-not $sectionDict.Contains($keyName)) {
+                $sectionDict[$keyName] = $keyValue
+                return
+            }
+            if ($sectionDict[$keyName] -isnot [System.Collections.ArrayList]) {
+                $oldValue = $sectionDict[$keyName]
+                $sectionDict[$keyName] = [System.Collections.ArrayList]::new()
+                $null = $sectionDict[$keyName].Add($oldValue)
+            }
+            $null = $sectionDict[$keyName].Add($keyValue)
+        }
     }
 
     process {
@@ -170,17 +188,7 @@
                         $name, $value = $matches[1].Trim(), $matches[2].Trim()
                         if (-not [string]::IsNullOrWhiteSpace($name)) {
                             Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name with value: $value"
-                            if (-not $ini[$section][$name]) {
-                                $ini[$section][$name] = $value
-                            }
-                            else {
-                                if ($ini[$section][$name] -is [string]) {
-                                    $oldValue = $ini[$section][$name]
-                                    $ini[$section][$name] = [System.Collections.ArrayList]::new()
-                                    $null = $ini[$section][$name].Add($oldValue)
-                                }
-                                $null = $ini[$section][$name].Add($value)
-                            }
+                            & $addKey $ini[$section] $name $value
                         }
                         continue
                     }
@@ -193,7 +201,7 @@
                         $name = $_.Trim()
                         if (-not [string]::IsNullOrWhiteSpace($name)) {
                             Write-Verbose "$($MyInvocation.MyCommand.Name):: Adding key $name without a value"
-                            $ini[$section][$name] = $null
+                            & $addKey $ini[$section] $name $null
                         }
                         continue
                     }
