@@ -1,21 +1,20 @@
 ﻿#requires -modules @{ ModuleName = "Pester"; ModuleVersion = "5.7"; MaximumVersion = "5.999" }
 
 Describe "Help tests" -Tag "Documentation", "Build" {
-    BeforeAll {
+    BeforeDiscovery {
         . "$PSScriptRoot/Helpers/Resolve-ModuleSource.ps1"
-        $script:moduleToTest = Resolve-ModuleSource
+        $moduleToTest = Resolve-ModuleSource
 
         Remove-Module PSIni -ErrorAction SilentlyContinue
         Import-Module $moduleToTest -Force -ErrorAction Stop
 
-        $script:module = Get-Module PSIni
-
-        $script:DefaultParams = @(
+        $DefaultParams = @(
             'Verbose'
             'Debug'
             'ErrorAction'
             'WarningAction'
             'InformationAction'
+            'ProgressAction'
             'ErrorVariable'
             'WarningVariable'
             'InformationVariable'
@@ -30,8 +29,19 @@ Describe "Help tests" -Tag "Documentation", "Build" {
                 Command     = $_
                 CommandName = $_.Name
                 Help        = (Get-Help $_.Name)
+                Parameters  = @(
+                    $_.Parameters.Keys | Where-Object { $_ -notin $DefaultParams } | ForEach-Object { @{ ParameterName = $_ } }
+                )
             }
         }
+    }
+
+    BeforeAll {
+        . "$PSScriptRoot/Helpers/Resolve-ModuleSource.ps1"
+        $script:moduleToTest = Resolve-ModuleSource
+
+        Remove-Module PSIni -ErrorAction SilentlyContinue
+        Import-Module $moduleToTest -Force -ErrorAction Stop
     }
 
     Describe "Help content" {
@@ -60,34 +70,22 @@ Describe "Help tests" -Tag "Documentation", "Build" {
         It "has at least as many examples as ParameterSets for <CommandName>" -TestCases $commands {
             ($help.Examples.Example | Measure-Object).Count | Should -BeGreaterOrEqual $command.ParameterSets.Count
         }
-
-        <# foreach ($parameterName in $command.Parameters.Keys) {
-                if ($help.Parameters | Get-Member -Name Parameter) {
-                    $parameterHelp = $help.Parameters.Parameter | Where-Object { $_.Name -eq $parameterName }
-
-                    if ($parameterName -notin $DefaultParams) {
-                        It "has a description for parameter [<parameterName>] in <commandName>" -TestCases @{
-                            parameterName = $parameterName
-                            commandName   = $commandName
-                            parameterHelp = $parameterHelp
-                        } {
-                            param($parameterName, $commandName, $parameterHelp)
-                            $parameterHelp.Description.Text | Should -Not -BeNullOrEmpty
-                        }
-                    }
-                }
-            }
-
-            It "does not have parameters that are not in the code" -TestCases @{ help = $help; command = $command } {
-                param($help, $command)
-                $parameter = @()
-                if ($help.Parameters | Get-Member -Name Parameter) {
-                    $parameter = $help.Parameters.Parameter.Name | Sort-Object -Unique
-                }
-                foreach ($helpParm in $parameter) {
-                    $command.Parameters.Keys | Should -Contain $helpParm
-                }
-            } #>
     }
-    #endregion Public Functions
+
+    Describe "Parameter help for <CommandName>" -ForEach $commands {
+        It "has a description for parameter <ParameterName>" -TestCases $Parameters {
+            $parameterHelp = $help.Parameters.Parameter | Where-Object { $_.Name -eq $ParameterName }
+            $parameterHelp.Description.Text -join '' | Should -Not -BeNullOrEmpty
+        }
+
+        It "does not have parameters that are not in the code" {
+            $helpParameters = @()
+            if ($help.Parameters | Get-Member -Name Parameter) {
+                $helpParameters = $help.Parameters.Parameter.Name | Sort-Object -Unique
+            }
+            foreach ($helpParameter in $helpParameters) {
+                $command.Parameters.Keys | Should -Contain $helpParameter
+            }
+        }
+    }
 }
