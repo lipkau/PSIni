@@ -194,12 +194,12 @@
         }
         if ($LiteralPath) {
             if ($PSCmdlet.ShouldProcess((Split-Path $LiteralPath -Leaf), "Write")) {
-                Out-File @ofsplat -LiteralPath $LiteralPath
+                Microsoft.PowerShell.Utility\Out-File @ofsplat -LiteralPath $LiteralPath
             }
         }
         else {
             if ($PSCmdlet.ShouldProcess((Split-Path $FilePath -Leaf), "Write")) {
-                Out-File @ofsplat -FilePath $FilePath
+                Microsoft.PowerShell.Utility\Out-File @ofsplat -FilePath $FilePath
             }
         }
     }
@@ -212,6 +212,8 @@
 Set-Alias epini Export-Ini
 
 Register-ArgumentCompleter -CommandName Export-Ini -ParameterName Encoding -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+
     Get-AllowedEncoding |
         Where-Object { $_ -like "$wordToComplete*" } |
         ForEach-Object {
