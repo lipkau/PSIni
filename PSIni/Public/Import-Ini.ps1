@@ -109,10 +109,16 @@
         Write-DebugMessage ("sectionRegex is $sectionRegex")
         Write-DebugMessage ("keyRegex is $keyRegex")
 
-        # Stores a key in a section. A key that appears more than once becomes an
-        # ArrayList with one entry per occurrence, in file order. This also applies
-        # to empty values and to keys without an `=` sign, which add a $null entry.
         function Add-IniValue {
+            <#
+            .Synopsis
+                Stores a key in a section
+
+            .Description
+                Stores a key in a section.
+                A key that appears more than once becomes an ArrayList with one entry per occurrence, in file order.
+                This also applies to empty values and to keys without an `=` sign, which add a $null entry.
+            #>
             param(
                 [Parameter( Mandatory )]
                 [System.Collections.IDictionary]
