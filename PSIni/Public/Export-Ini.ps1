@@ -4,14 +4,18 @@
         Write hash content to INI file
 
     .Description
-        Write hash content to INI file
+        Writes the content of a dictionary (such as a hashtable or the result of Import-Ini) to an INI file.
+
+        Every key of the dictionary becomes a section, and its value (another dictionary) holds the keys of that section.
+        Keys stored under the section "_" (as Import-Ini does for keys outside of any section) are written without a section header.
+        Comments that Import-Ini read from a file are written back as comments, unless -IgnoreComments is used.
 
     .Inputs
         System.String
         System.Collections.IDictionary
 
     .Example
-        Export-Ini $IniVar "C:\myinifile.ini"
+        Export-Ini "C:\myinifile.ini" -InputObject $IniVar
         -----------
         Description
         Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini
@@ -23,10 +27,10 @@
         Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini and overwrites the file if it is already present
 
     .Example
-        $file = Export-Ini $IniVar -FilePath "C:\myinifile.ini" -PassThru
+        Export-Ini -InputObject $IniVar -LiteralPath "C:\[config]\myinifile.ini"
         -----------
         Description
-        Saves the content of the $IniVar Hashtable to the INI File c:\myinifile.ini and saves the file into $file. Writes exported data to console, as a powershell object.
+        Saves the content of the $IniVar Hashtable to the INI File C:\[config]\myinifile.ini. LiteralPath does not treat the square brackets as wildcards.
 
     .Example
         $Category1 = @{"Key1"="Value1";"Key2"="Value2"}
@@ -40,7 +44,7 @@
     .Example
         $Winpeshl = @{
             LaunchApp = @{
-                AppPath = %"SYSTEMDRIVE%\Fabrikam\shell.exe"
+                AppPath = "%SYSTEMDRIVE%\Fabrikam\shell.exe"
             }
             LaunchApps = @{
                 "%SYSTEMDRIVE%\Fabrikam\app1.exe" = $null
@@ -54,8 +58,6 @@
 
     .Link
         Import-Ini
-        ConvertFrom-Ini
-        ConvertTo-Ini
     #>
 
     [CmdletBinding( SupportsShouldProcess )]
