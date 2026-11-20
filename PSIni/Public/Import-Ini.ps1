@@ -19,22 +19,20 @@
         Saves the content of the c:\myinifile.ini in a hashtable called $FileContent
 
     .Example
-        $inifilepath | $FileContent = Import-Ini
+        $FileContent = Get-ChildItem "C:\*.ini" | Import-Ini
         -----------
         Description
-        Gets the content of the ini file passed through the pipe into a hashtable called $FileContent
+        Gets the content of the ini files passed through the pipe. $FileContent holds one dictionary per file
 
     .Example
-        C:\PS>$FileContent = Import-Ini "c:\settings.ini"
-        C:\PS>$FileContent["Section"]["Key"]
+        $FileContent = Import-Ini "C:\settings.ini"
+        $FileContent["Section"]["Key"]
         -----------
         Description
         Returns the key "Key" of the section "Section" from the C:\settings.ini file
 
     .Link
         Export-Ini
-        ConvertFrom-Ini
-        ConvertTo-Ini
     #>
 
     [CmdletBinding()]
