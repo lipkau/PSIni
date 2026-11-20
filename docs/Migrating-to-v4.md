@@ -71,7 +71,7 @@ v4 provides more robust error handling and clearer error messages.
 
 ## PowerShell Version Requirements
 
-PSIni v4 requires PowerShell 5.0 or higher. Support for PowerShell v2, v3, and v4 has been removed.
+PSIni v4 requires PowerShell 5.1 or higher. Support for PowerShell v2, v3, v4, and v5.0 has been removed.
 
 ## Migration Steps
 
