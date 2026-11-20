@@ -50,12 +50,77 @@ Describe "Export-Ini" -Tag "Unit" {
             $command | Should -HaveParameter $parameter -DefaultValue $defaultValue
         }
 
-        It "only accepts the values for -Encode which are supported by the powershell version" -Skip {
-            # TODO: I don't know how to test this
-        }
+        Context "-Encoding" {
+            BeforeAll {
+                $outFile = Get-Command -Name Out-File -Module Microsoft.PowerShell.Utility -CommandType Cmdlet
+                $script:builtInEncodings = if ($PSVersionTable.PSVersion.Major -ge 6) {
+                    (
+                        $outFile.Parameters['Encoding'].Attributes |
+                            Where-Object { $_ -is [ArgumentCompletions] }
+                    )[0].CompleteArgument('Out-File', 'Encoding', '*', $null, @{ }).CompletionText
+                }
+                else {
+                    (
+                        $outFile.Parameters['Encoding'].Attributes |
+                            Where-Object { $_.TypeId -eq [ValidateSet] }
+                    )[0].ValidValues
+                }
 
-        It "provides autocompletion for parameters" -Skip {
-            # TODO: I don't know how to test this
+                function Get-EncodingCompletion {
+                    param([String] $Word)
+
+                    $line = "Export-Ini -Encoding $Word"
+                    (TabExpansion2 -inputScript $line -cursorColumn $line.Length).CompletionMatches.CompletionText
+                }
+            }
+
+            AfterEach {
+                Remove-Item -Path Function:\Out-File -ErrorAction SilentlyContinue
+            }
+
+            It "only accepts the values for -Encoding which are supported by the powershell version" {
+                $builtInEncodings | Should -Not -BeNullOrEmpty
+
+                foreach ($encoding in $builtInEncodings) {
+                    { Export-Ini -InputObject @{} -Path "TestDrive:\encoding.ini" -Encoding $encoding -Force -ErrorAction Stop } |
+                        Should -Not -Throw
+                }
+                { Export-Ini -InputObject @{} -Path "TestDrive:\encoding.ini" -Encoding "NotAnEncoding" } |
+                    Should -Throw "*Encoding*"
+            }
+
+            It "uses the built-in Out-File even when another 'Out-File' command exists" {
+                function global:Out-File {
+                    param(
+                        [ValidateSet("NotAnEncoding")]
+                        $Encoding
+                    )
+                    throw "The overridden Out-File was called"
+                }
+
+                $path = "TestDrive:\override$(Get-Random).ini"
+                { Export-Ini -InputObject @{ Section = @{ Key = "Value" } } -Path $path -Encoding "utf8" -ErrorAction Stop } |
+                    Should -Not -Throw
+                $path | Should -Exist
+                Get-EncodingCompletion -Word "" | Should -Not -Contain "NotAnEncoding"
+            }
+
+            It "completes '<word>' to matching encodings" -TestCases @(
+                @{ word = "a"; expected = "ascii" }
+                @{ word = "u"; expected = "utf8" }
+                @{ word = "UTF3"; expected = "utf32" }
+            ) {
+                $completions = Get-EncodingCompletion -Word $word
+
+                $completions | Should -Contain $expected
+                $completions | ForEach-Object { $_ | Should -BeLike "$word*" }
+            }
+
+            It "completes an empty word to all supported encodings" {
+                $completions = Get-EncodingCompletion -Word ""
+
+                $completions | Should -HaveCount @($builtInEncodings).Count
+            }
         }
     }
 
