@@ -3,6 +3,26 @@
 
 ## [NEXT VERSION] - YYYY-MM-DD
 
+## v4.0.2 - 2026-11-22
+
+### Added
+
+* Added `config`, `configuration` and `settings` tags and a release notes link to the module manifest @lipkau #187
+
+### Fixed
+
+* Fixed `Export-Ini` ignoring `-Force`, so read-only files can be overwritten again @lipkau #180
+* Fixed `Import-Ini` not finding hidden files, including dotfiles on Linux and macOS @lipkau #182
+* Fixed the `-Encoding` argument completer of `Export-Ini`, and `Export-Ini` now always uses the built-in `Out-File`, even if another module overrides it @lipkau #183
+* Fixed `Export-Ini` writing `0` and `$false` as empty values @lipkau #184
+* Fixed `Import-Ini` losing duplicate keys when the first value is empty @lipkau #185
+* Fixed the help examples and removed links to commands that no longer exist @lipkau #186
+
+### Changed
+
+* `Export-Ini -SkipTrailingEqualSign` now writes an empty string as `key=`. Only `$null` is written as `key` @lipkau #184
+* `Import-Ini` keeps every occurrence of a repeated key, including ones without `=`, instead of overwriting earlier values @lipkau #185
+
 ## v4.0.1 - 2025-05-27
 
 ### Fixed
