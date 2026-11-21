@@ -9,32 +9,63 @@ on:
       - master
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+# A new push to a PR cancels that PR's older run. Every other run gets its own
+# group, so runs on master are never cancelled or replaced by a newer push:
+# release.yml needs the `Release` artifact of the exact commit that was tagged.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build_module:
     name: Build Module
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: pwsh
     steps:
       - uses: actions/checkout@v7
       - uses: actions/cache@v6
-        id: cacher
         with:
-          path: "~/.local/share/powershell/Modules"
-          key: ${{ runner.os }}-PSModules
+          path: ~/.local/share/powershell/Modules
+          key: ${{ runner.os }}-pwsh-PSModules-${{ hashFiles('tools/build.requirements.psd1') }}
       - run: ./tools/setup.ps1
-        shell: pwsh
       - run: Invoke-Build -Task ShowDebugInfo
-        shell: pwsh
       - run: Invoke-Build -Task Build
-        shell: pwsh
+      # release.yml downloads this artifact by name. Don't rename it.
       - uses: actions/upload-artifact@v7
         with:
           name: Release
           path: ./release/
 
-  test_on_windows_v5:
-    name: Test Module on Windows (PS v5)
+  test:
+    name: Test (${{ matrix.os }}, ${{ matrix.shell }})
     needs: build_module
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            shell: powershell
+            modules: ~/Documents/WindowsPowerShell/Modules
+          - os: windows-latest
+            shell: pwsh
+            modules: ~/Documents/PowerShell/Modules
+          - os: ubuntu-latest
+            shell: pwsh
+            modules: ~/.local/share/powershell/Modules
+          - os: macos-latest
+            shell: pwsh
+            modules: ~/.local/share/powershell/Modules
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
@@ -42,95 +73,14 @@ jobs:
           name: Release
           path: ./release/
       - uses: actions/cache@v6
-        id: cacher
         with:
-          path: "~/.local/share/powershell/Modules"
-          key: ${{ runner.os }}-PSModules
+          path: ${{ matrix.modules }}
+          key: ${{ runner.os }}-${{ matrix.shell }}-PSModules-${{ hashFiles('tools/build.requirements.psd1') }}
       - run: ./tools/setup.ps1
-        shell: powershell
       - run: Invoke-Build -Task ShowDebugInfo
-        shell: powershell
       - run: Invoke-Build -Task Test
-        shell: powershell
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
-          name: ${{ runner.os }}v5-Unit-Tests
-          path: Test*.xml
-
-  test_on_windows_v7:
-    name: Test Module on Windows (PS v7)
-    needs: build_module
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
-        with:
-          name: Release
-          path: ./release/
-      - uses: actions/cache@v6
-        id: cacher
-        with:
-          path: "~/.local/share/powershell/Modules"
-          key: ${{ runner.os }}-PSModules
-      - run: ./tools/setup.ps1
-        shell: pwsh
-      - run: Invoke-Build -Task ShowDebugInfo
-        shell: pwsh
-      - run: Invoke-Build -Task Test
-        shell: pwsh
-      - uses: actions/upload-artifact@v7
-        with:
-          name: ${{ runner.os }}v7-Unit-Tests
-          path: Test*.xml
-
-  test_on_ubuntu:
-    name: Test Module on Ubuntu
-    needs: build_module
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
-        with:
-          name: Release
-          path: ./release/
-      - uses: actions/cache@v6
-        id: cacher
-        with:
-          path: "~/.local/share/powershell/Modules"
-          key: ${{ runner.os }}-PSModules
-      - run: ./tools/setup.ps1
-        shell: pwsh
-      - run: Invoke-Build -Task ShowDebugInfo
-        shell: pwsh
-      - run: Invoke-Build -Task Test
-        shell: pwsh
-      - uses: actions/upload-artifact@v7
-        with:
-          name: ${{ runner.os }}-Unit-Tests
-          path: Test*.xml
-
-  test_on_macos:
-    name: Test Module on macOS
-    needs: build_module
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
-        with:
-          name: Release
-          path: ./release/
-      - uses: actions/cache@v6
-        id: cacher
-        with:
-          path: "~/.local/share/powershell/Modules"
-          key: ${{ runner.os }}-PSModules
-      - run: ./tools/setup.ps1
-        shell: pwsh
-      - run: Invoke-Build -Task ShowDebugInfo
-        shell: pwsh
-      - run: Invoke-Build -Task Test
-        shell: pwsh
-      - uses: actions/upload-artifact@v7
-        with:
-          name: ${{ runner.os }}-Unit-Tests
+          name: ${{ runner.os }}-${{ matrix.shell }}-Unit-Tests
           path: Test*.xml
