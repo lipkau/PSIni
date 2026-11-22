@@ -208,7 +208,7 @@
                         }
                         continue
                     }
-                    Default {
+                    default {
                         # As seen in https://github.com/lipkau/PSIni/issues/65, some software write keys without the `=` sign.
                         if (-not $section) {
                             $section = $script:NoSection
