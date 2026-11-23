@@ -6,8 +6,10 @@
     .Description
         Writes the content of a dictionary (such as a hashtable or the result of Import-Ini) to an INI file.
 
-        Every key of the dictionary becomes a section, and its value (another dictionary) holds the keys of that section.
-        Keys stored under the section "_" (as Import-Ini does for keys outside of any section) are written without a section header.
+        Every key of the dictionary whose value is another dictionary becomes a section, and that dictionary holds the keys of the section.
+        Every key whose value is not a dictionary is written as a key without a section.
+        Keys stored under the section "_" (as Import-Ini does for keys outside of any section) are also written without a section header.
+        Keys without a section are always written at the top of the file, before the first section.
         Comments that Import-Ini read from a file are written back as comments, unless -IgnoreComments is used.
 
     .Inputs
@@ -42,6 +44,13 @@
         Creating a custom Hashtable and saving it to C:\MyNewFile.ini
 
     .Example
+        $NewINIContent = [ordered]@{ Name = "Value"; Section = @{ Key = "Value" } }
+        Export-Ini -InputObject $NewINIContent -FilePath "C:\MyNewFile.ini"
+        -----------
+        Description
+        Writes the key "Name" without a section at the top of the file, followed by the section "[Section]"
+
+    .Example
         $Winpeshl = @{
             LaunchApp = @{
                 AppPath = "%SYSTEMDRIVE%\Fabrikam\shell.exe"
@@ -64,6 +73,7 @@
     [OutputType( [Void] )]
     param(
         # Specifies the Hashtable to be written to the file.
+        # Values that are dictionaries are written as sections, all other values as keys without a section.
         # Enter a variable that contains the objects or type a command or expression that gets the objects.
         [Parameter( Mandatory, ValueFromPipeline )]
         [System.Collections.IDictionary]
@@ -163,26 +173,46 @@
     process {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Creating file content in memory"
         $fileContent = @()
+        $keysWithoutSection = @()
+        $sections = @()
 
-        foreach ($section in $InputObject.GetEnumerator().Name) {
-            Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$section]"
+        $outKeyParam = @{
+            Delimiter             = $delimiter
+            IgnoreComments        = $IgnoreComments
+            CommentChar           = $CommentChar
+            SkipTrailingEqualSign = $SkipTrailingEqualSign
+        }
 
-            # Add section header to the content array
-            # Note: this relies on an OrderedDictionary for the keys without a section to be at the top of the file
-            if ($section -ne $script:NoSection) {
-                $fileContent += "[$section]"
+        # A value that is a dictionary is a section. Any other value is a key
+        # without a section, like the `$script:NoSection` section Import-Ini creates.
+        # Keys without a section must come before the first section header,
+        # otherwise they would be read back as part of that section.
+        foreach ($entry in $InputObject.GetEnumerator()) {
+            if ($entry.Value -isnot [System.Collections.IDictionary]) {
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key without section: $($entry.Key)"
+                $keysWithoutSection += Out-Key @outKeyParam -InputObject @{ $entry.Key = $entry.Value }
             }
-
-            $outKeyParam = @{
-                InputObject           = $InputObject[$section]
-                Delimiter             = $delimiter
-                IgnoreComments        = $IgnoreComments
-                CommentChar           = $CommentChar
-                SkipTrailingEqualSign = $SkipTrailingEqualSign
+            elseif ($entry.Key -eq $script:NoSection) {
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing keys without section"
+                $keysWithoutSection += Out-Key @outKeyParam -InputObject $entry.Value
             }
-            $fileContent += Out-Key @outKeyParam
+            else {
+                $sections += $entry
+            }
+        }
 
-            # TODO: what when the Input is only a simple hash?
+        if ($keysWithoutSection.Count) {
+            $fileContent += $keysWithoutSection
+
+            # Separate Sections with whiteSpace
+            if ($Format -eq "pretty") { $fileContent += "" }
+        }
+
+        foreach ($section in $sections) {
+            Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$($section.Key)]"
+
+            $fileContent += "[$($section.Key)]"
+            $fileContent += Out-Key @outKeyParam -InputObject $section.Value
 
             # Separate Sections with whiteSpace
             if ($Format -eq "pretty") { $fileContent += "" }

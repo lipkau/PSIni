@@ -374,6 +374,98 @@ Describe "Export-Ini" -Tag "Unit" {
 
                 $fileContent | Should -Be $expectedFileContent
             }
+
+            It "writes nested input as sections with keys" {
+                $iniObject = [ordered]@{
+                    "Section1" = [ordered]@{ "Key1" = "Value1"; "Key2" = "Value2" }
+                    "Section2" = @{ "Key1" = "Value1" }
+                }
+
+                Export-Ini @commonParameter -InputObject $iniObject -Format minified
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be "[Section1]${lf}Key1=Value1${lf}Key2=Value2${lf}[Section2]${lf}Key1=Value1${lf}"
+            }
+        }
+
+        Describe "Keys without a section" {
+            It "writes a flat hashtable as keys without a section" {
+                Export-Ini @commonParameter -InputObject @{ "Key" = "Value" }
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be "Key = Value${lf}${lf}"
+            }
+
+            It "writes every kind of value of a flat dictionary" {
+                $iniObject = [ordered]@{
+                    "Key1"       = "Value1"
+                    "Empty"      = $null
+                    "Zero"       = 0
+                    "Array"      = @("Line 1", "Line 2")
+                    "__Comment1" = "a comment"
+                }
+
+                Export-Ini @commonParameter -InputObject $iniObject -Format minified
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be "Key1=Value1${lf}Empty=${lf}Zero=0${lf}Array=Line 1${lf}Array=Line 2${lf};a comment${lf}"
+            }
+
+            It "writes keys without a section before the first section of mixed input" {
+                $iniObject = [ordered]@{
+                    "Section1" = [ordered]@{ "Key1" = "Value1" }
+                    "Key1"     = "Value1"
+                    "Section2" = [ordered]@{ "Key2" = "Value2" }
+                    "Key2"     = "Value2"
+                }
+
+                Export-Ini @commonParameter -InputObject $iniObject
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be "Key1 = Value1${lf}Key2 = Value2${lf}${lf}[Section1]${lf}Key1 = Value1${lf}${lf}[Section2]${lf}Key2 = Value2${lf}${lf}"
+            }
+
+            It "writes the keys of the '_' section and other keys without a section together" {
+                $iniObject = [ordered]@{
+                    "Section" = [ordered]@{ "Key1" = "Value1" }
+                    "_"       = [ordered]@{ "Key2" = "Value2" }
+                    "Key3"    = "Value3"
+                }
+
+                Export-Ini @commonParameter -InputObject $iniObject -Format minified
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be "Key2=Value2${lf}Key3=Value3${lf}[Section]${lf}Key1=Value1${lf}"
+            }
+
+            It "keeps the keys of <name> input when the file is read with Import-Ini" -TestCases @(
+                @{
+                    name      = "flat"
+                    iniObject = [ordered]@{ "Key1" = "Value1"; "Key2" = "Value2" }
+                    expected  = [ordered]@{ "_" = [ordered]@{ "Key1" = "Value1"; "Key2" = "Value2" } }
+                }
+                @{
+                    name      = "mixed"
+                    iniObject = [ordered]@{ "Section" = [ordered]@{ "Key1" = "Value1" }; "Key2" = "Value2" }
+                    expected  = [ordered]@{ "_" = [ordered]@{ "Key2" = "Value2" }; "Section" = [ordered]@{ "Key1" = "Value1" } }
+                }
+                @{
+                    name      = "nested"
+                    iniObject = [ordered]@{ "Section1" = [ordered]@{ "Key1" = "Value1" }; "Section2" = [ordered]@{ "Key2" = "Value2" } }
+                    expected  = [ordered]@{ "Section1" = [ordered]@{ "Key1" = "Value1" }; "Section2" = [ordered]@{ "Key2" = "Value2" } }
+                }
+            ) {
+                Export-Ini @commonParameter -InputObject $iniObject
+                $result = Import-Ini -Path $testPath
+
+                @($result.Keys) | Should -Be @($expected.Keys)
+                foreach ($section in $expected.Keys) {
+                    @($result[$section].Keys) | Should -Be @($expected[$section].Keys)
+                    foreach ($key in $expected[$section].Keys) {
+                        $result[$section][$key] | Should -Be $expected[$section][$key]
+                    }
+                }
+            }
         }
     }
 }
