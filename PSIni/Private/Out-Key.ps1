@@ -32,7 +32,9 @@
         }
 
         foreach ($key in $InputObject.GetEnumerator().Name) {
-            if ($key -like "$script:CommentPrefix*") {
+            # Only the names Import-Ini gives comments (__Comment1, __Comment2, ...) are comments.
+            # A key such as "__Commentary" is a normal key.
+            if ($key -match "^$([regex]::Escape($script:CommentPrefix))\d*$") {
                 if ($IgnoreComments) {
                     Write-Verbose "$($MyInvocation.MyCommand.Name):: Skipping comment: $key"
                 }

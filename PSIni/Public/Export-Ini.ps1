@@ -6,8 +6,10 @@
     .Description
         Writes the content of a dictionary (such as a hashtable or the result of Import-Ini) to an INI file.
 
-        Every key of the dictionary becomes a section, and its value (another dictionary) holds the keys of that section.
-        Keys stored under the section "_" (as Import-Ini does for keys outside of any section) are written without a section header.
+        Every key of the dictionary whose value is another dictionary becomes a section, and that dictionary holds the keys of the section.
+        Every key whose value is not a dictionary is written as a key without a section.
+        Keys stored under the section "_" (as Import-Ini does for keys outside of any section) are also written without a section header.
+        Keys without a section are written before the first section of the InputObject (see -Append for an exception).
         Comments that Import-Ini read from a file are written back as comments, unless -IgnoreComments is used.
 
     .Inputs
@@ -42,6 +44,13 @@
         Creating a custom Hashtable and saving it to C:\MyNewFile.ini
 
     .Example
+        $NewINIContent = [ordered]@{ Name = "Value"; Section = @{ Key = "Value" } }
+        Export-Ini -InputObject $NewINIContent -FilePath "C:\MyNewFile.ini"
+        -----------
+        Description
+        Writes the key "Name" without a section at the top of the file, followed by the section "[Section]"
+
+    .Example
         $Winpeshl = @{
             LaunchApp = @{
                 AppPath = "%SYSTEMDRIVE%\Fabrikam\shell.exe"
@@ -64,6 +73,7 @@
     [OutputType( [Void] )]
     param(
         # Specifies the Hashtable to be written to the file.
+        # Values that are dictionaries are written as sections, all other values as keys without a section.
         # Enter a variable that contains the objects or type a command or expression that gets the objects.
         [Parameter( Mandatory, ValueFromPipeline )]
         [System.Collections.IDictionary]
@@ -88,6 +98,9 @@
         $LiteralPath,
 
         # Adds the output to the end of an existing file, instead of replacing the file contents.
+        # Keys without a section are written at the end of the file too, so when the file already
+        # contains sections, Import-Ini reads them as part of the last section. A warning is written in that case.
+        # Without -Append, the first object from the pipeline replaces the file and the next ones are appended to it.
         [Switch]
         $Append,
 
@@ -151,6 +164,12 @@
 
         $targetPath = if ($LiteralPath) { $LiteralPath } else { $FilePath }
 
+        # Same pattern Import-Ini uses to find a section header
+        $sectionRegex = "^\s*\[(.+)\]"
+
+        # Files written by this call, so the next object in the pipeline is appended to them
+        $writtenPaths = New-Object -TypeName "System.Collections.Generic.HashSet[String]"
+
         $fileParameters = @{
             Encoding = $Encoding
             Path     = $targetPath
@@ -163,47 +182,87 @@
     process {
         Write-Verbose "$($MyInvocation.MyCommand.Name):: Creating file content in memory"
         $fileContent = @()
+        $keysWithoutSection = @()
+        $sections = @()
 
-        foreach ($section in $InputObject.GetEnumerator().Name) {
-            Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$section]"
+        $outKeyParam = @{
+            Delimiter             = $delimiter
+            IgnoreComments        = $IgnoreComments
+            CommentChar           = $CommentChar
+            SkipTrailingEqualSign = $SkipTrailingEqualSign
+        }
 
-            # Add section header to the content array
-            # Note: this relies on an OrderedDictionary for the keys without a section to be at the top of the file
-            if ($section -ne $script:NoSection) {
-                $fileContent += "[$section]"
+        # A value that is a dictionary is a section. Any other value is a key
+        # without a section, like the `$script:NoSection` section Import-Ini creates.
+        # Keys without a section must come before the first section header,
+        # otherwise they would be read back as part of that section.
+        foreach ($entry in $InputObject.GetEnumerator()) {
+            if ($entry.Value -isnot [System.Collections.IDictionary]) {
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing key without section: $($entry.Key)"
+                $keysWithoutSection += Out-Key @outKeyParam -InputObject @{ $entry.Key = $entry.Value }
             }
-
-            $outKeyParam = @{
-                InputObject           = $InputObject[$section]
-                Delimiter             = $delimiter
-                IgnoreComments        = $IgnoreComments
-                CommentChar           = $CommentChar
-                SkipTrailingEqualSign = $SkipTrailingEqualSign
+            elseif ($entry.Key -eq $script:NoSection) {
+                Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing keys without section"
+                $keysWithoutSection += Out-Key @outKeyParam -InputObject $entry.Value
             }
-            $fileContent += Out-Key @outKeyParam
+            else {
+                $sections += $entry
+            }
+        }
 
-            # TODO: what when the Input is only a simple hash?
+        if ($keysWithoutSection.Count) {
+            $fileContent += $keysWithoutSection
 
             # Separate Sections with whiteSpace
             if ($Format -eq "pretty") { $fileContent += "" }
         }
 
-        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $targetPath"
-        $ofsplat = @{
-            InputObject = $fileContent
-            NoClobber   = $NoClobber
-            Append      = $Append
-            Encoding    = $Encoding
-            Force       = $Force
+        foreach ($section in $sections) {
+            Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing Section: [$($section.Key)]"
+
+            $fileContent += "[$($section.Key)]"
+            $fileContent += Out-Key @outKeyParam -InputObject $section.Value
+
+            # Separate Sections with whiteSpace
+            if ($Format -eq "pretty") { $fileContent += "" }
         }
-        if ($LiteralPath) {
-            if ($PSCmdlet.ShouldProcess((Split-Path $LiteralPath -Leaf), "Write")) {
+
+        $path = if ($LiteralPath) { $LiteralPath } else { $FilePath }
+        $resolvedPath = $PSCmdlet.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
+
+        # When several dictionaries are piped in, append every one after the first,
+        # instead of replacing the file each time.
+        $appendToFile = $Append -or $writtenPaths.Contains($resolvedPath)
+
+        if ($PSCmdlet.ShouldProcess((Split-Path $path -Leaf), "Write")) {
+            # Keys without a section can't be placed before the sections that are already in the file.
+            if ($appendToFile -and $keysWithoutSection.Count -and (Test-Path -LiteralPath $resolvedPath -PathType Leaf)) {
+                $existingSection = Get-Content -LiteralPath $resolvedPath -Encoding $Encoding |
+                    Where-Object { $_ -match $sectionRegex } |
+                    Select-Object -First 1
+                if ($existingSection) {
+                    Write-Warning "Appending keys without a section to '$path', which already contains sections. Import-Ini will read these keys as part of the last section."
+                }
+            }
+
+            Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $path"
+            $ofsplat = @{
+                InputObject   = $fileContent
+                NoClobber     = $NoClobber
+                Append        = $appendToFile
+                Encoding      = $Encoding
+                Force         = $Force
+                ErrorVariable = "writeError"
+            }
+            if ($LiteralPath) {
                 Microsoft.PowerShell.Utility\Out-File @ofsplat -LiteralPath $LiteralPath
             }
-        }
-        else {
-            if ($PSCmdlet.ShouldProcess((Split-Path $FilePath -Leaf), "Write")) {
+            else {
                 Microsoft.PowerShell.Utility\Out-File @ofsplat -FilePath $FilePath
+            }
+
+            if (-not $writeError) {
+                $null = $writtenPaths.Add($resolvedPath)
             }
         }
     }
