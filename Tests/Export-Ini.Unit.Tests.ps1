@@ -174,6 +174,21 @@ Describe "Export-Ini" -Tag "Unit" {
                 $defaultObject | Export-Ini @commonParameter
                 Test-Path -Path $testPath | Should -Be $true
             }
+
+            It "writes every object from the pipeline to the file" {
+                $additionalObject | Export-Ini @commonParameter
+                $defaultObject, $additionalObject | Export-Ini @commonParameter
+
+                $fileContent = Get-Content -Path $testPath -Raw
+                $fileContent | Should -Be ($defaultFileContent + $additionalFileContent)
+            }
+
+            It "does not write any object from the pipeline to an existing file when '-NoClobber' is defined" {
+                Export-Ini @commonParameter -InputObject $additionalObject
+
+                { $defaultObject, $additionalObject | Export-Ini @commonParameter -NoClobber } | Should -Throw
+                Get-Content -Path $testPath -Raw | Should -Be $additionalFileContent
+            }
         }
 
         Describe "File I/O" {
@@ -183,6 +198,22 @@ Describe "Export-Ini" -Tag "Unit" {
 
                 $fileContent = Get-Content -Path $testPath -Raw
                 $fileContent | Should -Be ($defaultFileContent + $additionalFileContent)
+            }
+
+            It "warns when appending keys without a section to a file with sections" {
+                Export-Ini @commonParameter -InputObject $additionalObject
+                Export-Ini @commonParameter -InputObject @{ "Key" = "Value" } -Append -WarningVariable warning -WarningAction SilentlyContinue
+
+                $warning | Should -HaveCount 1
+                $warning[0] | Should -BeLike "*keys without a section*"
+            }
+
+            It "does not warn when appending keys without a section to a file without sections" {
+                Export-Ini @commonParameter -InputObject @{ "Key1" = "Value1" }
+                Export-Ini @commonParameter -InputObject @{ "Key2" = "Value2" } -Append -WarningVariable warning -WarningAction SilentlyContinue
+
+                $warning | Should -BeNullOrEmpty
+                Get-Content -Path $testPath -Raw | Should -Be "Key1 = Value1${lf}${lf}Key2 = Value2${lf}${lf}"
             }
 
             It "it overwrite any existing by default" {
@@ -352,6 +383,15 @@ Describe "Export-Ini" -Tag "Unit" {
                 $fileContent = Get-Content -Path $testPath -Raw
 
                 $fileContent | Should -Be "[Section]${lf}Key=Value${lf}Key=${lf}Key=0${lf}"
+            }
+
+            It "writes a key that only starts with '__Comment' as a key" {
+                $iniObject = [ordered]@{ "Section" = [ordered]@{ "__Commentary" = "Value"; "__Comment1" = "a comment" } }
+
+                Export-Ini @commonParameter -InputObject $iniObject -Format minified -IgnoreComments
+                $fileContent = Get-Content -Path $testPath -Raw
+
+                $fileContent | Should -Be "[Section]${lf}__Commentary=Value${lf}"
             }
 
             It "writes a key with an empty array as a key without a value" {

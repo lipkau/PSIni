@@ -9,7 +9,7 @@
         Every key of the dictionary whose value is another dictionary becomes a section, and that dictionary holds the keys of the section.
         Every key whose value is not a dictionary is written as a key without a section.
         Keys stored under the section "_" (as Import-Ini does for keys outside of any section) are also written without a section header.
-        Keys without a section are always written at the top of the file, before the first section.
+        Keys without a section are written before the first section of the InputObject (see -Append for an exception).
         Comments that Import-Ini read from a file are written back as comments, unless -IgnoreComments is used.
 
     .Inputs
@@ -98,6 +98,9 @@
         $LiteralPath,
 
         # Adds the output to the end of an existing file, instead of replacing the file contents.
+        # Keys without a section are written at the end of the file too, so when the file already
+        # contains sections, Import-Ini reads them as part of the last section. A warning is written in that case.
+        # Without -Append, the first object from the pipeline replaces the file and the next ones are appended to it.
         [Switch]
         $Append,
 
@@ -161,6 +164,12 @@
 
         $targetPath = if ($LiteralPath) { $LiteralPath } else { $FilePath }
 
+        # Same pattern Import-Ini uses to find a section header
+        $sectionRegex = "^\s*\[(.+)\]"
+
+        # Files written by this call, so the next object in the pipeline is appended to them
+        $writtenPaths = New-Object -TypeName "System.Collections.Generic.HashSet[String]"
+
         $fileParameters = @{
             Encoding = $Encoding
             Path     = $targetPath
@@ -218,22 +227,42 @@
             if ($Format -eq "pretty") { $fileContent += "" }
         }
 
-        Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $targetPath"
-        $ofsplat = @{
-            InputObject = $fileContent
-            NoClobber   = $NoClobber
-            Append      = $Append
-            Encoding    = $Encoding
-            Force       = $Force
-        }
-        if ($LiteralPath) {
-            if ($PSCmdlet.ShouldProcess((Split-Path $LiteralPath -Leaf), "Write")) {
+        $path = if ($LiteralPath) { $LiteralPath } else { $FilePath }
+        $resolvedPath = $PSCmdlet.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
+
+        # When several dictionaries are piped in, append every one after the first,
+        # instead of replacing the file each time.
+        $appendToFile = $Append -or $writtenPaths.Contains($resolvedPath)
+
+        if ($PSCmdlet.ShouldProcess((Split-Path $path -Leaf), "Write")) {
+            # Keys without a section can't be placed before the sections that are already in the file.
+            if ($appendToFile -and $keysWithoutSection.Count -and (Test-Path -LiteralPath $resolvedPath -PathType Leaf)) {
+                $existingSection = Get-Content -LiteralPath $resolvedPath -Encoding $Encoding |
+                    Where-Object { $_ -match $sectionRegex } |
+                    Select-Object -First 1
+                if ($existingSection) {
+                    Write-Warning "Appending keys without a section to '$path', which already contains sections. Import-Ini will read these keys as part of the last section."
+                }
+            }
+
+            Write-Verbose "$($MyInvocation.MyCommand.Name):: Writing to file: $path"
+            $ofsplat = @{
+                InputObject   = $fileContent
+                NoClobber     = $NoClobber
+                Append        = $appendToFile
+                Encoding      = $Encoding
+                Force         = $Force
+                ErrorVariable = "writeError"
+            }
+            if ($LiteralPath) {
                 Microsoft.PowerShell.Utility\Out-File @ofsplat -LiteralPath $LiteralPath
             }
-        }
-        else {
-            if ($PSCmdlet.ShouldProcess((Split-Path $FilePath -Leaf), "Write")) {
+            else {
                 Microsoft.PowerShell.Utility\Out-File @ofsplat -FilePath $FilePath
+            }
+
+            if (-not $writeError) {
+                $null = $writtenPaths.Add($resolvedPath)
             }
         }
     }
