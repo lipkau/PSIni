@@ -42,11 +42,13 @@ _I will assume you already have `Powershell` and `PowershellGet` installed._
     ```
 
 4. _make your changes (don't forget to extend the tests)_
-5. Run the tests locally
+5. Build the module and run the tests locally
 
     ```pwsh
-    Invoke-Build test
+    Invoke-Build
     ```
+
+    `Invoke-Build -Task Test` alone doesn't build first, so it tests the last build in `./release`.
 
 6. Submit your changes with a Pull Request ([how to do prs](https://help.github.com/articles/about-pull-requests/))
 
